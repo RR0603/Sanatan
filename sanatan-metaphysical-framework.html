@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sanatan Dharma — Metaphysical Framework</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400;1,600&family=Cinzel:wght@400;600;900&family=IBM+Plex+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#08060300; --bg2:#0d0a04; --surface:#15100a; --surface2:#1f180e;
+  --gold:#c9a84c; --gold-dim:#7a6330; --gold-pale:#e8d4a0;
+  --ember:#c4581e; --ember-dim:#7a3510; --sage:#5a8a60;
+  --cream:#ede0c4; --muted:#6b5a3e; --text:#d0bc98; --text-dim:#8a7050; --white:#f0e4cc;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{background:#08060300;color:var(--text);font-family:'Cormorant Garamond',serif;min-height:100vh;overflow-x:hidden;}
+#bg-canvas{position:fixed;inset:0;z-index:0;pointer-events:none;}
+.grain{position:fixed;inset:0;z-index:2;pointer-events:none;opacity:.55;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.88' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");}
+.wrap{position:relative;z-index:3;}
+::-webkit-scrollbar{width:3px;}::-webkit-scrollbar-track{background:#080604;}::-webkit-scrollbar-thumb{background:var(--gold-dim);}
+
+/* HEADER */
+.hdr{position:fixed;top:0;left:0;right:0;z-index:200;padding:16px 44px;display:flex;align-items:center;justify-content:space-between;background:linear-gradient(to bottom,rgba(8,6,3,.97) 65%,transparent);border-bottom:1px solid rgba(201,168,76,.09);}
+.logo{font-family:'Cinzel',serif;font-size:11px;letter-spacing:4px;color:var(--gold-dim);text-transform:uppercase;}
+.logo span{color:var(--gold);}
+.hdr-om{font-size:24px;color:var(--gold-dim);animation:omGlow 4s ease-in-out infinite;}
+@keyframes omGlow{0%,100%{opacity:.35;text-shadow:none;}50%{opacity:1;text-shadow:0 0 24px rgba(201,168,76,.7);}}
+.hdr-r{font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:3px;}
+
+/* HERO */
+.hero{padding:120px 44px 44px;text-align:center;position:relative;overflow:hidden;}
+.yantra-wrap{position:absolute;top:50%;left:50%;pointer-events:none;}
+.yantra-outer{transform:translate(-50%,-60%);width:580px;height:580px;animation:spin 100s linear infinite;opacity:.05;}
+.yantra-inner{transform:translate(-50%,-60%);width:320px;height:320px;animation:spin 50s linear infinite reverse;opacity:.045;}
+@keyframes spin{from{transform:translate(-50%,-60%) rotate(0deg);}to{transform:translate(-50%,-60%) rotate(360deg);}}
+.h-eyebrow{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:6px;color:var(--gold-dim);text-transform:uppercase;margin-bottom:14px;animation:fadeUp .9s ease both;}
+.h-om{font-size:56px;color:var(--gold);display:block;margin-bottom:12px;line-height:1;animation:fadeUp .9s .1s ease both;text-shadow:0 0 40px rgba(201,168,76,.35),0 0 80px rgba(201,168,76,.15);}
+.h-title{font-family:'Cinzel',serif;font-size:clamp(26px,4.5vw,62px);font-weight:400;color:var(--white);line-height:1.08;margin-bottom:8px;animation:fadeUp .9s .18s ease both;}
+.h-title em{font-style:italic;color:var(--gold);font-family:'Cormorant Garamond',serif;font-size:1.14em;}
+.h-sutra{font-size:17px;font-style:italic;color:var(--gold-dim);margin-bottom:6px;animation:fadeUp .9s .26s ease both;}
+.h-trans{font-size:11px;color:var(--muted);letter-spacing:2px;font-family:'IBM Plex Mono',monospace;margin-bottom:44px;animation:fadeUp .9s .32s ease both;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(22px);}to{opacity:1;transform:translateY(0);}}
+
+/* MAHAVAKYA STRIP */
+.maha-strip{display:flex;justify-content:center;gap:0;flex-wrap:wrap;margin-bottom:44px;animation:fadeUp .9s .4s ease both;border-top:1px solid rgba(201,168,76,.1);border-bottom:1px solid rgba(201,168,76,.1);padding:12px 0;}
+.maha-item{padding:6px 22px;text-align:center;border-right:1px solid rgba(201,168,76,.12);}
+.maha-item:last-child{border-right:none;}
+.maha-skt{font-size:15px;font-style:italic;color:var(--gold);display:block;margin-bottom:2px;}
+.maha-eng{font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:1px;color:var(--muted);text-transform:uppercase;}
+
+/* FILTER TABS */
+.tabs{display:flex;justify-content:center;gap:6px;flex-wrap:wrap;margin-bottom:56px;animation:fadeUp .9s .48s ease both;}
+.tab{padding:7px 18px;border:1px solid rgba(201,168,76,.18);background:transparent;color:var(--text-dim);font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:all .3s;}
+.tab:hover,.tab.active{border-color:var(--gold);color:var(--gold);background:rgba(201,168,76,.05);}
+
+/* TREE */
+.tree{max-width:1340px;margin:0 auto;padding:0 28px 100px;}
+.tier-block{margin-bottom:6px;transition:opacity .4s;}
+.tier-lbl{font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:5px;color:var(--muted);text-transform:uppercase;text-align:center;margin-bottom:16px;display:flex;align-items:center;justify-content:center;gap:14px;}
+.tier-lbl::before,.tier-lbl::after{content:'';flex:1;height:1px;background:linear-gradient(to right,transparent,rgba(201,168,76,.2),transparent);}
+.tier-row{display:flex;justify-content:center;flex-wrap:wrap;gap:13px;margin-bottom:8px;}
+.conn{display:flex;justify-content:center;height:28px;align-items:center;margin-bottom:4px;}
+.conn::after{content:'';width:1px;height:100%;background:linear-gradient(to bottom,rgba(201,168,76,.4),rgba(201,168,76,.08));}
+
+/* NODES */
+.node{cursor:pointer;transition:transform .3s ease;position:relative;}
+.node:hover{transform:translateY(-5px);}
+.node-card{border:1px solid rgba(201,168,76,.13);background:var(--surface);padding:17px 18px;min-width:148px;max-width:182px;text-align:center;position:relative;overflow:hidden;transition:all .4s;}
+.node-card::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(201,168,76,.06),transparent);opacity:0;transition:opacity .3s;}
+.node:hover .node-card::before{opacity:1;}
+.node-card::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:var(--gold);transform:scaleX(0);transform-origin:left;transition:transform .4s ease;}
+.node:hover .node-card::after{transform:scaleX(1);}
+/* ripple on click */
+.node-card .ripple{position:absolute;border-radius:50%;transform:scale(0);background:rgba(201,168,76,.25);animation:rippleAnim .6s linear;pointer-events:none;}
+@keyframes rippleAnim{to{transform:scale(4);opacity:0;}}
+
+.node.t-abs .node-card{border-color:rgba(201,168,76,.55);background:linear-gradient(135deg,#1a1408,#221a0a);padding:24px 28px;min-width:188px;}
+.node.t-em  .node-card{border-color:rgba(201,168,76,.26);}
+.node.t-pol .node-card{border-color:rgba(196,88,30,.28);}
+.node.t-sub .node-card{border-color:rgba(201,168,76,.2);}
+.node.t-el  .node-card{border-color:rgba(90,138,96,.28);}
+.node.t-mn  .node-card{border-color:rgba(201,168,76,.18);}
+.node.t-kn  .node-card{border-color:rgba(196,88,30,.22);}
+.node.t-br  .node-card{border-color:rgba(201,168,76,.16);}
+.node.active .node-card{border-color:var(--gold)!important;background:var(--surface2)!important;box-shadow:0 0 32px rgba(201,168,76,.14),0 0 64px rgba(201,168,76,.06);}
+
+.node-glyph{font-size:20px;margin-bottom:7px;display:block;line-height:1;}
+.node-name{font-family:'Cinzel',serif;font-size:10px;letter-spacing:2px;color:var(--gold);text-transform:uppercase;display:block;margin-bottom:3px;}
+.node.t-abs .node-name{font-size:13px;}
+.node-sub{font-family:'Cormorant Garamond',serif;font-size:12px;font-style:italic;color:var(--text-dim);display:block;}
+.node-dot{position:absolute;top:7px;right:7px;width:4px;height:4px;border-radius:50%;background:var(--gold-dim);transition:all .3s;}
+.node:hover .node-dot,.node.active .node-dot{background:var(--gold);box-shadow:0 0 8px var(--gold);}
+
+/* KNOWLEDGE SECTION divider */
+.k-section{border-top:1px solid rgba(201,168,76,.12);padding-top:46px;margin-top:46px;}
+
+/* FOOTER */
+.footer{text-align:center;padding:38px;border-top:1px solid rgba(201,168,76,.08);font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:3px;}
+
+/* ════════════════════════════
+   PANEL
+════════════════════════════ */
+.overlay{position:fixed;inset:0;background:rgba(8,6,3,.84);backdrop-filter:blur(7px);z-index:500;opacity:0;pointer-events:none;transition:opacity .4s ease;}
+.overlay.open{opacity:1;pointer-events:all;}
+.panel{position:fixed;top:0;right:0;bottom:0;width:500px;max-width:100vw;background:var(--bg2);border-left:1px solid rgba(201,168,76,.18);overflow-y:auto;z-index:600;transform:translateX(100%);transition:transform .5s cubic-bezier(.16,1,.3,1);}
+.overlay.open .panel{transform:translateX(0);}
+
+/* panel sacred top border */
+.panel-top-bar{height:3px;background:linear-gradient(to right,transparent,var(--gold-dim),var(--gold),var(--gold-dim),transparent);}
+
+.p-head{padding:32px 38px 24px;border-bottom:1px solid rgba(201,168,76,.1);position:sticky;top:0;background:var(--bg2);z-index:10;}
+/* Decorative chakra in panel header */
+.p-head::before{content:'';position:absolute;top:0;right:0;width:120px;height:120px;background:radial-gradient(circle at 100% 0%, rgba(201,168,76,.06) 0%, transparent 70%);pointer-events:none;}
+.p-close{position:absolute;top:18px;right:20px;background:none;border:1px solid var(--muted);color:var(--muted);width:28px;height:28px;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;transition:all .2s;font-family:'IBM Plex Mono',monospace;}
+.p-close:hover{border-color:var(--gold);color:var(--gold);}
+.p-glyph{font-size:32px;margin-bottom:9px;display:block;}
+.p-title{font-family:'Cinzel',serif;font-size:18px;color:var(--white);margin-bottom:4px;}
+.p-sub{font-family:'Cormorant Garamond',serif;font-size:14px;font-style:italic;color:var(--gold);}
+
+.p-body{padding:26px 38px 60px;}
+.p-sec{margin-bottom:24px;animation:fadeUp .5s ease both;}
+.p-sec:nth-child(1){animation-delay:.04s}.p-sec:nth-child(2){animation-delay:.09s}.p-sec:nth-child(3){animation-delay:.14s}.p-sec:nth-child(4){animation-delay:.19s}.p-sec:nth-child(5){animation-delay:.24s}.p-sec:nth-child(6){animation-delay:.29s}.p-sec:nth-child(7){animation-delay:.34s}
+.p-lbl{font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:3px;color:var(--gold-dim);text-transform:uppercase;margin-bottom:9px;display:flex;align-items:center;gap:10px;}
+.p-lbl::after{content:'';flex:1;height:1px;background:rgba(201,168,76,.12);}
+.p-sec p{font-size:15px;line-height:1.8;color:var(--text);}
+.p-sec p+p{margin-top:10px;}
+.p-sec blockquote{border-left:2px solid var(--gold-dim);padding:8px 0 8px 16px;font-style:italic;color:var(--cream);font-size:15.5px;line-height:1.7;margin:4px 0 6px;}
+.p-sec blockquote cite{display:block;font-size:10px;font-style:normal;color:var(--muted);margin-top:6px;font-family:'IBM Plex Mono',monospace;letter-spacing:1px;}
+.hook{background:var(--surface);border-left:3px solid var(--ember);padding:12px 16px;font-size:14.5px;line-height:1.75;color:var(--cream);}
+.hook em{color:var(--ember);font-style:normal;}
+.axiom{background:linear-gradient(135deg,#1a1408,#221a0a);border:1px solid rgba(201,168,76,.3);padding:14px 18px;text-align:center;font-size:15px;font-style:italic;color:var(--gold-pale);line-height:1.65;}
+.mtable{width:100%;border-collapse:collapse;font-size:13px;margin:6px 0;}
+.mtable th{background:rgba(201,168,76,.1);padding:7px 10px;text-align:left;font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:2px;color:var(--gold);text-transform:uppercase;border:1px solid rgba(201,168,76,.1);}
+.mtable td{padding:8px 10px;border:1px solid rgba(201,168,76,.07);color:var(--text);line-height:1.55;vertical-align:top;}
+.mtable tr:nth-child(even) td{background:rgba(201,168,76,.025);}
+.tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:4px;}
+.tag{padding:3px 9px;border:1px solid rgba(201,168,76,.18);font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:1px;color:var(--text-dim);text-transform:uppercase;cursor:pointer;transition:all .2s;}
+.tag:hover{border-color:var(--gold);color:var(--gold);}
+.tag.g{border-color:var(--gold);color:var(--gold);}
+.tag.e{border-color:var(--ember);color:var(--ember);}
+.tag.s{border-color:var(--sage);color:var(--sage);}
+
+/* PARTICLE CANVAS for panel */
+#particle-canvas{position:fixed;inset:0;z-index:1;pointer-events:none;}
+</style>
+</head>
+<body>
+
+<!-- BACKGROUND CANVAS: stars + sacred geometry -->
+<canvas id="bg-canvas"></canvas>
+<canvas id="particle-canvas"></canvas>
+<div class="grain"></div>
+
+<div class="wrap">
+
+<!-- HEADER -->
+<header class="hdr">
+  <div class="logo">Sanatan <span>Dharma</span> — Metaphysical Framework</div>
+  <div class="hdr-om">ॐ</div>
+  <div class="hdr-r">BRAHMAN · SHAKTI · NADA · MIND · MATTER</div>
+</header>
+
+<!-- HERO -->
+<section class="hero">
+
+  <!-- Rotating Sri Yantra outer -->
+  <div class="yantra-wrap">
+    <svg class="yantra-outer" viewBox="0 0 500 500" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="250" cy="250" r="245" stroke="#c9a84c" stroke-width=".4"/>
+      <circle cx="250" cy="250" r="235" stroke="#c9a84c" stroke-width=".3"/>
+      <circle cx="250" cy="250" r="195" stroke="#c9a84c" stroke-width=".4"/>
+      <circle cx="250" cy="250" r="155" stroke="#c9a84c" stroke-width=".3"/>
+      <circle cx="250" cy="250" r="115" stroke="#c9a84c" stroke-width=".4"/>
+      <circle cx="250" cy="250" r="75"  stroke="#c9a84c" stroke-width=".3"/>
+      <circle cx="250" cy="250" r="30"  stroke="#c9a84c" stroke-width=".5"/>
+      <line x1="250" y1="5"   x2="250" y2="495" stroke="#c9a84c" stroke-width=".25"/>
+      <line x1="5"   y1="250" x2="495" y2="250" stroke="#c9a84c" stroke-width=".25"/>
+      <line x1="73"  y1="73"  x2="427" y2="427" stroke="#c9a84c" stroke-width=".2"/>
+      <line x1="427" y1="73"  x2="73"  y2="427" stroke="#c9a84c" stroke-width=".2"/>
+      <line x1="5"   y1="133" x2="495" y2="367" stroke="#c9a84c" stroke-width=".18"/>
+      <line x1="5"   y1="367" x2="495" y2="133" stroke="#c9a84c" stroke-width=".18"/>
+      <line x1="133" y1="5"   x2="367" y2="495" stroke="#c9a84c" stroke-width=".18"/>
+      <line x1="367" y1="5"   x2="133" y2="495" stroke="#c9a84c" stroke-width=".18"/>
+      <!-- upward triangles -->
+      <polygon points="250,20 475,415 25,415" stroke="#c9a84c" stroke-width=".3" fill="none"/>
+      <polygon points="250,55 455,395 45,395" stroke="#c9a84c" stroke-width=".25" fill="none"/>
+      <!-- downward triangles -->
+      <polygon points="250,480 475,85 25,85"  stroke="#c9a84c" stroke-width=".3" fill="none"/>
+      <polygon points="250,445 455,105 45,105" stroke="#c9a84c" stroke-width=".25" fill="none"/>
+      <!-- lotus petals -->
+      <ellipse cx="250" cy="55"  rx="18" ry="36" stroke="#c9a84c" stroke-width=".2" fill="none" transform="rotate(0 250 250)"/>
+      <ellipse cx="250" cy="55"  rx="18" ry="36" stroke="#c9a84c" stroke-width=".2" fill="none" transform="rotate(45 250 250)"/>
+      <ellipse cx="250" cy="55"  rx="18" ry="36" stroke="#c9a84c" stroke-width=".2" fill="none" transform="rotate(90 250 250)"/>
+      <ellipse cx="250" cy="55"  rx="18" ry="36" stroke="#c9a84c" stroke-width=".2" fill="none" transform="rotate(135 250 250)"/>
+      <ellipse cx="250" cy="55"  rx="18" ry="36" stroke="#c9a84c" stroke-width=".2" fill="none" transform="rotate(180 250 250)"/>
+      <ellipse cx="250" cy="55"  rx="18" ry="36" stroke="#c9a84c" stroke-width=".2" fill="none" transform="rotate(225 250 250)"/>
+      <ellipse cx="250" cy="55"  rx="18" ry="36" stroke="#c9a84c" stroke-width=".2" fill="none" transform="rotate(270 250 250)"/>
+      <ellipse cx="250" cy="55"  rx="18" ry="36" stroke="#c9a84c" stroke-width=".2" fill="none" transform="rotate(315 250 250)"/>
+    </svg>
+    <svg class="yantra-inner" viewBox="0 0 300 300" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="150" cy="150" r="140" stroke="#c9a84c" stroke-width=".5"/>
+      <circle cx="150" cy="150" r="100" stroke="#c9a84c" stroke-width=".4"/>
+      <circle cx="150" cy="150" r="60"  stroke="#c9a84c" stroke-width=".5"/>
+      <polygon points="150,15 280,243 20,243"  stroke="#c9a84c" stroke-width=".4" fill="none"/>
+      <polygon points="150,285 280,57 20,57"   stroke="#c9a84c" stroke-width=".4" fill="none"/>
+      <polygon points="150,30 265,228 35,228"  stroke="#c9a84c" stroke-width=".3" fill="none"/>
+      <polygon points="150,270 265,72 35,72"   stroke="#c9a84c" stroke-width=".3" fill="none"/>
+    </svg>
+  </div>
+
+  <div class="h-eyebrow">Metaphysical · Non-Dual · Brahman-First</div>
+  <span class="h-om">ॐ</span>
+  <h1 class="h-title"><em>Ekam Evādvitīyam</em> Brahma</h1>
+  <p class="h-sutra">एकम् एव अद्वितीयम् ब्रह्म</p>
+  <p class="h-trans">Brahman alone is. Without a second. — Chandogya Upanishad 6.2.1</p>
+
+  <!-- Mahavakyas strip -->
+  <div class="maha-strip">
+    <div class="maha-item"><span class="maha-skt">अहं ब्रह्मास्मि</span><span class="maha-eng">Aham Brahmasmi</span></div>
+    <div class="maha-item"><span class="maha-skt">तत् त्वम् असि</span><span class="maha-eng">Tat Tvam Asi</span></div>
+    <div class="maha-item"><span class="maha-skt">प्रज्ञानं ब्रह्म</span><span class="maha-eng">Prajnanam Brahma</span></div>
+    <div class="maha-item"><span class="maha-skt">अयम् आत्मा ब्रह्म</span><span class="maha-eng">Ayam Atma Brahma</span></div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="filterView('all',this)">All Layers</button>
+    <button class="tab" onclick="filterView('origin',this)">Origin</button>
+    <button class="tab" onclick="filterView('manifest',this)">Manifestation</button>
+    <button class="tab" onclick="filterView('mind',this)">Mind &amp; Matter</button>
+    <button class="tab" onclick="filterView('knowledge',this)">Knowledge Tree</button>
+    <button class="tab" onclick="filterView('paths',this)">Paths Back</button>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════
+     TREE
+══════════════════════════════════════ -->
+<main class="tree">
+
+  <!-- I ABSOLUTE -->
+  <div class="tier-block" data-layer="origin">
+    <div class="tier-lbl">I — The Absolute Ground</div>
+    <div class="tier-row">
+      <div class="node t-abs" onclick="openPanel('brahman')"><div class="node-card"><div class="node-dot"></div><span class="node-glyph">☉</span><span class="node-name">Brahman</span><span class="node-sub">Ekam Evādvitīyam</span></div></div>
+    </div>
+  </div>
+  <div class="conn"></div>
+
+  <!-- II EMANATIONS -->
+  <div class="tier-block" data-layer="origin">
+    <div class="tier-lbl">II — First Emanations</div>
+    <div class="tier-row">
+      <div class="node t-em" onclick="openPanel('atman')"><div class="node-card"><div class="node-dot"></div><span class="node-glyph">◎</span><span class="node-name">Ātman</span><span class="node-sub">Aham Brahmasmi</span></div></div>
+      <div class="node t-em" onclick="openPanel('maya')"><div class="node-card"><div class="node-dot"></div><span class="node-glyph">◉</span><span class="node-name">Māyā</span><span class="node-sub">Appearance, not illusion</span></div></div>
+      <div class="node t-em" onclick="openPanel('chidabhasa')"><div class="node-card"><div class="node-dot"></div><span class="node-glyph">⟁</span><span class="node-name">Chidābhāsa</span><span class="node-sub">Reflection of Brahman</span></div></div>
+      <div class="node t-em" onclick="openPanel('turiya')"><div class="node-card"><div class="node-dot"></div><span class="node-glyph">∞</span><span class="node-name">Turīya</span><span class="node-sub">The fourth — pure witness</span></div></div>
+    </div>
+  </div>
+  <div class="conn"></div>
+
+  <!-- III SHIVA SHAKTI -->
+  <div class="tier-block" data-layer="manifest">
+    <div class="tier-lbl">III — The First Appearing — Shiva &amp; Shakti</div>
+    <div class="tier-row">
+      <div class="node t-pol" onclick="openPanel('shiva')"><div class="node-card"><div class="node-dot"></div><span class="node-glyph">🜁</span><span class="node-name">Shiva</span><span class="node-sub">Pure awareness · Stillness</span></div></div>
+      <div class="node t-pol" onclick="openPanel('shakti')"><div class="node-card"><div class="node-dot"></div><span class="node-glyph">☽</span><span class="node-name">Shakti</span><span class="node-sub">Dynamic power · Vibration</span></div></div>
+      <div class="node t-pol" onclick="openPanel('spanda')"><div class="node-card"><div class="node-dot"></div><span class="node-glyph">〰</span><span class="node-name">Spanda</span><span class="node-sub">Divine pulse · First throb</span></div></div>
+      <div class="node t-pol" onclick="openPanel('lila')"><div class="node-card"><div class="node-dot"></div><span class="node-glyph">✦</span><span class="node-name">Līlā</span><span class="node-sub">Divine play · Self-expression</span></div></div>
+    </div>
+  </div>
+  <div class="conn"></div>
+
+  <!-- IV NADA -->
+  <div class="tier-block" data-layer="manifest">
+    <div class="tier-lbl">IV — Nāda Brahma — Sound as Creation</div>
+    <div class="tier-row">
+      <div class="node t-sub" onclick="openPanel('para')"><div class="node-card"><div class="node-dot"></div><span class="node-glyph">◈</span><span class="node-name">Parā Vāch</span><span class="node-sub">Sound as pure Shakti</span></div></div>
+      <div class="node t-sub" onclick="openPanel('pashyanti')"><div class="node-card"><div class="node-dot"></div><span class="node-glyph">◇</span><span class="node-name">Pashyantī</span><span class="node-sub">Unified meaning-flash</span></div></div>
+      <div class="node t-sub" onclick="openPanel('madhyama')"><div class="node-card"><div class="node-dot"></div><span class="node-glyph">◻</span><span class="node-name">Madhyamā</span><span class="node-sub">Inner thought-speech</span></div></div>
+      <div class="node t-sub" onclick="openPanel('vaikhari')"><div class="node-card"><div class="node-dot"></div><span class="node-glyph">)))</span><span class="node-name">Vaikharī</span><span class="node-sub">Articulated sound · Mantra</span></div></div>
+    </div>
+  </div>
+  <div class="conn"></div>
+
+  <!-- V MIND -->
+  <div class="tier-block" data-layer="mind">
+    <div class="tier-lbl">V — Antahkarana — The Inner Instrument</div>
+    <div class="tier-row">
+      <div class="node t-mn" onclick="openPanel('manas')"><div class="node-card"><div class="node-dot"></div><span class="node-glyph">◌</span><span class="node-name">Manas</span><span class="node-sub">Reactive sense-mind</span></div></div>
+      <div class="node t-mn" onclick="openPanel('buddhi')"><div class="node-card"><div class="node-dot"></div><span class="node-glyph">△</span><span class="node-name">Buddhi</span><span class="node-sub">Discriminating intelligence</span></div></div>
+      <div class="node t-mn" onclick="openPanel('ahamkara')"><div class="node-card"><div class="node-dot"></div><span class="node-glyph">⊕</span><span class="node-name">Ahamkāra</span><span class="node-sub">The I-maker · Ego function</span></div></div>
+      <div class="node t-mn" onclick="openPanel('chitta')"><div class="node-card"><div class="node-dot"></div><span class="node-glyph">⊗</span><span class="node-name">Chitta</span><span class="node-sub">Memory · Samskāras</span></div></div>
+    </div>
+  </div>
+  <div class="conn"></div>
+
+  <!-- VI ELEMENTS -->
+  <div class="tier-block" data-layer="mind">
+    <div class="tier-lbl">VI — Pañcha Mahābhūta — Consciousness as Matter</div>
+    <div class="tier-row">
+      <div class="node t-el" onclick="openPanel('akasha')"><div class="node-card"><div class="node-dot"></div><span class="node-glyph">○</span><span class="node-name">Ākāsha</span><span class="node-sub">Space · The field</span></div></div>
+      <div class="node t-el" onclick="openPanel('vayu')"><div class="node-card"><div class="node-dot"></div><span class="node-glyph">〜</span><span class="node-name">Vāyu</span><span class="node-sub">Air · Movement · Prāna</span></div></div>
+      <div class="node t-el" onclick="openPanel('agni')"><div class="node-card"><div class="node-dot"></div><span class="node-glyph">▲</span><span class="node-name">Agni</span><span class="node-sub">Fire · Transformation</span></div></div>
+      <div class="node t-el" onclick="openPanel('jala')"><div class="node-card"><div class="node-dot"></div><span class="node-glyph">≋</span><span class="node-name">Jala</span><span class="node-sub">Water · Cohesion</span></div></div>
+      <div class="node t-el" onclick="openPanel('prithvi')"><div class="node-card"><div class="node-dot"></div><span class="node-glyph">⬡</span><span class="node-name">Prithvī</span><span class="node-sub">Earth · Dense form</span></div></div>
+    </div>
+  </div>
+
+  <!-- VII KNOWLEDGE TREE -->
+  <div class="k-section tier-block" data-layer="knowledge">
+    <div class="tier-lbl">VII — The Transmission Architecture — Vedas to Darshanas</div>
+    <div class="tier-row" style="gap:11px;">
+      <div class="node t-kn" onclick="openPanel('vedas')"><div class="node-card" style="min-width:136px;"><div class="node-dot"></div><span class="node-glyph">𐌀</span><span class="node-name">Vedas</span><span class="node-sub">Shruti · Sonic truth</span></div></div>
+      <div class="node t-kn" onclick="openPanel('vedangas')"><div class="node-card" style="min-width:136px;"><div class="node-dot"></div><span class="node-glyph">⚙</span><span class="node-name">Vedāngas</span><span class="node-sub">Limbs of preservation</span></div></div>
+      <div class="node t-kn" onclick="openPanel('upavedas')"><div class="node-card" style="min-width:136px;"><div class="node-dot"></div><span class="node-glyph">⚕</span><span class="node-name">Upavedas</span><span class="node-sub">Applied life sciences</span></div></div>
+      <div class="node t-kn" onclick="openPanel('puranas')"><div class="node-card" style="min-width:136px;"><div class="node-dot"></div><span class="node-glyph">☸</span><span class="node-name">Purānas</span><span class="node-sub">Metaphysics as narrative</span></div></div>
+      <div class="node t-kn" onclick="openPanel('itihasa')"><div class="node-card" style="min-width:136px;"><div class="node-dot"></div><span class="node-glyph">⚔</span><span class="node-name">Itihāsa</span><span class="node-sub">Epic living dharma</span></div></div>
+      <div class="node t-kn" onclick="openPanel('agamas')"><div class="node-card" style="min-width:136px;"><div class="node-dot"></div><span class="node-glyph">🜂</span><span class="node-name">Āgamas</span><span class="node-sub">Method · Tantra · Ritual</span></div></div>
+      <div class="node t-kn" onclick="openPanel('darshanas')"><div class="node-card" style="min-width:136px;"><div class="node-dot"></div><span class="node-glyph">⊹</span><span class="node-name">Darshanas</span><span class="node-sub">Inquiry · Logic · Philosophy</span></div></div>
+    </div>
+  </div>
+  <div class="conn" style="margin-top:18px;"></div>
+
+  <!-- VIII PATHS -->
+  <div class="tier-block" data-layer="paths">
+    <div class="tier-lbl">VIII — The Four Paths Back to Brahman</div>
+    <div class="tier-row">
+      <div class="node t-br" onclick="openPanel('jnana')"><div class="node-card"><div class="node-dot"></div><span class="node-glyph">👁</span><span class="node-name">Jñāna Yoga</span><span class="node-sub">Path of inquiry</span></div></div>
+      <div class="node t-br" onclick="openPanel('bhakti')"><div class="node-card"><div class="node-dot"></div><span class="node-glyph">♡</span><span class="node-name">Bhakti Yoga</span><span class="node-sub">Path of surrender</span></div></div>
+      <div class="node t-br" onclick="openPanel('karma')"><div class="node-card"><div class="node-dot"></div><span class="node-glyph">⟳</span><span class="node-name">Karma Yoga</span><span class="node-sub">Path of action</span></div></div>
+      <div class="node t-br" onclick="openPanel('raja')"><div class="node-card"><div class="node-dot"></div><span class="node-glyph">☯</span><span class="node-name">Rāja Yoga</span><span class="node-sub">Path of inner science</span></div></div>
+    </div>
+  </div>
+
+</main>
+
+<footer class="footer">ॐ तत् सत् &nbsp;·&nbsp; BRAHMAN ALONE IS &nbsp;·&nbsp; EKAM EVĀDVITĪYAM &nbsp;·&nbsp; SANATAN DHARMA</footer>
+
+</div><!-- .wrap -->
+
+<!-- PANEL -->
+<div class="overlay" id="overlay" onclick="overlayClick(event)">
+  <div class="panel" id="panel" onclick="event.stopPropagation()">
+    <div class="panel-top-bar"></div>
+    <div class="p-head">
+      <button class="p-close" onclick="closePanel()">✕</button>
+      <span class="p-glyph" id="pg"></span>
+      <div class="p-title" id="pt"></div>
+      <div class="p-sub"   id="ps"></div>
+    </div>
+    <div class="p-body" id="pb"></div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════
+//  BACKGROUND: Starfield + floating sacred particles
+// ═══════════════════════════════════════════════════
+(function(){
+  const c = document.getElementById('bg-canvas');
+  const ctx = c.getContext('2d');
+  let W, H, stars=[], tris=[];
+
+  function resize(){
+    W = c.width = window.innerWidth;
+    H = c.height = window.innerHeight;
+  }
+  window.addEventListener('resize', resize);
+  resize();
+
+  // stars
+  for(let i=0;i<220;i++){
+    stars.push({
+      x:Math.random()*1, y:Math.random()*1,
+      r:Math.random()*0.9+0.2,
+      a:Math.random(),
+      speed:Math.random()*0.0003+0.0001,
+      twinkle:Math.random()*Math.PI*2
+    });
+  }
+
+  // floating sacred triangles
+  for(let i=0;i<7;i++){
+    tris.push({
+      x:Math.random(), y:Math.random(),
+      size:Math.random()*60+30,
+      rot:Math.random()*Math.PI*2,
+      rotSpeed:(Math.random()-0.5)*0.002,
+      driftX:(Math.random()-0.5)*0.00008,
+      driftY:(Math.random()-0.5)*0.00008,
+      alpha:Math.random()*0.04+0.015,
+      inv: i%2===0
+    });
+  }
+
+  let t=0;
+  function draw(){
+    t++;
+    ctx.clearRect(0,0,W,H);
+
+    // deep background gradient
+    const grd = ctx.createRadialGradient(W/2,H*0.3,0,W/2,H/2,Math.max(W,H)*0.8);
+    grd.addColorStop(0,'rgba(28,18,6,1)');
+    grd.addColorStop(0.5,'rgba(12,8,3,1)');
+    grd.addColorStop(1,'rgba(5,3,1,1)');
+    ctx.fillStyle = grd;
+    ctx.fillRect(0,0,W,H);
+
+    // stars
+    for(const s of stars){
+      s.twinkle += s.speed*8;
+      const alpha = s.a * (0.5 + 0.5*Math.sin(s.twinkle));
+      ctx.beginPath();
+      ctx.arc(s.x*W, s.y*H, s.r, 0, Math.PI*2);
+      ctx.fillStyle = `rgba(232,212,160,${alpha})`;
+      ctx.fill();
+    }
+
+    // floating sacred triangles
+    for(const tri of tris){
+      tri.rot += tri.rotSpeed;
+      tri.x = (tri.x + tri.driftX + 1)%1;
+      tri.y = (tri.y + tri.driftY + 1)%1;
+      const tx = tri.x*W, ty = tri.y*H, s = tri.size;
+      ctx.save();
+      ctx.translate(tx,ty);
+      ctx.rotate(tri.rot + (tri.inv?Math.PI:0));
+      ctx.beginPath();
+      ctx.moveTo(0,-s);
+      ctx.lineTo(s*0.866,s*0.5);
+      ctx.lineTo(-s*0.866,s*0.5);
+      ctx.closePath();
+      ctx.strokeStyle = `rgba(201,168,76,${tri.alpha})`;
+      ctx.lineWidth = 0.5;
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+
+// ═══════════════════════════════════════════════════
+//  PARTICLE CANVAS: floating Om / dot particles
+// ═══════════════════════════════════════════════════
+(function(){
+  const c = document.getElementById('particle-canvas');
+  const ctx = c.getContext('2d');
+  let W, H, particles=[];
+
+  function resize(){ W=c.width=window.innerWidth; H=c.height=window.innerHeight; }
+  window.addEventListener('resize',resize); resize();
+
+  const glyphs=['ॐ','ॐ','ॐ','✦','◎','△','◇','∞','☽'];
+  for(let i=0;i<18;i++){
+    particles.push({
+      x:Math.random()*W, y:Math.random()*H,
+      vx:(Math.random()-0.5)*0.18,
+      vy:-Math.random()*0.22-0.06,
+      alpha:Math.random()*0.07+0.02,
+      size:Math.random()*12+8,
+      glyph:glyphs[Math.floor(Math.random()*glyphs.length)],
+      life:Math.random()
+    });
+  }
+
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    for(const p of particles){
+      p.x+=p.vx; p.y+=p.vy; p.life+=0.002;
+      if(p.y<-40||p.life>1){ p.y=H+20; p.x=Math.random()*W; p.life=0; }
+      const a = p.alpha * Math.sin(p.life*Math.PI);
+      ctx.fillStyle=`rgba(201,168,76,${a})`;
+      ctx.font=`${p.size}px serif`;
+      ctx.fillText(p.glyph, p.x, p.y);
+    }
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+
+// ═══════════════════════════════════════════════════
+//  NODE ENTRANCE ANIMATION
+// ═══════════════════════════════════════════════════
+document.querySelectorAll('.node').forEach((node,i)=>{
+  node.style.opacity='0';
+  node.style.transform='translateY(18px)';
+  setTimeout(()=>{
+    node.style.transition='opacity .5s ease, transform .5s ease';
+    node.style.opacity='1';
+    node.style.transform='translateY(0)';
+  }, 600+i*50);
+});
+
+// ═══════════════════════════════════════════════════
+//  RIPPLE ON CLICK
+// ═══════════════════════════════════════════════════
+document.querySelectorAll('.node').forEach(node=>{
+  node.addEventListener('click',function(e){
+    const card = this.querySelector('.node-card');
+    const r = document.createElement('span');
+    r.className='ripple';
+    const rect=card.getBoundingClientRect();
+    const size=Math.max(rect.width,rect.height);
+    r.style.width=r.style.height=size+'px';
+    r.style.left=(e.clientX-rect.left-size/2)+'px';
+    r.style.top=(e.clientY-rect.top-size/2)+'px';
+    card.appendChild(r);
+    setTimeout(()=>r.remove(),700);
+  });
+});
+
+// ═══════════════════════════════════════════════════
+//  FILTER
+// ═══════════════════════════════════════════════════
+function filterView(layer, btn){
+  document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.tier-block,.k-section').forEach(block=>{
+    if(layer==='all'){
+      block.style.opacity='1'; block.style.pointerEvents='all';
+    } else {
+      const match=block.dataset.layer===layer;
+      block.style.opacity=match?'1':'0.15';
+      block.style.pointerEvents=match?'all':'none';
+      block.style.transition='opacity .4s ease';
+    }
+  });
+}
+
+// ═══════════════════════════════════════════════════
+//  PANEL DATA
+// ═══════════════════════════════════════════════════
+const DATA = {
+brahman:{glyph:'☉',title:'Brahman — The Only Reality',sub:'Parabrahman · Nirguna · Infinite Self-Aware Consciousness',secs:[
+  {l:'The Ground',c:`<p>Begin here. Before space. Before time. Before any observer or observed. There is only Brahman — the one, infinite, indivisible, self-luminous consciousness. Not a being who exists. <em>Existence itself.</em> Not something that is conscious. <em>Consciousness itself</em> — without object, without subject, without limit, without second.</p><p>This is not mysticism. This is the most precise metaphysical statement possible: there is one reality, and it is awareness aware of itself, with nothing outside it.</p>`},
+  {l:'Yoga Vasishtha',c:`<blockquote>"This world appearance is nothing but consciousness. There is no material cause. Consciousness alone exists as this cosmic person."<cite>Yoga Vasishtha, Utpatti Prakarana 11</cite></blockquote>`},
+  {l:'The Dream Axiom',c:`<div class="hook">The universe does not get <em>created</em> — it <em>appears</em>. Like a dream arising in the sleeping mind, without the dreamer ever leaving themselves, without any new substance being produced. The wave appears in the ocean without the ocean ever ceasing to be only ocean. The universe appears in Brahman the same way.</div>`},
+  {l:'Advaita Position',c:`<p>Brahman is not the universe. The universe is an appearance within Brahman — the way a dream is not outside the dreamer. Non-duality (Advaita) means no second reality anywhere, ever. Not two. Not one-and-a-half. Not God-plus-world. Only Brahman.</p>`},
+  {l:'Mahāvākya',c:`<blockquote>"Ekam Evādvitīyam Brahma — Brahman alone is. Without a second."<cite>Chandogya Upanishad 6.2.1</cite></blockquote>`},
+  {l:'Mapping',c:`<table class="mtable"><tr><th>Metaphysical</th><th>Psychological</th><th>Experiential</th></tr><tr><td>Brahman — infinite self-aware consciousness, without second</td><td>The 'I am' before any thought arises — pure existence-awareness</td><td>The silence underneath all experience. The knowing that knows, right now, as you read this.</td></tr></table>`},
+  {l:'Connected',c:`<div class="tags"><span class="tag g" onclick="openPanel('atman')">Ātman</span><span class="tag g" onclick="openPanel('maya')">Māyā</span><span class="tag g" onclick="openPanel('turiya')">Turīya</span><span class="tag g" onclick="openPanel('shiva')">Shiva-Shakti</span></div>`}
+]},
+atman:{glyph:'◎',title:'Ātman — The Self',sub:'Aham Brahmasmi · The Unchanging Witness',secs:[
+  {l:'Core',c:`<p>Ātman is not your personality, name, story, body, or history. It is the unchanging witness behind every experience — the one who watches thoughts but is not a thought. The Vedanta's radical claim: this witness is not a fragment of Brahman. It is Brahman. Identical. Without gap.</p>`},
+  {l:'Upanishad',c:`<blockquote>"Aham Brahmasmi — I am Brahman."<cite>Brihadaranyaka Upanishad 1.4.10</cite></blockquote>`},
+  {l:'Neti Neti',c:`<p>The method of self-inquiry is negation: <em>Neti, Neti</em> — not this, not this. You are not the food body. Not the breath. Not the mind. Not even the sense of bliss. What remains when all five sheaths are set aside? Pure awareness. That is the Ātman.</p>`},
+  {l:'Kena Upanishad',c:`<blockquote>"That which is not thought by the mind, but by which the mind thinks — know that alone as Brahman."<cite>Kena Upanishad 1.5</cite></blockquote>`},
+  {l:'Mapping',c:`<table class="mtable"><tr><th>Metaphysical</th><th>Psychological</th><th>Experiential</th></tr><tr><td>Ātman — Brahman as the individual witness</td><td>Awareness that persists through waking, dreaming, deep sleep — unchanged</td><td>The 'I am' before any qualifier. Before 'I am happy.' Just: I am.</td></tr></table>`},
+  {l:'Connected',c:`<div class="tags"><span class="tag g" onclick="openPanel('brahman')">Brahman</span><span class="tag g" onclick="openPanel('turiya')">Turīya</span><span class="tag g" onclick="openPanel('jnana')">Jñāna Yoga</span></div>`}
+]},
+maya:{glyph:'◉',title:'Māyā — The Veil of Appearance',sub:'Not illusion. Appearance. The rope mistaken for a snake.',secs:[
+  {l:'Core',c:`<p>Māyā does not say the world is fake. It says the world is <em>misidentified</em>. You see a wave and call it real as a wave — but it is made entirely of ocean. The wave has name, form, movement, duration. But not for a single moment is it anything other than ocean. Māyā is the mechanism that makes infinite Brahman appear as finite objects, finite selves, finite stories.</p>`},
+  {l:'Vivartavāda',c:`<p>Advaita's precise term: <em>Vivartavāda</em> — apparent transformation. Not actual transformation. The rope appears as a snake in dim light. The snake is fully experienced. The fear is real. But the snake was never there. The moment light falls — only rope.</p>`},
+  {l:'Yoga Vasishtha',c:`<blockquote>"Just as a dreamer sees the world as real during the dream, so too does the mind project this world. Neither is independently real."<cite>Yoga Vasishtha, Sthiti Prakarana 4</cite></blockquote>`},
+  {l:'Why it exists',c:`<div class="hook">Māyā is not a problem to be solved. It is the very capacity of Brahman to appear as multiplicity while remaining one. Without Māyā, there would be no appearance, no world, no seeker, no path. In Tantra, Māyā is Shakti — the Goddess — and is worshipped, not rejected.</div>`},
+  {l:'Connected',c:`<div class="tags"><span class="tag g" onclick="openPanel('brahman')">Brahman</span><span class="tag e" onclick="openPanel('shakti')">Shakti</span><span class="tag e" onclick="openPanel('ahamkara')">Ahamkāra</span></div>`}
+]},
+chidabhasa:{glyph:'⟁',title:'Chidābhāsa — Reflection of Consciousness',sub:'How the infinite appears as the finite individual',secs:[
+  {l:'Core',c:`<p>How does infinite Brahman appear as a finite person? Through Chidābhāsa — the reflection (Ābhāsa) of consciousness (Chit) in the medium of the body-mind. Consider the sun reflected in a still pool. The reflection is not a separate sun. Individual beings are Chidābhāsa — the one consciousness, Brahman, reflected through the instrument of a particular body-mind.</p>`},
+  {l:'Implications',c:`<p>The individual consciousness (Jīva) does not have its own independent consciousness. It borrows consciousness from Brahman the way a mirror borrows light from the sun. The mirror is not luminous. It only appears luminous. Remove the mirror — the light remains.</p>`},
+  {l:'The Error',c:`<div class="hook">Avidyā — root ignorance — is when the Chidābhāsa forgets it is a reflection and believes itself to be an independent, separate entity. This is the entire root of Samsāra. Not a moral failure. An epistemic error. Errors are corrected by knowledge, not punishment.</div>`},
+  {l:'Mapping',c:`<table class="mtable"><tr><th>Metaphysical</th><th>Psychological</th><th>Experiential</th></tr><tr><td>Chidābhāsa — Brahman reflected in body-mind</td><td>The apparent individual 'I' believing itself separate</td><td>The contracted feeling of being a small, separate, vulnerable self. The root of all fear.</td></tr></table>`},
+  {l:'Connected',c:`<div class="tags"><span class="tag g" onclick="openPanel('brahman')">Brahman</span><span class="tag g" onclick="openPanel('atman')">Ātman</span><span class="tag e" onclick="openPanel('ahamkara')">Ahamkāra</span></div>`}
+]},
+turiya:{glyph:'∞',title:'Turīya — The Fourth',sub:'The witness-state that was never absent',secs:[
+  {l:'Core',c:`<p>The Māndūkya Upanishad maps four states: Jāgrat (waking), Svapna (dreaming), Sushupti (deep sleep), and Turīya — the fourth. But Turīya is not a fourth state added to three others. It is the unchanging witness-consciousness in which all three states arise and subside. It is the ground.</p>`},
+  {l:'The Proof',c:`<p>In deep dreamless sleep, all mental content ceases. Yet you exist. Upon waking you report: "I slept well. I knew nothing." Who reported that? Who was present during the unknowing? This witnessing presence — always there, never created — is Turīya.</p>`},
+  {l:'Māndūkya',c:`<blockquote>"Turīya is not that which cognizes internal or external objects. It is unseen, beyond empirical dealings, indescribable. Its essence is the consciousness of the self alone. All appearance ceases in it. It is peaceful, blissful, non-dual."<cite>Māndūkya Upanishad 7</cite></blockquote>`},
+  {l:'Connected',c:`<div class="tags"><span class="tag g" onclick="openPanel('brahman')">Brahman</span><span class="tag g" onclick="openPanel('atman')">Ātman</span><span class="tag g" onclick="openPanel('raja')">Rāja Yoga</span></div>`}
+]},
+shiva:{glyph:'🜁',title:'Shiva — Pure Awareness',sub:'Changeless · Formless · The Still Center',secs:[
+  {l:'Core',c:`<p>In Shaiva metaphysics, Shiva is not a deity among deities. Shiva is the name given to the aspect of Brahman that is pure, changeless awareness — infinite, without form, without action. The still center that makes all movement possible. The screen that makes all cinema possible.</p>`},
+  {l:'Shiva Sūtras',c:`<blockquote>"Chaitanyam Ātmā — Consciousness is the Self."<cite>Shiva Sūtras 1.1 — Vasugupta</cite></blockquote>`},
+  {l:'Not Two',c:`<div class="hook">Shiva and Shakti are <em>never two realities</em>. They are the same one reality in two aspects: Shiva as the being-aspect, Shakti as the power-aspect. Without Shakti, Shiva is inert. Without Shiva, Shakti is blind. Inseparable — the way fire and its heat are inseparable.</div>`},
+  {l:'Connected',c:`<div class="tags"><span class="tag g" onclick="openPanel('brahman')">Brahman</span><span class="tag e" onclick="openPanel('shakti')">Shakti</span><span class="tag e" onclick="openPanel('spanda')">Spanda</span></div>`}
+]},
+shakti:{glyph:'☽',title:'Shakti — The Dynamic Power',sub:"Prakriti · The Goddess · Brahman's Own Creative Force",secs:[
+  {l:'Core',c:`<p>Shakti is the power, energy, and dynamic self-expression of Brahman. Not a second principle added to Brahman — but Brahman's own intrinsic capacity to appear, to create, to move, to experience. Where Shiva is the noun, Shakti is the verb.</p>`},
+  {l:'Tantric Understanding',c:`<p>The Āgamas make a radical claim: the world is Shakti — the Goddess playing. Matter is not the opposite of consciousness. Matter is consciousness in its densest appearance. The body is Shakti. The Earth is Shakti.</p>`},
+  {l:'Vijñāna Bhairava',c:`<blockquote>"Shakti is the face of Shiva. By knowing her, you know him. They are not two."<cite>Vijñāna Bhairava Tantra</cite></blockquote>`},
+  {l:'Mapping',c:`<table class="mtable"><tr><th>Metaphysical</th><th>Psychological</th><th>Experiential</th></tr><tr><td>Shakti — Brahman's self-expressive power</td><td>Creative, generative energy of the mind. Vitality. Will.</td><td>The aliveness in every experience. The charge. The felt sense that something is present.</td></tr></table>`},
+  {l:'Connected',c:`<div class="tags"><span class="tag e" onclick="openPanel('shiva')">Shiva</span><span class="tag e" onclick="openPanel('spanda')">Spanda</span><span class="tag g" onclick="openPanel('maya')">Māyā</span><span class="tag e" onclick="openPanel('agamas')">Āgamas</span></div>`}
+]},
+spanda:{glyph:'〰',title:'Spanda — The Divine Pulse',sub:'The first vibration. Bridge between Stillness and Form.',secs:[
+  {l:'Core',c:`<p>Spanda is the primordial pulse — the subtle throb of consciousness recognizing itself. Not a physical vibration, but the vibration of awareness itself. The first event in the transition from formless Brahman to formed universe. Not a movement in space — a movement of self-recognition.</p>`},
+  {l:'Spanda Kārikās',c:`<blockquote>"That which is established in Shiva — the power of that, the vibrancy of being — is Spanda. It alone is the cause of all manifestation and dissolution."<cite>Spanda Kārikās 1.1 — Vasugupta</cite></blockquote>`},
+  {l:'Physics Parallel',c:`<div class="hook">Quantum field theory: the quantum vacuum undergoes spontaneous quantum fluctuations — vibrations without cause, from which particles momentarily emerge. The physics discovering what Kashmir Shaivism stated as metaphysics: the ground of reality is not static. It <em>pulses</em>. It is alive with Spanda.</div>`},
+  {l:'Connected',c:`<div class="tags"><span class="tag e" onclick="openPanel('shiva')">Shiva</span><span class="tag e" onclick="openPanel('shakti')">Shakti</span><span class="tag g" onclick="openPanel('para')">Nāda</span></div>`}
+]},
+lila:{glyph:'✦',title:'Līlā — Divine Play',sub:"The universe as Brahman's self-expression. No reason. Pure aliveness.",secs:[
+  {l:'Core',c:`<p>Why does Brahman appear as the universe? The question assumes Brahman had a reason — a problem to solve. Vedanta's answer is disarming: for no reason at all. The infinite plays. A child builds sandcastles not to solve a problem but because building is the expression of aliveness. Brahman creates the universe the same way.</p>`},
+  {l:'Implication',c:`<p>If the universe is Līlā, then the seeker's journey is also Līlā — Brahman playing at being a limited being, playing at seeking, playing at finding. The Yoga Vasishtha's greatest joke: Brahman, in the form of Rāma, asks Vasishtha "How do I attain liberation?" — and Vasishtha, also Brahman, spends 32,000 verses answering.</p>`},
+  {l:'Yoga Vasishtha',c:`<blockquote>"This infinite consciousness alone appears as all this, and perceives all this within itself, like a dreamer experiencing a dream."<cite>Yoga Vasishtha, Nirvāna Prakarana 6.128</cite></blockquote>`},
+  {l:'Connected',c:`<div class="tags"><span class="tag e" onclick="openPanel('shakti')">Shakti</span><span class="tag g" onclick="openPanel('maya')">Māyā</span><span class="tag g" onclick="openPanel('brahman')">Brahman</span></div>`}
+]},
+para:{glyph:'◈',title:'Parā Vāch — Sound as Pure Shakti',sub:'Before differentiation. Before phoneme. The sonic potential itself.',secs:[
+  {l:'Core',c:`<p>Parā is the first and deepest level of Nāda — sound in its pre-differentiated state. Not a sound you can hear. Not even a sound-concept. It is Shakti as pure sonic potential — the capacity for all possible sound, all possible meaning, all possible mantra — before any of them individuate. It is Brahman's own resonance.</p>`},
+  {l:'Why it exists',c:`<p>The four-level Nāda model shows that every sound a seeker utters — every word, every thought, every mantra — has its roots in Brahman itself. There is no gap between the grossest speech and the subtlest Brahman. It is a continuous spectrum. You are always already speaking from Brahman.</p>`},
+  {l:'Connected',c:`<div class="tags"><span class="tag e" onclick="openPanel('shakti')">Shakti</span><span class="tag e" onclick="openPanel('spanda')">Spanda</span><span class="tag g" onclick="openPanel('pashyanti')">Pashyantī</span></div>`}
+]},
+pashyanti:{glyph:'◇',title:"Pashyantī — The Seeing-Sound",sub:"Unified meaning before words. The Rishi's revelation.",secs:[
+  {l:'Core',c:`<p>At Pashyantī, Shakti begins to differentiate — but without linear sequence. The entire meaning appears as a single undivided flash of knowing. This is the level at which a Rishi receives a Vedic revelation: not word-by-word, but as a total recognition of a vibratory pattern of truth, complete in a single instant.</p>`},
+  {l:'The Rishi',c:`<div class="hook">The Vedas were not composed by scholars. They were <em>Shruti</em> — heard. The Rishi enters a state of Pashyantī awareness and directly perceives the vibratory structure of a cosmic truth. This is why the Vedic mantras are <em>Apaurusheya</em> — not of human authorship. Cognized, not composed.</div>`},
+  {l:'Connected',c:`<div class="tags"><span class="tag g" onclick="openPanel('para')">Parā Vāch</span><span class="tag g" onclick="openPanel('madhyama')">Madhyamā</span><span class="tag g" onclick="openPanel('vedas')">Vedas</span></div>`}
+]},
+madhyama:{glyph:'◻',title:'Madhyamā — Inner Thought-Speech',sub:'The subtle mind before utterance.',secs:[
+  {l:'Core',c:`<p>Madhyamā is inner speech — the level of formed thought before it is spoken. Every idea you've "heard yourself think" is at the Madhyamā level. Words are now distinguishable and sequential, but still internal. This is where most human cognitive life happens.</p>`},
+  {l:'Practice',c:`<p>In mantra practice, the progression is: chanted aloud (Vaikharī), then whispered, then thought (Madhyamā), then internalized as pure awareness (Pashyantī), then dissolved into silent Parā. This is the meditator ascending back up the ladder of Nāda toward the source.</p>`},
+  {l:'Connected',c:`<div class="tags"><span class="tag g" onclick="openPanel('pashyanti')">Pashyantī</span><span class="tag g" onclick="openPanel('vaikhari')">Vaikharī</span><span class="tag e" onclick="openPanel('manas')">Manas</span></div>`}
+]},
+vaikhari:{glyph:')))',title:'Vaikharī — Articulated Sound',sub:'The Mantra voiced. The Veda chanted. The world named.',secs:[
+  {l:'Core',c:`<p>Vaikharī is fully articulated physical speech — the Mantra voiced aloud, the Vedic hymn chanted, the name spoken. This is the most condensed level of Nāda — furthest from the source, yet not separate from it. Every syllable of Vaikharī is Parā, wearing the form of a specific sound.</p>`},
+  {l:'Shikshā',c:`<p>This is why Shikshā (Vedic phonetics) is a Vedānga — a sacred science. The precise pronunciation of a Vedic mantra preserves the specific vibratory content cognized at Pashyantī. Alter the sound and you alter the transmission. The Vedic oral tradition maintained exact pronunciation for thousands of years before writing.</p>`},
+  {l:'Mundaka',c:`<blockquote>"Om is the bow. The Self is the arrow. Brahman is the target. Hit it with an undistracted mind — become one with it as the arrow with the target."<cite>Mundaka Upanishad 2.2.4</cite></blockquote>`},
+  {l:'Connected',c:`<div class="tags"><span class="tag g" onclick="openPanel('madhyama')">Madhyamā</span><span class="tag g" onclick="openPanel('vedas')">Vedas</span><span class="tag e" onclick="openPanel('agamas')">Āgamas</span></div>`}
+]},
+manas:{glyph:'◌',title:'Manas — The Reactive Mind',sub:'Sense-processor · Doubt · Oscillation · The noise floor',secs:[
+  {l:'Core',c:`<p>Manas is the first and most reactive layer of the inner instrument (Antahkarana). It receives raw sensory input and immediately generates reactions: attraction or aversion, approach or withdrawal. It is the part of the mind that doubts, deliberates, oscillates. Left unguided by Buddhi, Manas drives the Jīva from sensation to sensation without rest.</p>`},
+  {l:'Function',c:`<p>Manas exists as the interface between the gross world of sensation and the subtler apparatus of Buddhi and Chitta. Without Manas, there would be no lived experience, no engagement with the manifest world. The problem is not Manas itself but identification with its content.</p>`},
+  {l:'Connected',c:`<div class="tags"><span class="tag g" onclick="openPanel('buddhi')">Buddhi</span><span class="tag e" onclick="openPanel('ahamkara')">Ahamkāra</span><span class="tag g" onclick="openPanel('chitta')">Chitta</span></div>`}
+]},
+buddhi:{glyph:'△',title:'Buddhi — Discriminating Intelligence',sub:'The faculty of clarity. The primary tool of liberation.',secs:[
+  {l:'Core',c:`<p>Buddhi is the most elevated function of the inner instrument — the faculty of clear discrimination (Viveka). Where Manas reacts, Buddhi discerns. In its highest function, Buddhi performs the ultimate act of Vedantic inquiry: distinguishing the permanent (Brahman) from the impermanent (everything else).</p>`},
+  {l:'Viveka',c:`<div class="hook">Viveka — discrimination — is the single most important faculty a seeker can cultivate. Shankaracharya's <em>Viveka Chūdāmani</em>: to discriminate between the real and the unreal, between Self and not-Self, between the eternal and the temporary — this is the beginning and near-end of the Jñāna path.</div>`},
+  {l:'Bhagavad Gītā',c:`<blockquote>"One who has disciplined the self by the self, whose Buddhi is not confused — such a person attains the supreme state."<cite>Bhagavad Gītā 6.14</cite></blockquote>`},
+  {l:'Connected',c:`<div class="tags"><span class="tag g" onclick="openPanel('manas')">Manas</span><span class="tag e" onclick="openPanel('ahamkara')">Ahamkāra</span><span class="tag g" onclick="openPanel('jnana')">Jñāna Yoga</span></div>`}
+]},
+ahamkara:{glyph:'⊕',title:'Ahamkāra — The I-Maker',sub:'Not a thing. A function. The root of separation.',secs:[
+  {l:'Core',c:`<p>Ahamkāra is a function, not a structure. The function of taking Chidābhāsa and identifying it with a particular form, name, history, and role. "I am this body. I am this person. I was born. I will die. I am afraid." All of this is Ahamkāra operating — the ego function as metaphysical individuating mechanism.</p>`},
+  {l:'The Double Nature',c:`<p>Ahamkāra is the primary instrument of Samsāra — the vehicle of false identification. But it is also the necessary instrument for spiritual practice — you need an "I" to practice. The Yoga Vasishtha's solution: use Ahamkāra in the service of the inquiry that dissolves it. Use the I to ask: Who is this I?</p>`},
+  {l:'Ramana Maharshi',c:`<blockquote>"The thought 'I am' is the first thought. Hold on to it. Don't let it merge into other thoughts. Trace it to its source."<cite>Ramana Maharshi</cite></blockquote>`},
+  {l:'Mapping',c:`<table class="mtable"><tr><th>Metaphysical</th><th>Psychological</th><th>Experiential</th></tr><tr><td>Ahamkāra — the I-making function of Prakriti</td><td>Ego identity: name, role, story, body-identification</td><td>The contracted, defended feeling of being a separate self. The sense of "mine."</td></tr></table>`},
+  {l:'Connected',c:`<div class="tags"><span class="tag g" onclick="openPanel('buddhi')">Buddhi</span><span class="tag e" onclick="openPanel('chitta')">Chitta</span><span class="tag g" onclick="openPanel('chidabhasa')">Chidābhāsa</span></div>`}
+]},
+chitta:{glyph:'⊗',title:'Chitta — The Field of Memory',sub:'Samskāras · Vāsanās · The subconscious architecture',secs:[
+  {l:'Core',c:`<p>Chitta is the storehouse — the vast reservoir of every impression, every experience, every latent tendency accumulated across this life (and in the Sanatan understanding, across many lives). Every experience leaves a Samskāra — a groove in Chitta. These Samskāras generate Vāsanās — habitual tendencies — which shape perception before the first conscious thought arises.</p>`},
+  {l:'Patañjali',c:`<div class="hook">The Yoga Sūtras define liberation as <em>Chitta Vritti Nirodha</em> — the cessation of the modifications of Chitta. Not the destruction of Chitta, but the stilling of its oscillations. When Chitta is still, the pure witness is recognized — the way a still lake reflects the sky without distortion.</div>`},
+  {l:'Yoga Sūtras',c:`<blockquote>"Yogas chitta-vritti-nirodhah — Yoga is the cessation of the fluctuations of the mind-field."<cite>Yoga Sūtras 1.2 — Patañjali</cite></blockquote>`},
+  {l:'Connected',c:`<div class="tags"><span class="tag e" onclick="openPanel('ahamkara')">Ahamkāra</span><span class="tag g" onclick="openPanel('manas')">Manas</span><span class="tag g" onclick="openPanel('raja')">Rāja Yoga</span></div>`}
+]},
+akasha:{glyph:'○',title:'Ākāsha — Space',sub:'The first element. The field that contains all.',secs:[
+  {l:'Core',c:`<p>Ākāsha is the first and subtlest of the five Mahābhūtas. Not simply empty space — but the field, the containing medium in which all other elements and all form arise. One quality: Shabda (sound) — because it is closest to Nāda, still carrying only the quality of vibration.</p>`},
+  {l:'Taittirīya sequence',c:`<blockquote>"From Brahman → Ākāsha → Vāyu → Agni → Jala → Prithvī. From earth arise plants. From plants, food. From food, man."<cite>Taittirīya Upanishad 2.1.1</cite></blockquote>`},
+  {l:'Inner Ākāsha',c:`<blockquote>"The Brahman who dwells in the space within the heart — that is the real Brahman."<cite>Chāndogya Upanishad 3.14.2</cite></blockquote>`},
+  {l:'Connected',c:`<div class="tags"><span class="tag g" onclick="openPanel('para')">Nāda</span><span class="tag s" onclick="openPanel('vayu')">Vāyu</span><span class="tag g" onclick="openPanel('brahman')">Brahman</span></div>`}
+]},
+vayu:{glyph:'〜',title:'Vāyu — Air / Movement',sub:'The principle of motion, breath, and vital force.',secs:[
+  {l:'Core',c:`<p>Vāyu is the element of movement — not just air, but the principle of motion itself. Qualities: Sparsha (touch) and Shabda (sound). It introduces direction, flow, the movement from here to there. Without Vāyu, no differentiation is possible.</p>`},
+  {l:'Prāna',c:`<p>In its subtler dimension, Vāyu is Prāna — the vital force. The five Vāyus (Prāna, Apāna, Samāna, Udāna, Vyāna) govern every physiological and energetic function. Prānāyāma works directly with Vāyu to regulate the flow of Prāna in the vital body.</p>`},
+  {l:'Connected',c:`<div class="tags"><span class="tag s" onclick="openPanel('akasha')">Ākāsha</span><span class="tag s" onclick="openPanel('agni')">Agni</span><span class="tag g" onclick="openPanel('raja')">Rāja Yoga</span></div>`}
+]},
+agni:{glyph:'▲',title:'Agni — Fire / Transformation',sub:'Light · Perception · The principle of transformation.',secs:[
+  {l:'Core',c:`<p>Agni is the element of fire — and more precisely, the principle of transformation and perception. Qualities: Rūpa (form), Sparsha, and Shabda. Agni makes things visible. It is the element of the eye and of intelligence. Wherever transformation occurs — biological, chemical, psychological — Agni is the principle at work.</p>`},
+  {l:'Rigveda',c:`<blockquote>"Agnimīle purohitam — Agni I invoke, the priest, divine, minister of the sacrifice, the invoker, greatest bestower of treasure."<cite>Rigveda 1.1.1 — The very first verse</cite></blockquote>`},
+  {l:'Connected',c:`<div class="tags"><span class="tag s" onclick="openPanel('vayu')">Vāyu</span><span class="tag s" onclick="openPanel('jala')">Jala</span><span class="tag g" onclick="openPanel('upavedas')">Upavedas</span></div>`}
+]},
+jala:{glyph:'≋',title:'Jala — Water / Cohesion',sub:'The binding principle. Flow. Emotional life.',secs:[
+  {l:'Core',c:`<p>Jala is the element of water — the principle of cohesion, flow, and binding. Qualities: Rasa (taste), Rūpa, Sparsha, and Shabda. Water binds, unites, dissolves boundaries. It is the element of love, empathy, and the feeling-sense that connects self and other.</p>`},
+  {l:'Inner Jala',c:`<p>Emotionally, Jala governs the entire domain of feeling-life — the fluid quality of experience. Bhakti Yoga works primarily in this element: devotion is Jala-dominant — the flowing of the individual toward the Divine, the way water flows toward the ocean.</p>`},
+  {l:'Connected',c:`<div class="tags"><span class="tag s" onclick="openPanel('agni')">Agni</span><span class="tag s" onclick="openPanel('prithvi')">Prithvī</span><span class="tag g" onclick="openPanel('bhakti')">Bhakti Yoga</span></div>`}
+]},
+prithvi:{glyph:'⬡',title:'Prithvī — Earth / Dense Form',sub:'Brahman in its most condensed appearance. Sacred, not inferior.',secs:[
+  {l:'Core',c:`<p>Prithvī is the densest element — earth, solidity, form. It contains all five qualities: Gandha (smell), Rasa, Rūpa, Sparsha, and Shabda. It is the element furthest from Brahman in appearance — and yet, it is Brahman. Dense Brahman. Brahman wearing the form of rock, soil, the body.</p>`},
+  {l:'The Tantric View',c:`<div class="hook">The materialist error: matter is base, consciousness is higher. The Vedantic correction: <em>matter is consciousness in its densest appearing</em>. There is no hierarchy of reality — only hierarchy of apparent density. Earth is Shakti. Your body is Shakti. The physical world is not the obstacle to liberation — it is the arena of liberation.</div>`},
+  {l:'Taittirīya',c:`<blockquote>"From food all beings are born. By food they live. Into food they merge at the end. Food is the first-born of all beings."<cite>Taittirīya Upanishad 2.2</cite></blockquote>`},
+  {l:'Connected',c:`<div class="tags"><span class="tag s" onclick="openPanel('jala')">Jala</span><span class="tag e" onclick="openPanel('shakti')">Shakti</span><span class="tag g" onclick="openPanel('maya')">Māyā</span></div>`}
+]},
+vedas:{glyph:'𐌀',title:'The Vedas — Shruti',sub:'The realization came first. The Veda is its sonic echo.',secs:[
+  {l:'Core',c:`<p>The four Vedas — Rigveda, Sāmaveda, Yajurveda, Atharvaveda — are the primary stratum of the transmission system. Called Shruti: "that which was heard." Not composed by human intellect — cognized by Rishis at the level of Pashyantī awareness, where vibratory patterns of truth are directly perceived.</p>`},
+  {l:'Four Layers',c:`<p>Each Veda contains four progressive layers: <strong>Samhitās</strong> (the Mantras), <strong>Brāhmanas</strong> (ritual application), <strong>Āranyakas</strong> (moving inward — forest texts), <strong>Upanishads</strong> (the inner recognition — direct non-dual inquiry). The sequence is the sequence of the spiritual path: outer → inner, action → inquiry, form → formless.</p>`},
+  {l:'Not the Source',c:`<div class="hook">The Vedas are fingers pointing at the moon, not the moon. The Rishis saw first. Then they spoke. The speaking is the Veda. But what was seen — that is Brahman. The text is the transmission system. Brahman is the source.</div>`},
+  {l:'Connected',c:`<div class="tags"><span class="tag g" onclick="openPanel('pashyanti')">Pashyantī</span><span class="tag e" onclick="openPanel('vedangas')">Vedāngas</span><span class="tag g" onclick="openPanel('darshanas')">Darshanas</span></div>`}
+]},
+vedangas:{glyph:'⚙',title:'Vedāngas — The Six Limbs',sub:"The preservation sciences. The transmission system's immune system.",secs:[
+  {l:'Why they exist',c:`<p>The Rishis recognized a danger: even the most perfect sonic transmission will degrade over time if not supported by rigorous preserving sciences. The six Vedāngas protect the integrity of the Vedic transmission across thousands of years.</p>`},
+  {l:'The Six',c:`<p><strong>Shikshā</strong> — exact Vedic pronunciation; every pitch, duration, accent preserved.<br><br><strong>Vyākarana</strong> — Pānini's Ashtādhyāyī; the structural logic of Sanskrit ensuring meaning cannot drift.<br><br><strong>Chhandas</strong> — the rhythmic-structural property of each Vedic hymn — not decoration but part of the vibratory pattern.<br><br><strong>Nirukta</strong> — Yaska's etymology; every Vedic name is a compressed metaphysical definition.<br><br><strong>Jyotisha</strong> — the timing science; when to practice, how cosmic cycles map to individual karma.<br><br><strong>Kalpa</strong> — the systematic application of Vedic principles in structured ritual action.</p>`},
+  {l:'Connected',c:`<div class="tags"><span class="tag g" onclick="openPanel('vedas')">Vedas</span><span class="tag g" onclick="openPanel('vaikhari')">Vaikharī</span><span class="tag e" onclick="openPanel('upavedas')">Upavedas</span></div>`}
+]},
+upavedas:{glyph:'⚕',title:'Upavedas — Applied Life Sciences',sub:'Brahman appears as all life. The Upavedas make that life worthy of it.',secs:[
+  {l:'Core',c:`<p>The Upavedas apply Vedic principles to the full range of embodied human life. They recognize that a seeker is not only a mind — they are a body, a society, an aesthete, a political being. Every domain of life becomes a domain of Dharma.</p>`},
+  {l:'The Four',c:`<p><strong>Āyurveda</strong> — the body as temple of consciousness; the Tridosha framework mapping the three Gunas onto physiology.<br><br><strong>Dhanurveda</strong> — courage, decisive action, the warrior's discipline as spiritual training; the Gītā's battlefield as its highest expression.<br><br><strong>Gandharva Veda</strong> — beauty as transmission; the rāga system mapping sonic structures to states of consciousness.<br><br><strong>Arthashastra</strong> — just social structures as the prerequisite for individual liberation.</p>`},
+  {l:'Connected',c:`<div class="tags"><span class="tag e" onclick="openPanel('vedas')">Vedas</span><span class="tag s" onclick="openPanel('prithvi')">Prithvī</span><span class="tag s" onclick="openPanel('agni')">Agni</span></div>`}
+]},
+puranas:{glyph:'☸',title:'Purānas — Metaphysics as Narrative',sub:'18 Mahāpurānas. Truth encoded in story for the narrative mind.',secs:[
+  {l:'Core',c:`<p>How do you transmit non-dual truth to a mind that thinks in story, in character, in drama? You give it story — but precisely engineered narrative that carries metaphysical content in its structure. The 18 Mahāpurānas are narrative encyclopedias encoding cosmology, metaphysics, ethics, psychology, and direct Upanishadic teachings within story.</p>`},
+  {l:'How to read them',c:`<div class="hook">Do not read a Purāna as history. Read it as <em>operational metaphysics in narrative form</em>. When Vishnu dreams the universe — that is the Yoga Vasishtha's dream-cosmology in mythological dress. When Shakti slays Mahishasura — that is Buddhi dissolving Ahamkāra. The story is always pointing at something inside the reader.</div>`},
+  {l:'Bhāgavata',c:`<blockquote>"The Bhāgavata is the ripened fruit of the wish-fulfilling tree of Vedic literature."<cite>Bhāgavata Purāna 1.1.3</cite></blockquote>`},
+  {l:'Connected',c:`<div class="tags"><span class="tag e" onclick="openPanel('vedas')">Vedas</span><span class="tag g" onclick="openPanel('itihasa')">Itihāsa</span><span class="tag g" onclick="openPanel('bhakti')">Bhakti Yoga</span></div>`}
+]},
+itihasa:{glyph:'⚔',title:'Itihāsa — Epic Living Dharma',sub:'Rāmāyana · Mahābhārata · Bhagavad Gītā · Yoga Vasishtha',secs:[
+  {l:'Core',c:`<p>Itihāsa means "thus it was" — but these are not histories in the Western sense. They are living maps of the human drama against the backdrop of cosmic law. The Rāmāyana and Mahābhārata encode the full moral, psychological, and metaphysical complexity of existence. They are not to be believed — they are to be lived with.</p>`},
+  {l:'Yoga Vasishtha',c:`<p>Within Itihāsa, the Yoga Vasishtha holds a unique position: 32,000 verses of pure metaphysical transmission. Rāma in a state of Vairāgya (dispassion) is taught by Vasishtha. The teaching covers: the nature of consciousness, the dream-nature of reality, the mechanisms of Māyā, the path to liberation — through stories, nested dreams, and relentless non-dual logic.</p>`},
+  {l:'Metaphysical Map',c:`<div class="hook">Rāma's exile = the Jīva's apparent separation from Brahman. Sīta = consciousness, apparently separated. Rāvana = the ego-king who believes himself absolute. Hanumān = devotion crossing the impossible gap. The war = the inner war of liberation. The return = recognition. This is metaphysics wearing the form of epic.</div>`},
+  {l:'Bhagavad Gītā',c:`<blockquote>"Even if you are the most sinful among all sinners, you shall cross the ocean of sin by the boat of Jñāna."<cite>Bhagavad Gītā 4.36</cite></blockquote>`},
+  {l:'Connected',c:`<div class="tags"><span class="tag g" onclick="openPanel('puranas')">Purānas</span><span class="tag g" onclick="openPanel('darshanas')">Darshanas</span><span class="tag g" onclick="openPanel('jnana')">All Yoga paths</span></div>`}
+]},
+agamas:{glyph:'🜂',title:'Āgamas — The Method Branch',sub:'77 Shakta · 28 Shaiva · 108 Vaishnava. Realization as direct experience.',secs:[
+  {l:'Core',c:`<p>Where the Vedas primarily use Jñāna as the means of liberation, the Āgamas systematize direct experiential methods — ritual, mantra, yantra, Tantra, Kundalinī practices, meditation — as equally valid paths to the same recognition. They are the how-to literature of the tradition.</p>`},
+  {l:'Three streams',c:`<p><strong>Shakta Āgamas</strong> (77) — the path of Shakti: the world as Goddess, energy as sacred, Tantra as the vehicle.<br><br><strong>Shaiva Āgamas</strong> (28) — Kashmir Shaivism's Pratyabhijñā: the universe is Shiva's self-expression; liberation is recognizing your identity with Shiva.<br><br><strong>Vaishnava Āgamas</strong> (108) — the Pañcharātra tradition: devotional surrender recognizing non-difference between devotee and Divine.</p>`},
+  {l:'The Tantric Claim',c:`<div class="hook">The Āgamas make the most radical claim: the body is not the obstacle. The senses are not the enemies. Matter is Shakti. The path runs <em>through</em> experience, not away from it. Tantra does not renounce the world — it sees through it to Brahman.</div>`},
+  {l:'Connected',c:`<div class="tags"><span class="tag e" onclick="openPanel('shakti')">Shakti</span><span class="tag e" onclick="openPanel('shiva')">Shiva</span><span class="tag g" onclick="openPanel('puranas')">Purānas</span></div>`}
+]},
+darshanas:{glyph:'⊹',title:'Darshanas — The Six Philosophies',sub:'Six ladders. One wall. The logical scaffolding of liberation.',secs:[
+  {l:'Core',c:`<p>The six Darshanas are the classical philosophical systems — rigorous logical frameworks that subject metaphysical claims to systematic analysis. Not six competing religions. Six different methodologies, each suited to a different constitution of mind, all pointing at the same non-dual reality.</p>`},
+  {l:'The Six',c:`<table class="mtable"><tr><th>Darshana</th><th>Domain</th><th>Function</th></tr><tr><td><strong>Nyāya</strong></td><td>Logic &amp; Epistemology</td><td>Clears mind of logical error; establishes valid means of knowledge</td></tr><tr><td><strong>Vaisheshika</strong></td><td>Categorical Ontology</td><td>Trains precise analysis of existence</td></tr><tr><td><strong>Sāmkhya</strong></td><td>Cosmological Dualism</td><td>Most detailed map from Purusha to matter</td></tr><tr><td><strong>Yoga</strong></td><td>Practical Technology</td><td>The experiential bridge — Chitta Vritti Nirodha</td></tr><tr><td><strong>Mīmāmsā</strong></td><td>Vedic Hermeneutics</td><td>Valid interpretation and role of right action</td></tr><tr><td><strong>Vedānta</strong></td><td>Non-dual Inquiry</td><td>The culmination — Brahman as the only reality</td></tr></table>`},
+  {l:'Vedānta as Summit',c:`<p>Vedānta — literally "the end of the Vedas" — is both the final section (Upanishads) and the final purpose of all inquiry. Its three schools (Advaita, Vishishtādvaita, Dvaita) all take the Upanishads as the final authority and liberation as the only goal.</p>`},
+  {l:'Connected',c:`<div class="tags"><span class="tag g" onclick="openPanel('vedas')">Vedas</span><span class="tag e" onclick="openPanel('agamas')">Āgamas</span><span class="tag g" onclick="openPanel('jnana')">Jñāna Yoga</span></div>`}
+]},
+jnana:{glyph:'👁',title:'Jñāna Yoga — Path of Inquiry',sub:'"Who am I?" — The most direct path. The most demanding path.',secs:[
+  {l:'Core',c:`<p>Jñāna Yoga is the path of direct inquiry into the nature of the Self. Not philosophy as intellectual exercise — but the systematic dismantling of every false identification through the question: "Who is the I that I take myself to be?" The method is Vichāra — self-inquiry. The tradition includes Adi Shankaracharya and Ramana Maharshi.</p>`},
+  {l:'Three Steps',c:`<p><strong>Shravana</strong> — listening to the teaching from a qualified teacher or text. The hearing of "Tat Tvam Asi — You are That."<br><br><strong>Manana</strong> — deep, sustained reflection until all doubt dissolves.<br><br><strong>Nididhyāsana</strong> — direct, unbroken meditation on the truth until it is not a concept but a recognition.</p>`},
+  {l:'Ashtāvakra',c:`<blockquote>"You are not the body, nor is the body yours. You are not the doer, nor the enjoyer. You are pure awareness — the eternal witness. Live happily."<cite>Ashtāvakra Gītā 1.3</cite></blockquote>`},
+  {l:'Connected',c:`<div class="tags"><span class="tag g" onclick="openPanel('buddhi')">Buddhi</span><span class="tag g" onclick="openPanel('turiya')">Turīya</span><span class="tag g" onclick="openPanel('atman')">Ātman</span><span class="tag g" onclick="openPanel('darshanas')">Vedānta Darshana</span></div>`}
+]},
+bhakti:{glyph:'♡',title:'Bhakti Yoga — Path of Surrender',sub:'Love as the vehicle. Dissolution through devotion.',secs:[
+  {l:'Core',c:`<p>Bhakti Yoga is the path of complete surrender to the recognition that the Divine alone is real — and that the "I" who surrenders is itself the Divine. The ego dissolves not through inquiry but through love — the complete pouring of oneself into the object of devotion until the boundary between devotee and Divine dissolves.</p>`},
+  {l:'The Paradox',c:`<div class="hook">Bhakti appears to maintain duality — there is a devotee who loves a God. But the deepest Bhakti ends duality: the Bhakta becomes the Bhagavan. The river enters the ocean and becomes indistinguishable from it. Rāmakrishna Paramahamsa: "I wanted to taste sugar, not become sugar" — and then became sugar.</div>`},
+  {l:'Nārada',c:`<blockquote>"Bhakti is of the nature of intense love for God. When a man gets it, he loves all, hates none, and becomes satisfied forever."<cite>Nārada Bhakti Sūtras 2</cite></blockquote>`},
+  {l:'Connected',c:`<div class="tags"><span class="tag g" onclick="openPanel('puranas')">Purānas</span><span class="tag s" onclick="openPanel('jala')">Jala element</span><span class="tag e" onclick="openPanel('agamas')">Āgamas</span></div>`}
+]},
+karma:{glyph:'⟳',title:'Karma Yoga — Path of Action',sub:'Act fully. Attach to nothing. The actor dissolves.',secs:[
+  {l:'Core',c:`<p>Karma Yoga is action as spiritual practice — not the renunciation of action but the transformation of the actor's relationship to action. The Bhagavad Gītā's central teaching: act with complete engagement, without attachment to the fruits. Let action be worship. Let the doer dissolve into the doing.</p>`},
+  {l:'The Mechanism',c:`<p>Ordinary action reinforces Ahamkāra: "I did this. I achieved this." Karma Yoga removes the I from the equation. When there is no personal investment in the result — only the integrity of the action itself — the action ceases to generate Samskaras. Karma Yoga is the purification of Chitta through action.</p>`},
+  {l:'Bhagavad Gītā',c:`<blockquote>"You have a right to perform your prescribed duty, but you are not entitled to the fruits of action. Never consider yourself the cause of results, and never be attached to not doing your duty."<cite>Bhagavad Gītā 2.47</cite></blockquote>`},
+  {l:'Connected',c:`<div class="tags"><span class="tag e" onclick="openPanel('chitta')">Chitta</span><span class="tag g" onclick="openPanel('itihasa')">Itihāsa</span><span class="tag e" onclick="openPanel('ahamkara')">Ahamkāra</span></div>`}
+]},
+raja:{glyph:'☯',title:'Rāja Yoga — Path of Inner Science',sub:"Patañjali's complete technology of consciousness.",secs:[
+  {l:'Core',c:`<p>Rāja Yoga is the complete systematic technology for the direct transformation of consciousness. Patañjali's Yoga Sūtras: 196 aphorisms covering the entire journey from ethical foundation to Samādhi — the direct recognition of the pure witness (Purusha/Ātman).</p>`},
+  {l:'Eight Limbs',c:`<p><strong>Yama/Niyama</strong> — ethical disciplines; prerequisite for stable practice.<br><strong>Āsana</strong> — stability in the body.<br><strong>Prānāyāma</strong> — working with Vāyu/Prāna.<br><strong>Pratyāhāra</strong> — withdrawal of senses.<br><strong>Dhāranā</strong> — concentration.<br><strong>Dhyāna</strong> — sustained meditation.<br><strong>Samādhi</strong> — dissolution of the meditator into pure awareness.</p>`},
+  {l:'Yoga Sūtras',c:`<blockquote>"Yogas chitta-vritti-nirodhah. Tadā drastuh svarūpe 'vasthānam — Then the Seer abides in its own nature."<cite>Yoga Sūtras 1.2–1.3 — Patañjali</cite></blockquote>`},
+  {l:'Gateway Parallel',c:`<div class="hook">The Monroe Institute's Gateway Process (declassified CIA 1983) uses Hemi-Sync binaural audio to induce expanded states. The Māndūkya Upanishad's four states of consciousness map onto Gateway's Focus levels with extraordinary precision. The CIA was doing Rāja Yoga with technology. The Rishis did it with awareness alone.</div>`},
+  {l:'Connected',c:`<div class="tags"><span class="tag e" onclick="openPanel('chitta')">Chitta</span><span class="tag g" onclick="openPanel('turiya')">Turīya</span><span class="tag e" onclick="openPanel('agamas')">Āgamas</span></div>`}
+]}
+};
+
+// ═══════════════════════════════════════════════════
+//  PANEL LOGIC — openPanel (NOT open — avoids window.open conflict)
+// ═══════════════════════════════════════════════════
+let currentNode = null;
+
+function openPanel(id){
+  const d = DATA[id];
+  if(!d) return;
+  // deactivate previous
+  if(currentNode){
+    document.querySelectorAll('.node').forEach(n=>{
+      if(n.getAttribute('onclick')==="openPanel('"+currentNode+"')") n.classList.remove('active');
+    });
+  }
+  currentNode = id;
+  // activate current
+  document.querySelectorAll('.node').forEach(n=>{
+    if(n.getAttribute('onclick')==="openPanel('"+id+"')") n.classList.add('active');
+  });
+  // populate panel
+  document.getElementById('pg').textContent = d.glyph;
+  document.getElementById('pt').textContent = d.title;
+  document.getElementById('ps').textContent = d.sub;
+  document.getElementById('pb').innerHTML = d.secs.map(s=>`
+    <div class="p-sec">
+      <div class="p-lbl">${s.l}</div>
+      ${s.c}
+    </div>`).join('');
+  // open
+  document.getElementById('overlay').classList.add('open');
+  // scroll panel to top
+  document.getElementById('panel').scrollTop = 0;
+}
+
+function closePanel(){
+  document.getElementById('overlay').classList.remove('open');
+  if(currentNode){
+    document.querySelectorAll('.node').forEach(n=>{
+      if(n.getAttribute('onclick')==="openPanel('"+currentNode+"')") n.classList.remove('active');
+    });
+    currentNode = null;
+  }
+}
+
+function overlayClick(e){
+  if(e.target===document.getElementById('overlay')) closePanel();
+}
+
+// ESC key closes panel
+document.addEventListener('keydown',e=>{ if(e.key==='Escape') closePanel(); });
+</script>
+</body>
+</html>
