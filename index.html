@@ -1,0 +1,1716 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>The Ember Crown</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400;0,600;1,400&family=Pixelify+Sans:wght@400;600&family=Yatra+One&display=swap" rel="stylesheet">
+<style>
+/* Layout: one letterboxed 16:9 pixel stage on a night-indigo ground; DOM HUD floats on the stage, story panels float over the whole viewport. */
+:root{
+  --night:#0b0a1a;
+  --ink:#f2e6cb;
+  --ink-dim:#b8a888;
+  --saffron:#f0a03a;
+  --vermilion:#d4462f;
+  --teal:#47b0a4;
+  --panel:rgba(14,11,28,.9);
+  --line:rgba(240,160,58,.38);
+  --display:'Yatra One', 'Palatino Linotype', Georgia, serif;
+  --body:'Alegreya', 'Palatino Linotype', Georgia, serif;
+  --pixel:'Pixelify Sans', ui-monospace, 'Courier New', monospace;
+  color-scheme:dark;
+}
+html,body{height:100%;margin:0;background:var(--night);color:var(--ink);overflow:hidden}
+body{font-family:var(--body);touch-action:none;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
+#stage{position:absolute;left:0;top:0;overflow:hidden;background:#000}
+#cv{display:block;width:100%;height:100%;image-rendering:pixelated;image-rendering:crisp-edges}
+button{font:inherit;color:inherit}
+button:focus-visible{outline:2px solid var(--saffron);outline-offset:3px}
+
+/* HUD */
+#hud{position:absolute;inset:0;pointer-events:none;font-family:var(--pixel);font-size:clamp(11px,calc(var(--s,2)*5.4px),20px);line-height:1.2;text-shadow:0 1px 0 #000,0 0 6px rgba(0,0,0,.6)}
+#hud[hidden]{display:none!important}
+.hl{position:absolute;left:2.2%;top:3%;display:flex;flex-direction:column;gap:.25em;max-width:55%}
+.hl .ch{color:var(--saffron);letter-spacing:.06em;text-transform:uppercase;font-size:.82em}
+.hl .obj{color:var(--ink)}
+.hr{position:absolute;right:2.2%;top:3%;display:flex;flex-direction:column;align-items:flex-end;gap:.3em}
+.purse{display:flex;align-items:center;gap:.35em;font-size:1.25em;font-weight:600;font-variant-numeric:tabular-nums}
+.coin{width:.8em;height:.8em;border-radius:50%;background:radial-gradient(circle at 35% 35%,#fff3b0,#f2c14e 45%,#a8741c);box-shadow:0 0 6px rgba(242,193,78,.6)}
+.day{color:var(--ink-dim);font-size:.85em}
+.day.ecl{color:#ff6b5a}
+.mems{display:flex;gap:.3em}
+.mems i{width:.55em;height:.55em;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:#3a3350}
+.mems i.on{background:var(--saffron);box-shadow:0 0 6px var(--saffron)}
+.stam{width:4.5em;height:.32em;background:rgba(255,255,255,.15)}
+.stam b{display:block;height:100%;background:var(--teal);width:100%}
+.stam.tired b{background:var(--vermilion)}
+#tip{position:absolute;transform:translate(-50%,-100%);white-space:nowrap;font-size:.8em;color:var(--ink);background:rgba(10,8,20,.72);padding:.15em .45em;border:1px solid var(--line)}
+#tip.no{color:var(--ink-dim)}
+#toast{position:absolute;left:50%;bottom:6%;transform:translateX(-50%);display:flex;align-items:flex-start;gap:.5em;max-width:78%;background:rgba(10,8,22,.78);border:1px solid var(--line);padding:.45em .7em;opacity:0;transition:opacity .4s;font-family:var(--body);font-size:1.02em;line-height:1.3}
+#toast.on{opacity:1}
+#toast .fly{flex:none;width:.6em;height:.6em;margin-top:.3em;border-radius:50%;background:#ffe27a;box-shadow:0 0 8px 3px rgba(255,214,90,.65)}
+#toast b{color:var(--saffron);font-weight:600;margin-right:.3em}
+
+/* touch */
+#touch{position:fixed;left:0;right:0;bottom:0;display:flex;justify-content:space-between;padding:0 16px calc(14px + env(safe-area-inset-bottom,0px));pointer-events:none;z-index:5}
+#touch[hidden]{display:none!important}
+#touch .g{display:flex;gap:10px;pointer-events:auto}
+#touch button{width:64px;height:64px;border-radius:50%;border:1px solid var(--line);background:rgba(14,11,28,.55);font-family:var(--pixel);font-size:15px;touch-action:none}
+#touch button.on{background:rgba(240,160,58,.45)}
+
+/* overlays */
+#ov{position:fixed;inset:0;z-index:10;display:flex;align-items:center;justify-content:center;padding:16px;box-sizing:border-box}
+#ov[hidden]{display:none!important}
+#ov.dim{background:radial-gradient(ellipse at center,rgba(8,6,18,.55),rgba(8,6,18,.92))}
+#ov.story{align-items:flex-end;background:linear-gradient(to top,rgba(6,5,14,.85),rgba(6,5,14,.15) 60%,transparent)}
+.panel{width:100%;max-width:680px;box-sizing:border-box}
+.panel[hidden]{display:none!important}
+.title{text-align:center;display:flex;flex-direction:column;align-items:center;gap:14px}
+.eyebrow{font-family:var(--pixel);letter-spacing:.22em;text-transform:uppercase;font-size:12px;color:var(--teal);margin:0}
+h1{font-family:var(--display);font-weight:400;font-size:clamp(44px,9vw,92px);line-height:1;margin:0;color:var(--saffron);text-shadow:0 0 24px rgba(240,120,40,.55),0 2px 0 #4a1a10;text-wrap:balance}
+.lede{font-size:clamp(16px,2.2vw,20px);max-width:34em;margin:0;color:var(--ink);text-wrap:balance}
+.btns{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:6px}
+.btn{cursor:pointer;border:1px solid var(--saffron);background:rgba(240,160,58,.12);padding:10px 22px;font-family:var(--pixel);font-size:16px;letter-spacing:.04em}
+.btn:hover{background:rgba(240,160,58,.28)}
+.btn.ghost{border-color:var(--line);background:transparent;color:var(--ink-dim)}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+.keys{display:grid;grid-template-columns:auto auto;gap:4px 14px;margin:6px 0 0;font-size:14px;color:var(--ink-dim);text-align:left}
+.keys dt{font-family:var(--pixel);color:var(--ink);text-align:right}
+.keys dd{margin:0}
+.meta{font-family:var(--pixel);font-size:12px;color:var(--ink-dim);margin:0;letter-spacing:.05em}
+.story-p{background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--saffron);padding:18px 22px 14px;margin-bottom:4vh;cursor:pointer}
+.story-p .who{font-family:var(--pixel);font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:var(--saffron);margin-bottom:6px}
+.story-p.jugnu{border-left-color:#ffe27a}
+.story-p.jugnu .who{color:#ffe27a}
+.story-p.mem{border-left-color:var(--teal);background:rgba(10,24,30,.92)}
+.story-p.mem .who{color:var(--teal)}
+.story-p.mem p{font-style:italic}
+.story-p.foe{border-left-color:#b04cff}
+.story-p.foe .who{color:#d18cff}
+.story-p p{margin:0;font-size:clamp(17px,2.3vw,21px);line-height:1.5;min-height:3em}
+.story-p .more{font-family:var(--pixel);font-size:11px;color:var(--ink-dim);text-align:right;margin-top:8px;letter-spacing:.08em}
+.story-p.card{border:none;background:none;text-align:center;margin-bottom:30vh}
+.story-p.card .who{font-size:14px;color:var(--teal);letter-spacing:.3em}
+.story-p.card p{font-family:var(--display);font-size:clamp(34px,6vw,60px);color:var(--saffron);text-shadow:0 0 20px rgba(240,120,40,.5);min-height:0;line-height:1.1}
+.box{background:var(--panel);border:1px solid var(--line);padding:24px;text-align:center;display:flex;flex-direction:column;gap:12px;align-items:center}
+.box h2{font-family:var(--display);font-weight:400;font-size:clamp(28px,4.5vw,42px);margin:0;color:var(--saffron);text-wrap:balance}
+.box p{margin:0;max-width:34em;font-size:17px;line-height:1.45}
+.choices{display:flex;flex-direction:column;gap:10px;width:100%}
+.choice{cursor:pointer;text-align:left;border:1px solid var(--line);background:rgba(255,255,255,.03);padding:12px 16px;font-size:17px;line-height:1.35}
+.choice:hover:not([disabled]){border-color:var(--saffron);background:rgba(240,160,58,.12)}
+.choice small{display:block;font-family:var(--pixel);font-size:11px;color:var(--ink-dim);letter-spacing:.06em;margin-top:4px}
+.choice[disabled]{opacity:.5;cursor:not-allowed}
+#rotate{position:fixed;left:0;right:0;top:calc(10px + env(safe-area-inset-top,0px));text-align:center;font-family:var(--pixel);font-size:12px;color:var(--ink-dim);pointer-events:none;z-index:4}
+#rotate[hidden]{display:none!important}
+@media (prefers-reduced-motion: reduce){#toast{transition:none}}
+</style>
+</head>
+<body>
+<div id="stage">
+  <canvas id="cv" width="480" height="270" aria-label="The Ember Crown game view"></canvas>
+  <div id="hud" hidden>
+    <div class="hl"><div class="ch" id="hCh"></div><div class="obj" id="hObj"></div></div>
+    <div class="hr">
+      <div class="purse"><span class="coin"></span><span id="hCoins">0</span></div>
+      <div class="stam" id="hStam"><b></b></div>
+      <div class="day" id="hDay"></div>
+      <div class="mems" id="hMems" title="Memories recovered"><i></i><i></i><i></i><i></i></div>
+    </div>
+    <div id="tip" hidden></div>
+    <div id="toast"><span class="fly"></span><div><b>Jugnu</b><span id="toastT"></span></div></div>
+  </div>
+</div>
+<div id="rotate" hidden>Turn your phone sideways for a wider view</div>
+<div id="touch" hidden>
+  <div class="g"><button id="tL" aria-label="Ride left">◀</button><button id="tR" aria-label="Ride right">▶</button></div>
+  <div class="g"><button id="tG" aria-label="Gallop">Run</button><button id="tP" aria-label="Pay or drop coin">Pay</button></div>
+</div>
+
+<div id="ov" class="dim">
+  <section class="panel title" id="pTitle">
+    <p class="eyebrow">A tale of the river ghats</p>
+    <h1>The Ember Crown</h1>
+    <p class="lede">The eternal flame has gone out, the night will not end, and the crown on your head remembers more than you do.</p>
+    <div class="btns"><button class="btn" id="bNew">Begin the tale</button><button class="btn" id="bCont" hidden>Continue</button></div>
+    <dl class="keys">
+      <dt>← → / A D</dt><dd>Ride</dd>
+      <dt>Shift</dt><dd>Gallop</dd>
+      <dt>↓ / S</dt><dd>Pay at a marker, or drop a coin</dd>
+      <dt>Space</dt><dd>Continue the story</dd>
+      <dt>Esc · M</dt><dd>Pause · Sound</dd>
+    </dl>
+    <p class="meta" id="titleMeta"></p>
+  </section>
+  <section class="panel" id="pStory" hidden>
+    <div class="story-p" id="sBox"><div class="who" id="sWho"></div><p id="sText"></p><div class="more" id="sMore">Space or tap to continue</div></div>
+  </section>
+  <section class="panel" id="pPause" hidden>
+    <div class="box"><h2>Paused</h2>
+      <div class="btns"><button class="btn" id="bResume">Resume</button><button class="btn ghost" id="bMute">Sound: on</button><button class="btn ghost" id="bRestart">Restart this ghat</button><button class="btn ghost" id="bTitle">Title screen</button></div>
+    </div>
+  </section>
+  <section class="panel" id="pOver" hidden>
+    <div class="box"><h2>The crown is taken</h2><p id="overText">A masked thing runs for the river with the crown held over its head like a prize.</p>
+      <div class="btns"><button class="btn" id="bRetry">Try this ghat again</button><button class="btn ghost" id="bTitle2">Title screen</button></div>
+    </div>
+  </section>
+  <section class="panel" id="pChoice" hidden>
+    <div class="box"><h2>Someone must keep the Flame</h2><p>The night will not end until the Akhand Jyoti burns again, and the Flame needs a keeper.</p>
+      <div class="choices">
+        <button class="choice" id="cA">Walk into the Flame yourself.<small>You made the bargain. You pay it.</small></button>
+        <button class="choice" id="cB">Let Ira keep the Flame, as the priests decreed.<small>It's only a light. You'll see Ira every evening.</small></button>
+        <button class="choice" id="cC">"If I ever go dark, light me again."<small id="cCsub"></small></button>
+      </div>
+    </div>
+  </section>
+  <section class="panel" id="pEnd" hidden>
+    <div class="box"><p class="eyebrow">Ending</p><h2 id="endName"></h2><p id="endMeta"></p>
+      <div class="btns"><button class="btn" id="bAgain">Begin again from the first ghat</button><button class="btn ghost" id="bFinal">Replay the river's mouth</button></div>
+    </div>
+  </section>
+</div>
+
+<script>
+(() => {
+'use strict';
+// ================= constants & helpers =================
+const W = 480, H = 270, GY = 196, WY = 204;
+const cv = document.getElementById('cv'), ctx = cv.getContext('2d');
+ctx.imageSmoothingEnabled = false;
+const refl = document.createElement('canvas'); refl.width = W; refl.height = H; const rctx = refl.getContext('2d');
+const dark = document.createElement('canvas'); dark.width = W; dark.height = H; const dctx = dark.getContext('2d');
+const $ = id => document.getElementById(id);
+const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
+const lerp = (a, b, t) => a + (b - a) * t;
+const rand = (a, b) => a + Math.random() * (b - a);
+const sgn = v => v < 0 ? -1 : v > 0 ? 1 : 0;
+const mod = (a, n) => ((a % n) + n) % n;
+function mulberry(seed) { return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+const hash = n => { let x = Math.sin(n * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); };
+const hx = h => { const n = parseInt(h.slice(1), 16); return [n >> 16 & 255, n >> 8 & 255, n & 255]; };
+const mixA = (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
+const css = a => `rgb(${a[0] | 0},${a[1] | 0},${a[2] | 0})`;
+const rgba = (a, al) => `rgba(${a[0] | 0},${a[1] | 0},${a[2] | 0},${al})`;
+const isTouch = ('ontouchstart' in window) || (window.matchMedia && matchMedia('(pointer:coarse)').matches);
+
+const C_ = {
+  gold:'#f2c14e', goldD:'#a8741c', verm:'#c8352a', vermD:'#7d1f1c', saff:'#e98f2e', saffD:'#a85d1a',
+  skin:'#b97a4b', skinD:'#8a5636', hair:'#1f1515', white:'#ece4d2', whiteD:'#b8ad96',
+  wood:'#7a4c28', woodD:'#4e3018', stone:'#8d8794', stoneD:'#5e5966', sand:'#c9a26a', sandD:'#8e6c3e',
+  steel:'#a3a8b6', bronze:'#b5843a', hol:'#0c0712', mask:'#e9e0cc', teal:'#2f7f6e', tealD:'#1d5047'
+};
+
+// ================= story =================
+const NAR = '', J = 'Jugnu', MEM = 'Memory', IRA = 'Ira', CROWN = 'The Hollow Crown';
+const PROLOGUE = [
+  { who: NAR, text: 'For a thousand years the Akhand Jyoti burned on the steps of Suryaghat. As long as it burned, the pilgrims said, every night would end.' },
+  { who: NAR, text: 'Then one evening it went out. The night that followed did not end the way nights should.' },
+  { who: NAR, text: 'Out of the river came the Hollow: faceless things in pale masks, starving for gold, because gold is the last thing in the world that still remembers the sun.' },
+  { who: NAR, text: 'You wake on a riverbank with ash in your mouth. There is a crown on your head, still warm, and a white horse nosing at your sleeve. You cannot remember your name.' },
+  { who: J, text: "Ah. Awake at last. No, don't ask me who you are. You won't like the answer, and we don't have the daylight to spare. Ask me what to do instead." },
+  { who: J, text: "I'm Jugnu. A firefly, more or less. I've been keeping you warm." },
+  { who: J, text: 'This river runs down through the ghats to its mouth, where the Flame went out. There is a ferry at the far end of this ghat. Mend it, and we follow the river.' },
+  { who: J, text: 'Gold builds everything. Gold is also what they want. Keep some in your purse at night. If they catch you with an empty purse, they take the crown.' },
+];
+const CHAPTER_STORY = [
+  {
+    intro: [
+      { who: NAR, text: 'The first ghat is ash and broken steps. A few wanderers still camp in the reeds, too tired to run any further.' },
+      { who: J, text: 'Drop a coin near a wanderer and they will follow you home. Buy them a bow or a hammer by the fire. Then raise walls, and hope the walls hold.' },
+      { who: J, text: 'The ferry is east, past the last wall. The Hollow come from the east too. Of course they do.' },
+    ],
+    outro: [
+      { who: NAR, text: 'The ferry groans off the bank. Behind you the little fire burns on, and somebody beside it has started to sing.' },
+      { who: J, text: 'You keep staring at the water as if you dropped something in it.' },
+      { who: J, text: '…Maybe you did. Come on. Downriver.' },
+    ],
+  },
+  {
+    intro: [
+      { who: NAR, text: 'Ten thousand bells hang over the Ghat of Bells. Not one has rung since the Flame died. Here the Hollow come from both banks.' },
+      { who: NAR, text: "An old bell-keeper squints up at your crown. 'I know that face,' she says. 'You're Ira's little sibling. The one the priests didn't choose.' Then she turns away and will not say more." },
+      { who: J, text: 'Ignore Maitri. She says that to everyone. …Mostly.' },
+      { who: J, text: 'The soil here is good. Buy scythes and clear fields; farmers grow gold. And light the old diya posts. The Hollow hate a lit lamp more than they hate arrows.' },
+    ],
+    outro: [
+      { who: NAR, text: "Maitri walks you down to the ferry. 'The Flame did not die on its own, child,' she says. 'Someone bargained it away. Find out who, and you will know what the Hollow are hungry for.'" },
+      { who: NAR, text: 'As the ferry pulls away, one bell rings above the ghat, all by itself.' },
+      { who: J, text: '…' },
+      { who: J, text: "My light's just tired. Don't look at me like that." },
+    ],
+  },
+  {
+    intro: [
+      { who: NAR, text: 'At the Ghat of the Eclipse the sky is wrong. Every few nights Rahu, the severed head that swallows the moon, rises hungry, and the Hollow pour out after him like spilled ink.' },
+      { who: J, text: "There's an old stable in the eastern woods. A war elephant doesn't scare easily, and it doesn't much care what ends up under its feet." },
+      { who: J, text: 'When the moon bleeds, they come in floods. Thicker walls. More bows. And keep your purse heavy.' },
+    ],
+    outro: [
+      { who: NAR, text: 'Halfway across the river the moon turns red, and you remember.' },
+      { who: MEM, text: 'The night before the rite you went alone to the river\'s mouth, where the water lies black and perfectly still. Something lived under it.' },
+      { who: MEM, text: "'Take the Flame instead,' you told it. 'Not Ira. Anything but Ira.' The water said: 'Done.'" },
+      { who: MEM, text: 'At dawn the Flame went out. Ira did not burn. Ira walked down the steps into the river and did not come back. That evening, the first Hollow climbed out of the water.' },
+      { who: NAR, text: 'It was you. The night that would not end was yours.' },
+      { who: J, text: "Now you know why I didn't want to tell you." },
+      { who: J, text: "So you might as well know the rest. I'm what is left of Ira. The little piece the river couldn't swallow. The part that still wanted to come home." },
+    ],
+  },
+  {
+    intro: [
+      { who: NAR, text: 'The river ends in a black lake under a dead sky. Above it hangs the Rift, a wound in the air that never closed. Something inside it wears a crown of dark fire.' },
+      { who: J, text: "That's Ira. Or what the river made of Ira. The Hollow are the river's hunger, and Ira is its crown." },
+      { who: J, text: 'Raise an army. Buy shields; knights hold the line. When you are ready, blow the war conch at daybreak and your soldiers will march east on the Rift. Ride with them.' },
+      { who: J, text: "And, little lamp? Whatever happens out there, I'm glad it was you who came." },
+    ],
+  },
+];
+const MEMORIES = [
+  {
+    name: 'The Floating Lamps', blessing: "Agni's blessing: your archers draw a third faster.",
+    lines: [
+      { who: MEM, text: "Two children crouch on the ghat steps on Deepavali night, setting clay lamps on the water. 'Whoever's goes farthest gets to wear the crown,' says the smaller one." },
+      { who: MEM, text: "The older child grins and nudges their lamp with one finger. It drifts past the bend and keeps going. The smaller child's lamp tips over and sinks." },
+      { who: MEM, text: 'The older child is Ira. The smaller one, sulking, is you.' },
+      { who: J, text: 'Ira always did cheat with that finger.' },
+    ],
+  },
+  {
+    name: 'The Choosing', blessing: "Vayu's blessing: your mount runs half again as far.",
+    lines: [
+      { who: MEM, text: 'The Flame was dying. The priests said it needed a keeper: one of royal blood who would walk into the fire and become its wick, forever. They chose the eldest. They chose Ira.' },
+      { who: MEM, text: "Ira said yes the way someone says yes to a second sweet. That night you could not stop shaking. 'It's only a light,' Ira said. 'You'll see me every evening.'" },
+    ],
+  },
+  {
+    name: 'The Promise', blessing: "Prithvi's blessing: your walls are two-fifths sturdier.",
+    lines: [
+      { who: MEM, text: 'On the last evening, Ira pressed something warm into your cupped hands: a firefly, glowing.' },
+      { who: MEM, text: "'If I ever go dark,' Ira said, 'light me again. Promise.' You promised. Then you went down to the river and broke it." },
+      { who: J, text: '…You kept me, though. All this time, you kept me.' },
+    ],
+  },
+  {
+    name: 'The Name', blessing: "Soma's blessing: your knights are hardier and your soldiers strike the Rift twice as hard.",
+    lines: [
+      { who: MEM, text: "Nobody in the palace used your name, because Ira never did. Ira called you 'little lamp' from the day you were born, because you cried whenever the lamps were put out." },
+      { who: J, text: 'Strange, that the one most afraid of the dark is the one who let it in. Stranger, that the dark never managed to put the little lamp out.' },
+    ],
+  },
+];
+const BOSS_LINES = [
+  { who: CROWN, text: 'Little lamp. You walked all this way to put me out?' },
+  { who: CROWN, text: 'You gave me to the dark to save me. Now save me from it, if you can.' },
+];
+const FINALE = [
+  { who: NAR, text: 'The Hollow Crown falls to its knees, and the mask splits down the middle. Under it is Ira: older, thinner, with eyes like banked coals.' },
+  { who: IRA, text: 'There you are. You got so tall.' },
+  { who: J, text: 'The bargain still holds. The river took the Flame, and the night will not end until someone feeds it back.' },
+];
+const ENDINGS = {
+  A: { name: 'The Keeper', lines: [
+    { who: NAR, text: 'You set the crown on Ira\'s head. Ira does not want it. You leave it there anyway.' },
+    { who: NAR, text: 'Walking into the fire does not hurt the way you expected. It feels like being remembered.' },
+    { who: NAR, text: 'The night ends. On every ghat, every evening, the people float one extra lamp downriver for you. Ira\'s always goes the farthest. Ira still cheats with that finger.' },
+  ] },
+  B: { name: 'The Crown', lines: [
+    { who: IRA, text: "It's only a light, little lamp. You'll see me every evening." },
+    { who: NAR, text: 'Ira walks into the fire smiling. The Flame rises, the night ends, and at the Ghat of Bells ten thousand bells ring at once.' },
+    { who: NAR, text: 'You rule for fifty years, and you are fair, and you are kind. Every evening you sit on the steps beside the Flame until it is fully dark. It never gets easier.' },
+  ] },
+  C: { name: 'Two Lamps', lines: [
+    { who: IRA, text: 'You remembered.' },
+    { who: NAR, text: 'You take Ira\'s hand, the way Ira took yours on the night before the Choosing, and you walk into the Flame together.' },
+    { who: NAR, text: 'A flame that is shared does not burn half as bright. It burns twice as long. The Akhand Jyoti wakes with two wicks instead of one.' },
+    { who: NAR, text: 'From then on, one of you keeps the Flame each night while the other walks the ghats, and at every dawn you trade. The night always ends. Neither of you is ever alone in it.' },
+    { who: J, text: '…Look at that. I get to go home.' },
+  ] },
+};
+
+const tok = s => s.replace('{LR}', isTouch ? 'the ◀ ▶ pads' : '← → or A / D').replace(/\{PAY\}/g, isTouch ? 'Pay' : '↓').replace('{RUN}', isTouch ? 'Run' : 'Shift');
+const HINTS = {
+  move: 'Ride with {LR}. Hold {RUN} to gallop. Explore while the sun is up.',
+  vagrant: 'Wanderers. Hold {PAY} away from any marker to drop a coin near them.',
+  peasant: 'A new subject. They wait by the fire until you buy them a tool.',
+  pay: 'Hold {PAY} at a marker to pay. Let go early and the coins come back.',
+  wall: 'A wall site. Pay here, and your builders raise it.',
+  builder: 'Nobody will build that. Buy a hammer at the rack by the fire.',
+  dusk: 'Dusk. Get behind your walls, and keep a coin or two in your purse.',
+  night: 'Here they come.',
+  dawn: 'Dawn. The Hollow burn in the sun. The town leaves an offering at the fire.',
+  nocoin: 'Your purse is empty. If they touch you now, they take the crown!',
+  dock: "The ferry. It needs coin, and a builder's hands.",
+  shrine: 'An old shrine. It wants an offering, and it wants to show you something.',
+  chest: 'An offering box someone forgot. Ride over it.',
+  altar: 'Feed the fire to raise it higher. A bigger altar allows stronger walls.',
+  stamina: 'Your mount is winded. Walk for a bit.',
+  ferryReady: 'The ferry is whole. Stand on the dock and hold {PAY} to board.',
+  lamp: 'A diya post. Lit, it slows the Hollow and makes them smoulder.',
+  farm: 'Fallow ground. Clear a field, then buy scythes for farmers.',
+  stable: "Hear that trumpeting? There's an elephant in there.",
+  conch: 'The war conch. Blow it at daybreak and your soldiers march on the Rift.',
+  hunt: 'Archers hunt in daylight. Ride out and gather the coins they bring down.',
+  ruined: 'A wall has fallen. Pay at the rubble to rebuild it.',
+};
+
+// ================= chapters =================
+const CH = [
+  { name: 'The Ghat of Ashes', roman: 'I', half: 1500, seed: 7, coins: 10, firstDay: 115, rifts: [1500],
+    walls: [-200, 200, -460, 460, -760, 760], camps: [-560, 600, -1080], chests: [[380, 4], [-880, 6], [1260, 5]],
+    shrine: [-1320, 6, 0], shops: [['bow', -56], ['hammer', 56]], farms: [], lamps: [], dock: [1100, [5, 5, 6]],
+    altarMax: 2, wave: [2, 0.7], bruteFrom: 4, eclipse: 0, obj: 'ferry' },
+  { name: 'The Ghat of Bells', roman: 'II', half: 1800, seed: 19, coins: 8, firstDay: 100, rifts: [-1800, 1800],
+    walls: [-210, 210, -480, 480, -820, 820], camps: [-720, 740, -1200, 1260], chests: [[-1050, 6], [1080, 6], [-420, 3]],
+    shrine: [1560, 8, 1], shops: [['scythe', -96], ['bow', -56], ['hammer', 56]], farms: [-330, 340], lamps: [-600, 600, -980, 980], dock: [-1520, [6, 6, 6, 6]],
+    altarMax: 3, wave: [1.6, 0.8], bruteFrom: 3, eclipse: 0, obj: 'ferry' },
+  { name: 'The Ghat of the Eclipse', roman: 'III', half: 2000, seed: 31, coins: 10, firstDay: 100, rifts: [-2000, 2000],
+    walls: [-210, 210, -480, 480, -840, 840, -1150, 1150], camps: [-1000, 1010, -1520, 1560], chests: [[-1100, 8], [900, 5], [1250, 6]],
+    shrine: [-1750, 9, 2], shops: [['scythe', -96], ['bow', -56], ['hammer', 56]], farms: [-330, 340, 620], lamps: [-680, 700, -1300, 1300], dock: [1720, [8, 8, 8, 8]], stable: 1400,
+    altarMax: 3, wave: [2, 1], bruteFrom: 2, eclipse: 3, obj: 'ferry' },
+  { name: "The River's Mouth", roman: 'IV', half: 2100, seed: 43, coins: 12, firstDay: 100, rifts: [2100],
+    walls: [-210, 210, -480, 480, -840, 840, -1150, 1150], camps: [-1000, -1450, 1010], chests: [[-1300, 10], [-1750, 8], [1450, 6]],
+    shrine: [-1900, 10, 3], shops: [['scythe', -96], ['bow', -56], ['hammer', 56], ['shield', 96]], farms: [-330, 340, -620], lamps: [-700, 700, 1320, 1700], stable: -1600, conch: -140,
+    altarMax: 3, wave: [3, 1.2], bruteFrom: 1, eclipse: 4, obj: 'rift', riftHP: 90, bossHP: 110 },
+];
+const TOOLROLE = { bow: 'archer', hammer: 'builder', scythe: 'farmer', shield: 'knight' };
+const TOOLCOST = { bow: 2, hammer: 2, scythe: 3, shield: 4 };
+const TOOLNAME = { bow: 'a bow (archer)', hammer: 'a hammer (builder)', scythe: 'a scythe (farmer)', shield: 'a shield (knight)' };
+const WALLCOST = [2, 4, 7], WALLTIME = [5, 8, 11], WALLHP = [0, 12, 30, 60];
+const WALLNAME = ['Raise a palisade', 'Rebuild it in stone', 'Raise a sandstone rampart'];
+const CYC = 160, DAY = 90, DUSK = 10, NIGHT = 50, DAWN = 10;
+
+// ================= save =================
+const SAVE_KEY = 'emberCrown.v1';
+const defSave = () => ({ ch: 0, started: false, mem: [false, false, false, false], carry: null, mount: 'horse', endings: [], hints: {} });
+function loadSave() { try { const s = JSON.parse(localStorage.getItem(SAVE_KEY)); if (s && typeof s.ch === 'number') return Object.assign(defSave(), s); } catch (e) { } return defSave(); }
+function writeSave() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(save)); } catch (e) { } }
+let save = loadSave();
+
+// ================= audio =================
+const Snd = {
+  ac: null, master: null, muted: false, pluckT: 0, pluckI: 0, lastBuild: 0,
+  init() {
+    if (this.ac) { if (this.ac.state === 'suspended') this.ac.resume(); return; }
+    try {
+      this.ac = new (window.AudioContext || window.webkitAudioContext)();
+      this.master = this.ac.createGain(); this.master.gain.value = this.muted ? 0 : 0.55; this.master.connect(this.ac.destination);
+    } catch (e) { this.ac = null; }
+  },
+  setMuted(m) { this.muted = m; if (this.master) this.master.gain.value = m ? 0 : 0.55; },
+  tone(freq, dur, type = 'sine', vol = 0.15, slide = 0, delay = 0) {
+    if (!this.ac) return; const t = this.ac.currentTime + delay;
+    const o = this.ac.createOscillator(), g = this.ac.createGain(); o.type = type; o.frequency.setValueAtTime(freq, t);
+    if (slide) o.frequency.exponentialRampToValueAtTime(Math.max(20, freq * slide), t + dur);
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + 0.012); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g); g.connect(this.master); o.start(t); o.stop(t + dur + 0.05);
+  },
+  noise(dur, vol = 0.15, freq = 1000, delay = 0) {
+    if (!this.ac) return; const t = this.ac.currentTime + delay;
+    const len = Math.max(1, Math.floor(this.ac.sampleRate * dur)); const buf = this.ac.createBuffer(1, len, this.ac.sampleRate); const d = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / len);
+    const s = this.ac.createBufferSource(); s.buffer = buf; const f = this.ac.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = freq; f.Q.value = 0.8;
+    const g = this.ac.createGain(); g.gain.value = vol; s.connect(f); f.connect(g); g.connect(this.master); s.start(t);
+  },
+  pluck(freq, vol = 0.035) {
+    if (!this.ac) return; const t = this.ac.currentTime;
+    const f = this.ac.createBiquadFilter(); f.type = 'lowpass'; f.frequency.setValueAtTime(2400, t); f.frequency.exponentialRampToValueAtTime(500, t + 2.5);
+    const g = this.ac.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t + 3.2);
+    [1, 1.004].forEach(m => { const o = this.ac.createOscillator(); o.type = 'sawtooth'; o.frequency.value = freq * m; o.connect(f); o.start(t); o.stop(t + 3.3); });
+    f.connect(g); g.connect(this.master);
+  },
+  // tanpura cycle: Pa, Sa', Sa', Sa
+  drone(dt, night) {
+    if (!this.ac) return; this.pluckT -= dt; if (this.pluckT > 0) return;
+    const base = night ? 110 : 130.81; const seq = [base * 1.5, base * 2, base * 2, base];
+    this.pluck(seq[this.pluckI % 4], night ? 0.03 : 0.026); this.pluckI++; this.pluckT = this.pluckI % 4 === 0 ? 1.6 : 1.05;
+  },
+  coin() { this.tone(1568, 0.07, 'square', 0.035); this.tone(2093, 0.12, 'square', 0.03, 0, 0.05); },
+  pay() { this.tone(1046, 0.07, 'triangle', 0.07); },
+  drop() { this.tone(880, 0.08, 'triangle', 0.05, 0.7); },
+  build() { const n = performance.now(); if (n - this.lastBuild < 380) return; this.lastBuild = n; this.noise(0.06, 0.2, 700); this.tone(180, 0.06, 'square', 0.03); },
+  done() { [523, 659, 784].forEach((f, i) => this.tone(f, 0.3, 'triangle', 0.07, 0, i * 0.08)); },
+  bow() { this.noise(0.05, 0.08, 3200); },
+  hit() { this.noise(0.09, 0.14, 380); },
+  hurt() { this.tone(240, 0.35, 'sawtooth', 0.09, 0.45); this.noise(0.2, 0.15, 300); },
+  recruit() { this.tone(660, 0.12, 'triangle', 0.07); this.tone(990, 0.18, 'triangle', 0.07, 0, 0.09); },
+  conch() { this.tone(233, 2.4, 'sawtooth', 0.09, 1.03); this.tone(466, 2.4, 'triangle', 0.05, 1.02); this.tone(116.5, 2.4, 'sine', 0.1); },
+  bell() { [880, 1331, 2217].forEach((f, i) => this.tone(f, 2.8 - i * 0.7, 'sine', 0.06 / (i + 1))); },
+  horn() { this.tone(98, 2.6, 'sawtooth', 0.07, 0.94); this.tone(49, 2.6, 'sine', 0.12); },
+  dissolve() { this.noise(0.35, 0.06, 220); },
+  memory() { [587, 740, 880, 1175].forEach((f, i) => this.tone(f, 1.8, 'sine', 0.05, 0, i * 0.14)); },
+};
+
+// ================= input =================
+const keys = {};
+const touch = { left: false, right: false, pay: false, gallop: false };
+const inp = () => ({
+  left: keys.arrowleft || keys.a || touch.left, right: keys.arrowright || keys.d || touch.right,
+  gallop: keys.shift || touch.gallop, pay: keys.arrowdown || keys.s || touch.pay,
+});
+
+// ================= state =================
+let S = null;          // live game state
+let mode = 'title';    // title | story | play | pause | over | choice | end
+let hintsSeen = save.hints || {};
+
+function camps() { return S.st.filter(s => s.type === 'camp'); }
+function altar() { return S.st.find(s => s.type === 'altar'); }
+function riftObj() { return S.st.find(s => s.type === 'rift'); }
+
+function newState(ci, preview) {
+  const C = CH[ci], carry = preview ? null : save.carry;
+  const s = {
+    ci, C, t: 0, clock: DAY - (C.firstDay || DAY), night: 0, phase: 'day', pk: 0, prevPhase: 'day', eclipse: false, darkness: 0,
+    cam: 0, st: [], cits: [], hol: [], coins: [], arrows: [], rabbits: [], parts: [], spawnQ: [],
+    m: { x: 0, vx: 0, face: 1, stam: 1, tired: false, gallop: false, coins: carry ? Math.max(carry.coins, C.coins) : C.coins, inv: 0, mount: save.mount || 'horse', anim: 0, crown: true },
+    pay: { target: null, paid: 0, t: 0, dropT: 0, boardT: 0, held: false, needRelease: false },
+    over: false, overT: 0, assault: false, defT: 0, defN: 0, boss: null, rabbitT: 2, finale: false, near: null, toastQ: [], preview: !!preview,
+    bg: genBG(C.seed),
+  };
+  S = s;
+  const add = o => (s.st.push(o), o);
+  add({ type: 'altar', x: 0, level: 1, job: null });
+  C.walls.forEach(x => add({ type: 'wall', x, side: sgn(x), level: 0, hp: 0, max: 0, job: null, ruined: false }));
+  C.shops.forEach(([tool, x]) => add({ type: 'shop', x, tool, stock: 0 }));
+  C.farms.forEach(x => add({ type: 'farm', x, built: false, job: null, timer: 0 }));
+  C.lamps.forEach(x => add({ type: 'lamp', x, lit: false, job: null }));
+  C.camps.forEach(x => add({ type: 'camp', x }));
+  C.chests.forEach(([x, c]) => add({ type: 'chest', x, coins: c, open: false }));
+  if (C.shrine) add({ type: 'shrine', x: C.shrine[0], cost: C.shrine[1], mem: C.shrine[2], done: !!save.mem[C.shrine[2]] });
+  if (C.dock) add({ type: 'dock', x: C.dock[0], costs: C.dock[1], stage: 0, job: null });
+  if (C.stable != null && s.m.mount !== 'elephant') add({ type: 'stable', x: C.stable, done: false });
+  if (C.conch != null) add({ type: 'conch', x: C.conch });
+  C.rifts.forEach(x => add({ type: 'rift', x, hp: C.riftHP || 0, max: C.riftHP || 0, alive: true }));
+  camps().forEach((c, i) => { for (let k = 0; k < 2; k++) mkCit(c.x + rand(-25, 25), 'vagrant', i); });
+  if (carry && carry.cits) for (const role in carry.cits) for (let k = 0; k < carry.cits[role]; k++) mkCit(rand(-30, 30), role);
+  return s;
+}
+
+function mkCit(x, role, home) {
+  const c = { x, role, face: Math.random() < 0.5 ? -1 : 1, anim: rand(0, 5), cd: 0, home: home != null ? home : nearestCamp(x), slot: Math.floor(rand(0, 4)), side: 0, hp: 1, maxhp: 1, moving: false, wt: 0, wx: x, flash: 0 };
+  initRole(c); S.cits.push(c); return c;
+}
+function initRole(c) {
+  c.job = null; c.farm = null; c.shop = null; c.coin = null; c.tgt = null;
+  if (c.role === 'archer' || c.role === 'knight') c.side = pickSide(c.role);
+  if (c.role === 'knight') { c.maxhp = 4 + (save.mem[3] ? 2 : 0); c.hp = c.maxhp; }
+}
+function pickSide(role) {
+  const rs = S.C.rifts; if (rs.length === 1) return sgn(rs[0]);
+  let l = 0, r = 0; for (const c of S.cits) if (c.role === role) { if (c.side < 0) l++; else if (c.side > 0) r++; }
+  return l <= r ? -1 : 1;
+}
+function nearestCamp(x) {
+  const cs = camps(); let bi = 0, bd = 1e9; cs.forEach((c, i) => { const d = Math.abs(c.x - x); if (d < bd) { bd = d; bi = i; } }); return bi;
+}
+
+// ================= background generation =================
+function genBG(seed) {
+  const r = mulberry(seed), far = [], mid = [], p = [r() * 6, r() * 6, r() * 6, r() * 6];
+  for (let i = 0; i < 600; i++) { const x = i / 600 * Math.PI * 2; far.push(30 + 16 * Math.sin(x * 3 + p[0]) + 10 * Math.sin(x * 7 + p[1]) + 5 * Math.sin(x * 13 + p[2]) + 3 * Math.sin(x * 31 + p[3])); }
+  for (let i = 0; i < 600; i++) { const x = i / 600 * Math.PI * 2; mid.push(12 + 6 * Math.sin(x * 5 + p[1]) + 4 * Math.sin(x * 11 + p[2]) + 2 * Math.sin(x * 23 + p[0])); }
+  const temples = []; for (let i = 0; i < 4; i++) temples.push({ x: i * 300 + r() * 200, s: 0.7 + r() * 0.5 });
+  const trees = []; for (let i = 0; i < 30; i++) trees.push({ x: r() * 1600, t: r() < 0.5 ? 'palm' : 'banyan', s: 0.75 + r() * 0.5, h: r() });
+  const near = []; for (let i = 0; i < 12; i++) near.push({ x: r() * 2400, t: r() < 0.55 ? 'palm' : 'banyan', s: 1 + r() * 0.4, h: r() });
+  const stars = []; for (let i = 0; i < 90; i++) stars.push({ x: r() * W, y: r() * 150, b: r() });
+  return { far, mid, temples, trees, near, stars };
+}
+
+// ================= palettes =================
+const RAW = {
+  day:     { skyT: '#5d9cc2', skyB: '#f3d7a3', far: '#93a6bd', snow: '#e5ecf2', mid: '#6d8b72', tree: '#3d5d42', ground: '#5a4130', grass: '#6f9a45', water: '#2b5b6e', stone: '#a49a88' },
+  dusk:    { skyT: '#2c2350', skyB: '#f0874c', far: '#6b5878', snow: '#d9a0a0', mid: '#4a3c55', tree: '#2b2337', ground: '#3d2a24', grass: '#4c5a33', water: '#2a2a48', stone: '#7c6a68' },
+  night:   { skyT: '#060920', skyB: '#1d2352', far: '#1f2449', snow: '#4b5684', mid: '#151938', tree: '#0d1027', ground: '#1e1922', grass: '#23302b', water: '#0c1631', stone: '#3c3a4c' },
+  eclipse: { skyT: '#160309', skyB: '#5e121a', far: '#3b1520', snow: '#6a2a32', mid: '#270c15', tree: '#17070c', ground: '#211015', grass: '#2b1a18', water: '#22080f', stone: '#4a2a2e' },
+  dawn:    { skyT: '#3d4c7c', skyB: '#f3b183', far: '#7a7f9f', snow: '#f0d6d0', mid: '#4f5a6a', tree: '#2e3a3a', ground: '#3f3028', grass: '#56703d', water: '#33507a', stone: '#8a8080' },
+};
+const PAL = {}; for (const k in RAW) { PAL[k] = {}; for (const j in RAW[k]) PAL[k][j] = hx(RAW[k][j]); }
+function blendP(a, b, t) { const o = {}; for (const j in a) o[j] = mixA(a[j], b[j], clamp(t, 0, 1)); return o; }
+function palNow() {
+  const p = S.phase, k = S.pk, nightP = S.eclipse ? PAL.eclipse : PAL.night;
+  if (p === 'day') return k > 0.85 ? blendP(PAL.day, PAL.dusk, (k - 0.85) / 0.15 * 0.3) : PAL.day;
+  if (p === 'dusk') return k < 0.5 ? blendP(PAL.day, PAL.dusk, 0.3 + k * 1.4) : blendP(PAL.dusk, nightP, (k - 0.5) * 2);
+  if (p === 'night') return nightP;
+  return k < 0.5 ? blendP(nightP, PAL.dawn, k * 2) : blendP(PAL.dawn, PAL.day, (k - 0.5) * 2);
+}
+
+// ================= time =================
+function phaseOf(clock) {
+  if (clock < 0) return ['day', 0];
+  const c = clock % CYC;
+  if (c < DAY) return ['day', c / DAY];
+  if (c < DAY + DUSK) return ['dusk', (c - DAY) / DUSK];
+  if (c < DAY + DUSK + NIGHT) return ['night', (c - DAY - DUSK) / NIGHT];
+  return ['dawn', (c - DAY - DUSK - NIGHT) / DAWN];
+}
+const isDark = () => S.phase === 'dusk' || S.phase === 'night';
+const isLight = () => S.phase === 'day' || S.phase === 'dawn';
+function updateTime() {
+  const [p, k] = phaseOf(S.clock); S.phase = p; S.pk = k;
+  if (p !== S.prevPhase) { S.prevPhase = p; onPhase(p); }
+  let d = 0; if (p === 'dusk') d = k; else if (p === 'night') d = 1; else if (p === 'dawn') d = 1 - k;
+  S.darkness = d;
+}
+function onPhase(p) {
+  if (S.preview) return;
+  if (p === 'dusk') {
+    S.night++; S.eclipse = S.C.eclipse > 0 && S.night % S.C.eclipse === 0;
+    Snd.horn(); hint('dusk');
+    if (S.eclipse) toast('Rahu rises tonight. The moon will bleed. Hold the line.', true);
+    S.rabbits.length = 0;
+  } else if (p === 'night') {
+    queueWave(); hint('night');
+  } else if (p === 'dawn') {
+    for (const h of S.hol) if (h.type !== 'boss' && !S.assault) h.state = 'flee';
+  } else if (p === 'day') {
+    S.eclipse = false; Snd.bell(); dawnOffering(); hint('dawn');
+    camps().forEach((cp, i) => { if (S.cits.filter(c => c.role === 'vagrant' && c.home === i).length < 2) mkCit(cp.x + rand(-20, 20), 'vagrant', i); });
+    for (const c of S.cits) if (c.role === 'knight') c.hp = c.maxhp;
+  }
+}
+function queueWave() {
+  const C = S.C, n = S.night;
+  for (const r of S.st) {
+    if (r.type !== 'rift' || !r.alive) continue;
+    let small = Math.floor(C.wave[0] + C.wave[1] * (n - 1));
+    let brute = n >= C.bruteFrom ? Math.floor((n - C.bruteFrom) / 2) + 1 : 0;
+    if (S.eclipse) { small = small * 2 + 3; brute += 2; }
+    for (let i = 0; i < small; i++) S.spawnQ.push({ t: S.t + rand(0, 24), x: r.x, type: 'small' });
+    for (let i = 0; i < brute; i++) S.spawnQ.push({ t: S.t + rand(6, 30), x: r.x, type: 'brute' });
+  }
+}
+function dawnOffering() {
+  const n = S.cits.filter(c => c.role !== 'vagrant').length; if (!n) return;
+  const k = clamp(1 + Math.floor(n / 3), 1, 6);
+  for (let i = 0; i < k; i++) spawnCoin(0, GY - 14, rand(-50, 50), rand(-150, -90), 'world');
+}
+
+// ================= toast / hints =================
+let toastTimer = 0;
+function toast(text, urgent) {
+  if (!S || S.preview) return;
+  if (urgent) S.toastQ.unshift(text); else S.toastQ.push(text);
+  if (S.toastQ.length > 3) S.toastQ.length = 3;
+  if (toastTimer <= 0 || urgent) nextToast();
+}
+function nextToast() {
+  const t = S.toastQ.shift(); if (!t) { $('toast').classList.remove('on'); toastTimer = 0; return; }
+  $('toastT').textContent = tok(t); $('toast').classList.add('on'); toastTimer = 5.5;
+}
+function hint(key) {
+  if (hintsSeen[key]) return; hintsSeen[key] = true; save.hints = hintsSeen; writeSave();
+  toast(HINTS[key]);
+}
+
+// ================= entities: coins & particles =================
+function spawnCoin(x, y, vx, vy, src) { S.coins.push({ x, y, vx, vy, t: 0, src, claim: null }); }
+function part(x, y, vx, vy, life, col, opt = {}) { if (S.parts.length > 500) return; S.parts.push({ x, y, vx, vy, life, max: life, col, g: opt.g ?? 0, sz: opt.sz ?? 1, glow: !!opt.glow, world: true }); }
+function burst(x, y, n, col, spd = 40, opt = {}) { for (let i = 0; i < n; i++) part(x, y, rand(-spd, spd), rand(-spd * 1.2, spd * 0.3), rand(0.4, 1), col, opt); }
+
+// ================= payment =================
+function hasBuilders() { return S.cits.some(c => c.role === 'builder'); }
+function payInfo(s) {
+  const m = S.m;
+  const waiting = () => ({ label: hasBuilders() ? 'Builders at work' : 'Needs a builder: buy a hammer', ok: false });
+  switch (s.type) {
+    case 'wall': {
+      if (s.job) return waiting();
+      if (s.level >= 3) return null;
+      if (s.level + 1 > altar().level) return { label: s.level === 1 ? 'Stone walls need a stone altar' : 'Ramparts need the temple', ok: false };
+      return { cost: WALLCOST[s.level], label: s.ruined ? 'Rebuild the palisade' : WALLNAME[s.level], ok: true };
+    }
+    case 'altar':
+      if (s.job) return waiting();
+      if (s.level >= S.C.altarMax) return null;
+      return { cost: [0, 5, 10][s.level], label: s.level === 1 ? 'Raise a stone altar' : 'Build the temple', ok: true };
+    case 'shop':
+      if (s.stock >= 4) return { label: 'The rack is full', ok: false };
+      return { cost: TOOLCOST[s.tool], label: 'Buy ' + TOOLNAME[s.tool], ok: true };
+    case 'farm': if (s.built) return null; if (s.job) return waiting(); return { cost: 4, label: 'Clear a field', ok: true };
+    case 'lamp': if (s.lit) return null; if (s.job) return waiting(); return { cost: 3, label: 'Light the diya post', ok: true };
+    case 'shrine': if (s.done) return null; return { cost: s.cost, label: 'Make an offering at the shrine', ok: true };
+    case 'dock':
+      if (s.job) return waiting();
+      if (s.stage >= s.costs.length) return { label: tok('Hold {PAY} to board the ferry'), ok: true, board: true };
+      return { cost: s.costs[s.stage], label: `Mend the ferry (${s.stage + 1} of ${s.costs.length})`, ok: true };
+    case 'stable': if (s.done || m.mount === 'elephant') return null; return { cost: 6, label: 'Rouse the old war elephant', ok: true };
+    case 'conch': {
+      if (S.assault) return { label: 'The army is marching', ok: false };
+      const r = riftObj(); if (!r || (!r.alive && !S.boss)) return null;
+      if (S.phase !== 'day') return { label: 'Sound the conch at daybreak', ok: false };
+      if (!S.cits.some(c => c.role === 'archer' || c.role === 'knight')) return { label: 'You have no soldiers to march', ok: false };
+      return { cost: 8, label: 'Sound the war conch: march on the Rift', ok: true };
+    }
+  }
+  return null;
+}
+function nearestPayable() {
+  let best = null, bd = 20;
+  for (const s of S.st) { const d = Math.abs(s.x - S.m.x); if (d < bd && payInfo(s)) { bd = d; best = s; } }
+  return best;
+}
+function updatePay(dt) {
+  const P = S.pay, I = inp(), m = S.m;
+  const near = nearestPayable(); S.near = near;
+  if (near && payInfo(near).ok) hint('pay');
+  if (P.target && (P.target !== near || !I.pay)) {
+    if (P.paid > 0) { m.coins += P.paid; P.paid = 0; Snd.drop(); }
+    P.target = null; P.boardT = 0;
+  }
+  if (!I.pay) { P.held = false; P.needRelease = false; return; }
+  if (!P.held) { P.held = true; P.t = 0; P.dropT = 0; }
+  if (P.needRelease) return;
+  if (near) {
+    const info = payInfo(near);
+    if (!info.ok) return;
+    if (info.board) { P.target = near; P.boardT += dt; if (P.boardT > 1.1) { P.needRelease = true; boardFerry(); } return; }
+    P.target = near; P.t -= dt;
+    if (P.t <= 0) {
+      if (m.coins <= 0) { P.t = 1.5; toast('Your purse is empty. Archers and farmers bring in gold, and so do offering boxes.'); return; }
+      m.coins--; P.paid++; P.t = 0.2; Snd.pay();
+      part(m.x, GY - 22, 0, -30, 0.3, C_.gold, { glow: true, sz: 2 });
+      if (P.paid >= info.cost) { P.paid = 0; P.target = null; P.needRelease = true; onPaid(near); }
+    }
+  } else if (m.coins > 0) {
+    P.dropT -= dt;
+    if (P.dropT <= 0) { m.coins--; spawnCoin(m.x + m.face * 8, GY - 16, m.face * rand(15, 35), -70, 'drop'); P.dropT = 0.5; Snd.drop(); }
+  }
+}
+function onPaid(s) {
+  Snd.done(); burst(s.x, GY - 12, 12, C_.gold, 40, { glow: true });
+  const needsBuilder = () => { if (!hasBuilders()) hint('builder'); };
+  switch (s.type) {
+    case 'wall': s.job = { time: WALLTIME[s.level], prog: 0 }; needsBuilder(); break;
+    case 'altar': s.job = { time: s.level === 1 ? 9 : 13, prog: 0 }; needsBuilder(); break;
+    case 'shop': s.stock++; break;
+    case 'farm': s.job = { time: 8, prog: 0 }; needsBuilder(); break;
+    case 'lamp': s.job = { time: 4, prog: 0 }; needsBuilder(); break;
+    case 'dock': s.job = { time: 10, prog: 0 }; needsBuilder(); break;
+    case 'shrine': {
+      s.done = true; save.mem[s.mem] = true; writeSave(); Snd.memory();
+      const M = MEMORIES[s.mem];
+      runStory([{ who: 'Memory recovered', text: M.name, card: true }, ...M.lines, { who: 'Blessing', text: M.blessing }], () => { if (s.mem === 2) for (const w of S.st) if (w.type === 'wall' && w.level > 0) { w.max = wallMax(w.level); w.hp = Math.min(w.max, w.hp * 1.4); } });
+      break;
+    }
+    case 'stable':
+      s.done = true; S.m.mount = 'elephant'; save.mount = 'elephant'; writeSave();
+      runStory([{ who: NAR, text: 'An old war elephant lumbers out of the dark, blinks at your crown, and kneels. Its painted howdah is cracked, but it still fits.' }, { who: J, text: 'Gallop into the small ones. It will not mind.' }]);
+      break;
+    case 'conch': startAssault(); break;
+  }
+}
+function wallMax(level) { return WALLHP[level] * (save.mem[2] ? 1.4 : 1); }
+function completeJob(s) {
+  s.job = null; Snd.done(); burst(s.x, GY - 10, 14, '#ffe3a0', 30, { glow: true });
+  switch (s.type) {
+    case 'wall': s.level++; s.max = wallMax(s.level); s.hp = s.max; s.ruined = false; break;
+    case 'altar': s.level++; toast(s.level === 2 ? 'A stone altar. Now you can build stone walls.' : 'The temple stands. Sandstone ramparts are within reach.'); break;
+    case 'farm': s.built = true; break;
+    case 'lamp': s.lit = true; break;
+    case 'dock': s.stage++; if (s.stage >= s.costs.length) hint('ferryReady'); break;
+  }
+}
+
+// ================= monarch =================
+function updateMonarch(dt) {
+  const m = S.m, I = inp(); const dir = (I.right ? 1 : 0) - (I.left ? 1 : 0);
+  const ele = m.mount === 'elephant';
+  const walk = ele ? 42 : 52, gal = ele ? 84 : 112, smax = (ele ? 9 : 5) * (save.mem[1] ? 1.5 : 1);
+  let want = 0; m.gallop = false;
+  if (dir) {
+    m.face = dir; want = walk;
+    if (I.gallop && !m.tired && m.stam > 0) { want = gal; m.gallop = true; m.stam -= dt / smax; if (m.stam <= 0) { m.stam = 0; m.tired = true; hint('stamina'); } }
+  }
+  if (!m.gallop) { m.stam = Math.min(1, m.stam + dt * (dir ? 0.1 : 0.22) * (save.mem[1] ? 1.4 : 1)); if (m.tired && m.stam > 0.35) m.tired = false; }
+  m.vx = lerp(m.vx, dir * want, Math.min(1, dt * 5));
+  m.x = clamp(m.x + m.vx * dt, -S.C.half + 14, S.C.half - 14);
+  m.anim += Math.abs(m.vx) * dt * 0.11;
+  m.inv -= dt;
+  if (Math.abs(m.vx) > 10 && Math.random() < dt * 8 * (m.gallop ? 2 : 0.5)) part(m.x - m.face * 6, GY - 1, -m.face * rand(5, 20), rand(-15, -5), 0.5, 'rgba(160,130,100,0.6)');
+  for (const s of S.st) if (s.type === 'chest' && !s.open && Math.abs(s.x - m.x) < 10) {
+    s.open = true; Snd.coin(); for (let i = 0; i < s.coins; i++) spawnCoin(s.x, GY - 8, rand(-45, 45), rand(-170, -90), 'world');
+  }
+  if (ele && Math.abs(m.vx) > 55) for (const h of S.hol) {
+    if (Math.abs(h.x - m.x) > 13) continue;
+    if (h.type === 'small') { h.hp = 0; Snd.hit(); }
+    else { h.tr = (h.tr || 0) - dt; if (h.tr <= 0) { h.hp -= 1; h.flash = 0.12; h.tr = 0.5; Snd.hit(); } }
+  }
+}
+
+// ================= citizens =================
+function outerWall(side) {
+  let best = null; for (const s of S.st) if (s.type === 'wall' && s.side === side && s.level > 0 && s.hp > 0) if (!best || Math.abs(s.x) > Math.abs(best.x)) best = s;
+  return best;
+}
+function nearestHol(x, range, ahead) {
+  let best = null, bd = range;
+  for (const h of S.hol) { if (h.dead) continue; const d = Math.abs(h.x - x); if (d < bd && (!ahead || sgn(h.x - x) === ahead || d < 20)) { bd = d; best = h; } }
+  return best;
+}
+function shoot(c, tgt, kind, miss) {
+  const dist = Math.abs(tgt.x - c.x); const T = clamp(dist / 210, 0.25, 0.9);
+  S.arrows.push({ x0: c.x + c.face * 3, y0: GY - 10, x1: tgt.x + (miss ? rand(-25, 25) : 0), y1: GY - (kind === 'rift' ? 30 : 7), t: 0, T, tgt, kind, miss, arc: 10 + dist * 0.12 });
+  c.face = sgn(tgt.x - c.x) || c.face;
+  if (onScreen(c.x)) Snd.bow();
+}
+function idleNear(c, x, r) {
+  if (c.wt <= 0 || Math.abs(c.wx - x) > r + 5) { c.wx = x + rand(-r, r); c.wt = rand(2, 6); }
+  return c.wx;
+}
+function becomeVagrant(c) {
+  if (c.role !== 'peasant' && c.role !== 'vagrant') burst(c.x, GY - 8, 6, '#c9b08a', 30);
+  c.role = 'vagrant'; c.fleeing = true; c.home = nearestCamp(c.x); initRole(c);
+}
+function updateCits(dt) {
+  const dark = isDark(); const R = riftObj(); const rDir = R ? sgn(R.x) : 1;
+  const soldiers = S.assault ? S.cits.filter(c => c.role === 'knight') : [];
+  let front = null; for (const k of soldiers) if (front === null || k.x * rDir > front * rDir) front = k.x;
+  for (const c of S.cits) {
+    c.anim += dt; c.cd -= dt; c.wt -= dt; c.flash -= dt;
+    let tx = null, spd = 26;
+    switch (c.role) {
+      case 'vagrant': {
+        const cp = camps()[c.home];
+        if (c.fleeing) { tx = cp.x; spd = 36; if (Math.abs(c.x - cp.x) < 20) c.fleeing = false; break; }
+        if (!c.coin) { const k = S.coins.find(k => k.src === 'drop' && !k.claim && Math.abs(k.x - c.x) < 85 && k.vy === 0); if (k) { k.claim = c; c.coin = k; } }
+        if (c.coin) {
+          if (!S.coins.includes(c.coin)) { c.coin = null; break; }
+          tx = c.coin.x; spd = 38;
+          if (Math.abs(c.x - tx) < 3) {
+            S.coins.splice(S.coins.indexOf(c.coin), 1); c.coin = null; c.role = 'peasant'; initRole(c);
+            Snd.recruit(); burst(c.x, GY - 10, 10, '#ffe08a', 30, { glow: true }); hint('peasant');
+          }
+        } else { tx = idleNear(c, cp.x, 34); spd = 12; }
+        break;
+      }
+      case 'peasant': {
+        if (c.shop && c.shop.stock <= 0) c.shop = null;
+        if (!c.shop) {
+          let best = null, bd = 1e9;
+          for (const s of S.st) if (s.type === 'shop' && s.stock > 0) {
+            const reserved = S.cits.filter(o => o !== c && o.shop === s).length;
+            if (s.stock - reserved <= 0) continue; const d = Math.abs(s.x - c.x); if (d < bd) { bd = d; best = s; }
+          }
+          c.shop = best;
+        }
+        if (c.shop) {
+          tx = c.shop.x; spd = 32;
+          if (Math.abs(c.x - tx) < 3) {
+            c.shop.stock--; c.role = TOOLROLE[c.shop.tool]; initRole(c); Snd.pay();
+            if (c.role === 'archer') hint('hunt'); if (c.role === 'farmer' && !S.st.some(s => s.type === 'farm' && s.built)) hint('farm');
+          }
+        } else tx = idleNear(c, 0, 40), spd = 14;
+        break;
+      }
+      case 'builder': {
+        if (dark) { c.job = null; tx = idleNear(c, 0, 30); spd = 30; break; }
+        if (c.job && !(c.job.job || (c.job.type === 'wall' && c.job.level > 0 && c.job.hp < c.job.max))) c.job = null;
+        if (!c.job) {
+          let best = null, bd = 1e9;
+          for (const s of S.st) {
+            const need = s.job || (s.type === 'wall' && s.level > 0 && s.hp < s.max);
+            if (!need) continue; const d = Math.abs(s.x - c.x); if (d < bd) { bd = d; best = s; }
+          }
+          c.job = best;
+        }
+        if (c.job) {
+          const s = c.job; tx = s.x + (s.type === 'dock' ? -10 : (c.slot - 1.5) * 4); spd = 32;
+          if (Math.abs(c.x - tx) < 4) {
+            c.working = true;
+            if (s.job) { s.job.prog += dt; if (s.job.prog >= s.job.time) completeJob(s); }
+            else { s.hp = Math.min(s.max, s.hp + 4 * dt); }
+            if (onScreen(c.x) && Math.random() < dt * 3) { Snd.build(); part(c.x + c.face * 4, GY - 8, rand(-20, 20), rand(-40, -10), 0.4, '#ffd27a', { g: 120 }); }
+          } else c.working = false;
+        } else { c.working = false; tx = idleNear(c, 0, 40); spd = 14; }
+        break;
+      }
+      case 'farmer': {
+        if (dark) { tx = idleNear(c, 0, 30); spd = 30; break; }
+        if (!c.farm || !c.farm.built) {
+          let best = null, bn = 99;
+          for (const s of S.st) if (s.type === 'farm' && s.built) { const n = S.cits.filter(o => o.farm === s).length; if (n < bn) { bn = n; best = s; } }
+          c.farm = best;
+        }
+        if (c.farm) { tx = c.farm.x + (c.slot - 1.5) * 8; spd = 24; c.working = Math.abs(c.x - tx) < 4; }
+        else { tx = idleNear(c, 0, 40); spd = 14; }
+        break;
+      }
+      case 'archer': {
+        const ranged = 150;
+        if (S.assault && R) {
+          const anchor = front !== null ? front : R.x - rDir * 130;
+          tx = anchor - rDir * (55 + c.slot * 7); if ((tx - (R.x - rDir * 80)) * rDir > 0) tx = R.x - rDir * 80; spd = 40;
+        } else if (dark) {
+          const w = outerWall(c.side); tx = (w ? w.x : c.side * 26) - c.side * (8 + c.slot * 5); spd = 36;
+        } else {
+          const w = outerWall(c.side); const base = w ? w.x : c.side * 40;
+          if (c.tgt && (!c.tgt.alive)) c.tgt = null;
+          if (!c.tgt) { let bd = 260; for (const r of S.rabbits) { if (!r.alive) continue; const d = Math.abs(r.x - c.x); if (d < bd && sgn(r.x) === c.side) { bd = d; c.tgt = r; } } }
+          if (c.tgt) {
+            const d = c.tgt.x - c.x; if (Math.abs(d) > 75) { tx = c.tgt.x - sgn(d) * 70; spd = 30; }
+            else if (c.cd <= 0) { shoot(c, c.tgt, 'rab', Math.random() < 0.25); c.cd = 1.7; }
+          } else { tx = idleNear(c, base + c.side * 60, 60); spd = 14; }
+        }
+        if (c.cd <= 0) {
+          const h = nearestHol(c.x, ranged + (dark ? 0 : -30));
+          if (h) { shoot(c, h, 'hol', Math.random() < 0.12); c.cd = 1.25 / (save.mem[0] ? 1.33 : 1); }
+          else if (S.assault && R && R.alive && Math.abs(R.x - c.x) < 175) { shoot(c, R, 'rift', false); c.cd = 1.25 / (save.mem[0] ? 1.33 : 1); }
+        }
+        break;
+      }
+      case 'knight': {
+        if (S.assault && R) {
+          const h = nearestHol(c.x, 70);
+          if (h) tx = h.x - sgn(h.x - c.x) * 8;
+          else if (R.alive) tx = R.x - rDir * (18 + c.slot * 4);
+          else tx = R.x - rDir * 60;
+          spd = 38;
+          if (R.alive && Math.abs(R.x - c.x) < 34 && c.cd <= 0 && !h) { R.hp -= save.mem[3] ? 2 : 1; c.cd = 0.9; burst(R.x - rDir * 6, GY - 20, 4, '#d58cff', 30, { glow: true }); if (onScreen(c.x)) Snd.hit(); }
+        } else if (dark) {
+          const w = outerWall(c.side); tx = (w ? w.x : c.side * 30) + c.side * (9 + c.slot * 3); spd = 32;
+        } else {
+          const w = outerWall(c.side); tx = idleNear(c, w ? w.x - c.side * 20 : c.side * 30, 20); spd = 14;
+        }
+        if (c.cd <= 0) {
+          const h = nearestHol(c.x, 13);
+          if (h) { h.hp -= save.mem[3] ? 1.5 : 1; h.flash = 0.12; c.cd = 0.85; c.face = sgn(h.x - c.x) || c.face; c.swing = 0.2; if (onScreen(c.x)) Snd.hit(); }
+        }
+        break;
+      }
+    }
+    if (tx !== null) {
+      const d = tx - c.x;
+      if (Math.abs(d) > 1.5) { c.face = sgn(d); c.x += sgn(d) * Math.min(Math.abs(d), spd * dt); c.moving = true; } else c.moving = false;
+    } else c.moving = false;
+    c.swing = (c.swing || 0) - dt;
+  }
+  if (S.assault && !S.cits.some(c => c.role === 'archer' || c.role === 'knight')) {
+    S.assault = false; toast('Your army is broken. Rebuild it, and sound the conch again.', true);
+  }
+}
+
+// ================= farms & structures =================
+function updateStructs(dt) {
+  for (const s of S.st) {
+    if (s.type === 'farm' && s.built && isLight()) {
+      const n = S.cits.filter(c => c.role === 'farmer' && c.farm === s && c.working).length;
+      if (n) {
+        s.timer += dt * (n >= 2 ? 1.6 : 1);
+        if (s.timer > 11) {
+          s.timer = 0;
+          const lying = S.coins.filter(k => Math.abs(k.x - s.x) < 30).length;
+          if (lying < 6) { spawnCoin(s.x + rand(-10, 10), GY - 6, rand(-30, 30), -110, 'world'); Snd.coin(); }
+        }
+      }
+    }
+    if (s.type === 'rift' && s.alive && S.C.riftHP && s.hp <= 0) { s.alive = false; riftBroken(s); }
+  }
+}
+
+// ================= hollow =================
+function spawnHollow(x, type, state) {
+  const ch = S.ci;
+  const hp = type === 'small' ? (ch >= 2 ? 2 : 1) : type === 'brute' ? (ch === 0 ? 4 : 7) : S.C.bossHP;
+  const h = { x: x - sgn(x) * 6, type, hp, max: hp, state: state || 'advance', cd: rand(0, 0.5), loot: 0, crown: false, home: x, anim: rand(0, 10), flash: 0, tr: 0, sumT: 6, dead: false };
+  S.hol.push(h); burst(h.x, GY - 14, 8, '#b04cff', 25, { glow: true });
+  return h;
+}
+function updateSpawns() {
+  for (let i = S.spawnQ.length - 1; i >= 0; i--) {
+    const q = S.spawnQ[i]; if (S.t >= q.t) { S.spawnQ.splice(i, 1); const r = S.st.find(s => s.type === 'rift' && s.x === q.x); if (r && r.alive) spawnHollow(q.x, q.type); }
+  }
+}
+function hitMonarch(h) {
+  const m = S.m; if (m.inv > 0 || S.over) return;
+  if (m.coins > 0) {
+    const take = Math.min(m.coins, h.type === 'small' ? 2 : 3); m.coins -= take; m.inv = 1.4;
+    if (h.type !== 'boss') { h.loot += take; h.state = 'flee'; }
+    for (let i = 0; i < take; i++) part(m.x, GY - 22, rand(-40, 40), rand(-80, -40), 0.7, C_.gold, { g: 200, sz: 2 });
+    Snd.hurt(); if (m.coins === 0) toast(HINTS.nocoin, true);
+  } else {
+    m.crown = false; h.crown = true; h.state = 'flee'; S.over = true; S.overT = 0; Snd.hurt(); Snd.horn();
+  }
+}
+function hitCit(h, c) {
+  if (c.role === 'knight') { c.hp--; c.flash = 0.2; Snd.hit(); if (c.hp > 0) return; }
+  becomeVagrant(c); if (onScreen(c.x)) Snd.hit();
+  if (h.type === 'small') h.state = 'flee';
+}
+function attack(h, b) {
+  h.cd = h.type === 'small' ? 1.0 : h.type === 'brute' ? 1.5 : 2.0; h.lunge = 0.2;
+  if (h.type === 'boss') {
+    burst(h.x, GY - 4, 16, '#8f3cff', 60, { glow: true }); Snd.hit();
+    for (const c of S.cits) if (c.role !== 'vagrant' && Math.abs(c.x - h.x) < 24) { if (c.role === 'knight') c.hp--; hitCit(h, c); }
+    if (Math.abs(S.m.x - h.x) < 24) hitMonarch(h);
+    for (const w of S.st) if (w.type === 'wall' && w.level > 0 && Math.abs(w.x - h.x) < 24) damageWall(w, 8);
+    return;
+  }
+  if (b.k === 'wall') { damageWall(b.o, h.type === 'small' ? 1 : 4); }
+  else if (b.k === 'mon') hitMonarch(h);
+  else hitCit(h, b.o);
+}
+function damageWall(w, dmg) {
+  w.hp -= dmg; if (onScreen(w.x)) { Snd.hit(); part(w.x, GY - 10, rand(-20, 20), rand(-40, -10), 0.5, '#a89a8a', { g: 150 }); }
+  if (w.hp <= 0) { w.hp = 0; w.level = 0; w.ruined = true; w.job = null; burst(w.x, GY - 10, 18, '#8a7f74', 50, { g: 150 }); hint('ruined'); }
+}
+function killHollow(h) {
+  h.dead = true;
+  if (h.loot) for (let i = 0; i < h.loot; i++) spawnCoin(h.x, GY - 12, rand(-30, 30), rand(-120, -80), 'world');
+  burst(h.x, GY - 10, h.type === 'small' ? 10 : 20, '#2a1838', 35); burst(h.x, GY - 12, 4, '#e9e0cc', 30, { g: 160 });
+  if (onScreen(h.x)) Snd.dissolve();
+  if (h.type === 'boss') bossDefeated();
+}
+function updateHollows(dt) {
+  const m = S.m;
+  for (const h of S.hol) {
+    if (h.dead) continue;
+    h.anim += dt; h.cd -= dt; h.flash -= dt; h.lunge = (h.lunge || 0) - dt;
+    if (h.type !== 'boss' && isLight() && Math.abs(h.x - h.home) > 260) { h.hp -= dt * (h.type === 'small' ? 1.4 : 0.9); if (Math.random() < dt * 20) part(h.x + rand(-4, 4), GY - rand(4, 14), rand(-5, 5), -rand(15, 30), 0.8, 'rgba(60,40,70,0.8)'); }
+    let slow = 1;
+    for (const s of S.st) if (s.type === 'lamp' && s.lit && Math.abs(s.x - h.x) < 48) { slow = 0.5; if (isDark() && h.type !== 'boss') { h.hp -= 0.18 * dt; if (Math.random() < dt * 6) part(h.x, GY - 10, rand(-6, 6), -20, 0.5, '#ff9a3c', { glow: true }); } }
+    if (h.hp <= 0) { killHollow(h); continue; }
+    const spd = (h.type === 'small' ? 44 : h.type === 'brute' ? 26 : 17) * slow * (S.eclipse ? 1.15 : 1);
+    if (h.state === 'flee') {
+      const d = sgn(h.home - h.x) || 1; h.face = d; h.x += d * spd * 1.25 * dt;
+      if (Math.abs(h.x - h.home) < 8) { h.dead = true; if (h.crown) S.crownGone = true; }
+      continue;
+    }
+    if (isLight() && !S.assault && h.type !== 'boss') { h.state = 'flee'; continue; }
+    // pick direction
+    let tx = 0;
+    if (h.type === 'boss' || S.assault) {
+      let bd = 420; tx = h.home;
+      const consider = x => { const d = Math.abs(x - h.x); if (d < bd) { bd = d; tx = x; } };
+      for (const c of S.cits) if (c.role === 'knight' || c.role === 'archer') consider(c.x);
+      consider(m.x);
+    } else if (Math.abs(h.x) < 40) tx = m.x;
+    const dir = sgn(tx - h.x) || (h.face || -sgn(h.x) || 1); h.face = dir;
+    const reach = h.type === 'boss' ? 20 : h.type === 'brute' ? 11 : 8;
+    let blk = null;
+    for (const c of S.cits) if (c.role === 'knight' && Math.abs(c.x - h.x) < reach + 1) { blk = { k: 'cit', o: c }; break; }
+    if (!blk) for (const w of S.st) if (w.type === 'wall' && w.level > 0 && w.hp > 0) { const d = (h.x - w.x) * (-dir); if (d > -2 && d < reach) { blk = { k: 'wall', o: w }; break; } }
+    if (!blk && Math.abs(m.x - h.x) < reach && m.inv <= 0) blk = { k: 'mon' };
+    if (!blk) for (const c of S.cits) if (c.role !== 'vagrant' && c.role !== 'knight' && Math.abs(c.x - h.x) < reach - 1) { blk = { k: 'cit', o: c }; break; }
+    if (blk) { if (h.cd <= 0) attack(h, blk); }
+    else if (Math.abs(tx - h.x) > 2) h.x += dir * spd * dt;
+    if (h.type === 'boss') {
+      h.sumT -= dt; if (h.sumT <= 0) { h.sumT = 7; spawnHollow(h.x + h.face * 10, 'small'); spawnHollow(h.x - h.face * 10, 'small'); }
+    }
+  }
+  S.hol = S.hol.filter(h => !h.dead);
+}
+
+// ================= assault & boss =================
+function startAssault() {
+  S.assault = true; S.defT = 2; S.defN = 0; Snd.conch();
+  toast('The conch sounds. Your soldiers march on the Rift. Ride with them!', true);
+}
+function updateAssault(dt) {
+  const R = riftObj(); if (!S.assault || !R || !R.alive) return;
+  S.defT -= dt; if (S.defT <= 0) { S.defN++; S.defT = 3.4; spawnHollow(R.x, S.defN % 4 === 0 ? 'brute' : 'small'); }
+}
+function riftBroken(R) {
+  burst(R.x, GY - 30, 50, '#c66bff', 80, { glow: true }); Snd.horn();
+  S.spawnQ.length = 0;
+  S.boss = spawnHollow(R.x, 'boss'); S.boss.state = 'advance';
+  runStory([{ who: NAR, text: 'The Rift tears open like wet cloth. Something steps out of it, tall as a temple door, wearing a crown of black fire.' }, ...BOSS_LINES]);
+}
+function bossDefeated() {
+  S.boss = null; S.assault = false; S.finale = true; Snd.bell();
+  for (const h of S.hol) if (!h.dead) { h.dead = true; burst(h.x, GY - 10, 8, '#2a1838', 30); }
+  S.finaleT = 1.6;
+  if (isDark()) S.clock = Math.floor(S.clock / CYC) * CYC + DAY + DUSK + NIGHT;
+}
+
+// ================= arrows, coins, rabbits, particles =================
+function updateArrows(dt) {
+  for (const a of S.arrows) {
+    a.t += dt;
+    if (!a.miss && a.tgt && (a.kind === 'hol' ? !a.tgt.dead : a.kind === 'rab' ? a.tgt.alive : a.tgt.alive)) a.x1 = a.tgt.x;
+    if (a.t >= a.T) {
+      a.done = true;
+      if (a.miss) continue;
+      if (a.kind === 'hol' && !a.tgt.dead && Math.abs(a.tgt.x - a.x1) < 14) { a.tgt.hp -= 1; a.tgt.flash = 0.12; }
+      else if (a.kind === 'rab' && a.tgt.alive) { a.tgt.alive = false; spawnCoin(a.tgt.x, GY - 6, rand(-20, 20), -100, 'world'); burst(a.tgt.x, GY - 3, 5, '#ddd', 20); }
+      else if (a.kind === 'rift' && a.tgt.alive) { a.tgt.hp -= save.mem[3] ? 2 : 1; burst(a.tgt.x, GY - 30, 3, '#d58cff', 20, { glow: true }); }
+    }
+  }
+  S.arrows = S.arrows.filter(a => !a.done);
+}
+function updateCoins(dt) {
+  const m = S.m;
+  for (const k of S.coins) {
+    k.t += dt;
+    if (k.vy !== 0 || k.y < GY - 2) {
+      k.vy += 340 * dt; k.y += k.vy * dt; k.x += k.vx * dt;
+      if (k.y >= GY - 2) { k.y = GY - 2; k.vy = Math.abs(k.vy) > 60 ? -k.vy * 0.35 : 0; k.vx *= 0.5; if (k.vy === 0) k.vx = 0; }
+    }
+    if (!k.claim && k.t > (k.src === 'drop' ? 1.3 : 0.35) && Math.abs(k.x - m.x) < 10 && k.y > GY - 8 && m.coins < 40) { k.got = true; m.coins++; Snd.coin(); part(k.x, k.y - 4, 0, -40, 0.4, '#fff1a8', { glow: true }); }
+  }
+  S.coins = S.coins.filter(k => !k.got);
+}
+function updateRabbits(dt) {
+  S.rabbitT -= dt;
+  if (S.phase === 'day' && S.rabbitT <= 0 && S.rabbits.filter(r => r.alive).length < 6) {
+    S.rabbitT = 4.5; const side = Math.random() < 0.5 ? -1 : 1; const x = side * rand(260, S.C.half - 300);
+    S.rabbits.push({ x, face: side, hop: 0, ht: rand(0.5, 2), alive: true });
+  }
+  for (const r of S.rabbits) {
+    if (!r.alive) continue; r.ht -= dt;
+    if (r.hop > 0) { r.hop -= dt; r.x += r.face * 34 * dt; }
+    else if (r.ht <= 0) { r.hop = 0.32; r.ht = rand(0.6, 2.4); if (Math.random() < 0.4) r.face = -r.face; if (Math.abs(S.m.x - r.x) < 50) r.face = sgn(r.x - S.m.x) || 1; }
+  }
+  S.rabbits = S.rabbits.filter(r => r.alive);
+}
+function updateParts(dt) {
+  for (const p of S.parts) { p.life -= dt; p.vy += p.g * dt; p.x += p.vx * dt; p.y += p.vy * dt; }
+  S.parts = S.parts.filter(p => p.life > 0);
+  // ambient embers at the altar
+  if (Math.random() < dt * (3 + altar().level * 2)) part(rand(-3, 3), GY - 10 - altar().level * 3, rand(-6, 6), rand(-30, -14), rand(0.8, 1.6), '#ffb347', { glow: true });
+  for (const s of S.st) if (s.type === 'rift' && s.alive && Math.random() < dt * 10) part(s.x + rand(-8, 8), GY - rand(5, 55), rand(-10, 10), rand(-20, 5), 1, '#b04cff', { glow: true });
+}
+
+// ================= hints by proximity =================
+function updateHints() {
+  if (S.t > 1.2) hint('move');
+  const m = S.m;
+  for (const s of S.st) {
+    const d = Math.abs(s.x - m.x); if (d > 70) continue;
+    if (s.type === 'camp' && d < 60) hint('vagrant');
+    else if (s.type === 'wall' && d < 40 && s.level === 0 && !s.ruined) hint('wall');
+    else if (s.type === 'dock') hint('dock');
+    else if (s.type === 'shrine' && !s.done) hint('shrine');
+    else if (s.type === 'chest' && !s.open) hint('chest');
+    else if (s.type === 'lamp' && !s.lit) hint('lamp');
+    else if (s.type === 'farm' && !s.built) hint('farm');
+    else if (s.type === 'stable' && !s.done) hint('stable');
+    else if (s.type === 'conch') hint('conch');
+    else if (s.type === 'altar' && S.t > 50 && d < 30 && s.level < S.C.altarMax) hint('altar');
+  }
+}
+
+// ================= chapter flow =================
+function boardFerry() {
+  const counts = { archer: 0, builder: 0, farmer: 0, knight: 0 }; let total = 0;
+  for (const role of ['archer', 'builder', 'farmer', 'knight']) for (const c of S.cits) if (c.role === role && total < 8) { counts[role]++; total++; }
+  save.carry = { coins: Math.min(S.m.coins, 30), cits: counts };
+  const ci = S.ci; save.ch = ci + 1; writeSave(); Snd.bell();
+  const lines = [...CHAPTER_STORY[ci].outro];
+  if (total) lines.push({ who: NAR, text: `${total} of your people crowd onto the ferry with you, carrying their tools.` });
+  runStory(lines, () => startChapter(ci + 1));
+}
+function startChapter(ci) {
+  newState(ci); mode = 'story'; showHud(true);
+  const C = CH[ci];
+  const lines = [{ who: 'Chapter ' + C.roman, text: C.name, card: true }];
+  if (ci === 0 && !save.started) { save.started = true; writeSave(); lines.unshift(...PROLOGUE); }
+  lines.push(...CHAPTER_STORY[ci].intro);
+  runStory(lines);
+}
+
+// ================= camera =================
+function X(wx) { return Math.round(wx - S.cam + W / 2); }
+function onScreen(wx, mg = 40) { const sx = wx - S.cam + W / 2; return sx > -mg && sx < W + mg; }
+
+// ================= update =================
+function update(dt) {
+  S.t += dt;
+  if (toastTimer > 0) { toastTimer -= dt; if (toastTimer <= 0) nextToast(); }
+  if (S.over) {
+    S.overT += dt; updateHollows(dt); updateParts(dt);
+    if (S.overT > 2.6 && mode === 'play') showOver();
+    return;
+  }
+  if (S.finaleT > 0) { S.finaleT -= dt; if (S.finaleT <= 0) { runStory(FINALE, () => showChoice()); return; } }
+  S.clock += dt;
+  updateTime();
+  updateMonarch(dt);
+  updatePay(dt);
+  updateStructs(dt);
+  updateCits(dt);
+  updateAssault(dt);
+  updateHollows(dt);
+  updateArrows(dt);
+  updateCoins(dt);
+  updateRabbits(dt);
+  updateParts(dt);
+  updateSpawns();
+  updateHints();
+  Snd.drone(dt, isDark());
+  const half = S.C.half;
+  S.cam = lerp(S.cam, clamp(S.m.x + S.m.face * 50, -half + W / 2 - 40, half - W / 2 + 40), Math.min(1, dt * 2.5));
+}
+
+// ================= drawing helpers =================
+function F(sx, f) { return (dx, dy, w, h, c) => { ctx.fillStyle = c; ctx.fillRect(f > 0 ? sx + dx : sx - dx - w + 1, GY + dy, w, h); }; }
+function disc(cx, cy, r, col) { ctx.fillStyle = col; for (let dy = -r; dy <= r; dy++) { const w = Math.floor(Math.sqrt(r * r - dy * dy)); ctx.fillRect(Math.round(cx - w), Math.round(cy + dy), w * 2 + 1, 1); } }
+function rect(x, y, w, h, c) { ctx.fillStyle = c; ctx.fillRect(Math.round(x), Math.round(y), Math.round(w), Math.round(h)); }
+
+// ================= background drawing =================
+function drawSky(P) {
+  const g = ctx.createLinearGradient(0, 0, 0, GY); g.addColorStop(0, css(P.skyT)); g.addColorStop(1, css(P.skyB));
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, WY);
+  const na = S.darkness;
+  if (na > 0.05) for (const st of S.bg.stars) {
+    const a = na * (0.35 + 0.65 * st.b) * (0.7 + 0.3 * Math.sin(S.t * 2 + st.x));
+    ctx.fillStyle = `rgba(255,240,215,${a.toFixed(3)})`; ctx.fillRect(Math.round(mod(st.x - S.cam * 0.02, W)), Math.round(st.y), 1, 1);
+  }
+  // sun / moon
+  const p = S.phase, k = S.pk;
+  if (p === 'day' || p === 'dusk' || p === 'dawn') {
+    let u = p === 'day' ? 0.1 + k * 0.75 : p === 'dusk' ? 0.85 + k * 0.15 : k * 0.1;
+    if (S.clock < 0) u = 0.1;
+    const x = 30 + u * (W - 60), y = 175 - Math.sin(u * Math.PI) * 120 + (p === 'dusk' ? k * 30 : p === 'dawn' ? (1 - k) * 30 : 0);
+    const gl = ctx.createRadialGradient(x, y, 2, x, y, 40); gl.addColorStop(0, 'rgba(255,230,170,0.5)'); gl.addColorStop(1, 'rgba(255,230,170,0)');
+    ctx.fillStyle = gl; ctx.fillRect(x - 40, y - 40, 80, 80); disc(x, y, 8, '#fff0c2');
+  }
+  if (p === 'night' || (p === 'dusk' && k > 0.5) || (p === 'dawn' && k < 0.5)) {
+    const u = p === 'night' ? k : p === 'dusk' ? 0 : 1;
+    const x = 40 + u * (W - 80), y = 150 - Math.sin(0.15 + u * 2.8) * 110;
+    const col = S.eclipse ? '#b3281f' : '#ece8f4';
+    const gl = ctx.createRadialGradient(x, y, 2, x, y, 34); gl.addColorStop(0, S.eclipse ? 'rgba(200,40,30,0.5)' : 'rgba(210,215,255,0.35)'); gl.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = gl; ctx.fillRect(x - 34, y - 34, 68, 68); disc(x, y, 7, col);
+    if (S.eclipse) disc(x + 3, y - 1, 6, '#2a0508'); else disc(x + 4, y - 2, 2, '#cfcadb');
+  }
+}
+function drawFar(P) {
+  const off = S.cam * 0.1, fc = css(P.far), sc = css(P.snow);
+  for (let sx = 0; sx < W; sx += 2) {
+    const i = mod(Math.floor((sx + off) / 2), 600), h = S.bg.far[i];
+    rect(sx, GY - 34 - h, 2, h + 34, fc); if (h > 38) rect(sx, GY - 34 - h, 2, 2 + ((h - 38) / 4 | 0), sc);
+  }
+  const off2 = S.cam * 0.28, mc = css(P.mid);
+  for (let sx = 0; sx < W; sx += 2) { const i = mod(Math.floor((sx + off2) / 2), 600); const h = S.bg.mid[i]; rect(sx, GY - 6 - h, 2, h + 6, mc); }
+  for (const t of S.bg.temples) {
+    const sx = mod(t.x - off2, 1200) - 100; if (sx < -40 || sx > W + 40) continue;
+    const i = mod(Math.floor((sx + off2) / 2), 600), base = GY - 6 - S.bg.mid[i] + 2, s = t.s;
+    for (let k = 0; k < 7; k++) { const w = Math.round((14 - k * 1.7) * s), hh = Math.round(4 * s); rect(sx - w / 2, base - (k + 1) * hh, w, hh, mc); }
+    rect(sx - 2 * s, base - 7 * 4 * s - 3, 4 * s, 3, mc); rect(sx, base - 7 * 4 * s - 7, 1, 4, mc);
+    rect(sx - 10 * s, base - 8 * s, 6 * s, 8 * s, mc); rect(sx + 4 * s, base - 8 * s, 6 * s, 8 * s, mc);
+  }
+}
+function drawPalm(sx, base, s, col) {
+  const h = Math.round(46 * s), lean = 6 * s;
+  for (let i = 0; i < h; i++) rect(sx + Math.sin(i / h * 1.3) * lean, base - i, 2, 1, col);
+  const tx = sx + Math.sin(1.3) * lean, ty = base - h;
+  for (let f = 0; f < 7; f++) { const a = -Math.PI + f * (Math.PI / 6); const len = 16 * s; for (let j = 0; j < len; j++) rect(tx + Math.cos(a) * j, ty + Math.sin(a) * j * 0.5 + j * j * 0.035, 2, 1, col); }
+}
+function drawBanyan(sx, base, s, col) {
+  rect(sx - 3 * s, base - 22 * s, 6 * s, 22 * s, col);
+  disc(sx, base - 30 * s, Math.round(14 * s), col); disc(sx - 14 * s, base - 24 * s, Math.round(10 * s), col); disc(sx + 15 * s, base - 25 * s, Math.round(11 * s), col);
+  for (let r = -2; r <= 2; r++) rect(sx + r * 7 * s, base - 20 * s, 1, 20 * s, col);
+}
+function drawTrees(P) {
+  const tc = css(P.tree);
+  for (const t of S.bg.trees) { const sx = mod(t.x - S.cam * 0.55, 1600) - 200; if (sx < -50 || sx > W + 50) continue; if (t.t === 'palm') drawPalm(sx, GY, t.s * 0.9, tc); else drawBanyan(sx, GY, t.s * 0.8, tc); }
+  const nc = css(mixA(P.tree, [0, 0, 0], 0.3));
+  for (const t of S.bg.near) { const sx = mod(t.x - S.cam * 0.82, 2400) - 300; if (sx < -60 || sx > W + 60) continue; if (t.t === 'palm') drawPalm(sx, GY, t.s, nc); else drawBanyan(sx, GY, t.s, nc); }
+  // the world's edge: dense forest
+  for (const e of [-1, 1]) {
+    const ex = X(e * S.C.half); if (ex < -80 || ex > W + 80) continue;
+    for (let i = 0; i < 6; i++) drawBanyan(ex + e * (20 + i * 22), GY, 1.1 + hash(i + e) * 0.4, nc);
+    if (S.ci === 3 && e < 0) { rect(ex - 200, GY - 120, 200, 120, css(mixA(P.far, [0, 0, 0], 0.4))); }
+  }
+}
+function drawGround(P) {
+  rect(0, GY, W, WY - GY, css(P.ground));
+  const gc = css(P.grass); rect(0, GY - 1, W, 2, gc);
+  const x0 = Math.floor((S.cam - W / 2) / 4) * 4;
+  for (let wx = x0; wx < S.cam + W / 2 + 4; wx += 4) {
+    if (Math.abs(wx) < 150) continue; const hh = hash(wx);
+    if (hh > 0.5) rect(X(wx), GY - 1 - Math.floor((hh - 0.5) * 8), 1, Math.floor((hh - 0.5) * 8) + 1, gc);
+    if (hh < 0.08) rect(X(wx), GY + 3, 2, 1, css(mixA(P.ground, [0, 0, 0], 0.3)));
+  }
+  // ghat steps around the fire
+  const sc = css(P.stone), sd = css(mixA(P.stone, [0, 0, 0], 0.35));
+  const a = X(-150), b = X(150);
+  if (b > 0 && a < W) {
+    rect(a, GY - 1, b - a, WY - GY + 1, sc);
+    for (let y = GY + 2; y < WY; y += 3) rect(a + (y - GY) * 1.5, y, b - a - (y - GY) * 3, 1, sd);
+    for (let wx = -150; wx < 150; wx += 12) rect(X(wx), GY, 1, 2, sd);
+  }
+}
+
+// ================= structure drawing =================
+function drawFlame(sx, by, size, t) {
+  const f = Math.sin(t * 13) * 0.5 + Math.sin(t * 7.3) * 0.5;
+  const h1 = Math.round(size * 1.6 + f), h2 = Math.round(size * 1.1 - f * 0.6), h3 = Math.round(size * 0.6);
+  rect(sx - size / 2, by - h1, size, h1, '#c8352a');
+  rect(sx - size / 2 + 1, by - h2 - 1, size - 2, h2, '#f08a2a');
+  rect(sx - 1, by - h3 - 1, 2, h3, '#ffe27a');
+}
+function drawStruct(s, P) {
+  const sx = X(s.x); if (sx < -60 || sx > W + 60) return;
+  const r = F(sx, 1), t = S.t;
+  switch (s.type) {
+    case 'wall': {
+      if (s.level === 0) {
+        if (s.ruined) { r(-6, -2, 4, 2, C_.stoneD); r(-1, -3, 5, 3, C_.stone); r(4, -2, 3, 2, C_.woodD); }
+        else { r(0, -9, 1, 9, C_.woodD); r(1, -9, 4, 2 + (Math.sin(t * 4 + s.x) > 0 ? 1 : 0), C_.saff); r(-2, -1, 5, 1, C_.stoneD); }
+      } else if (s.level === 1) {
+        for (let i = 0; i < 5; i++) { const hh = 13 + ((i * 7 + s.x) % 3); r(-6 + i * 3, -hh, 2, hh, i % 2 ? C_.wood : '#8a5a30'); r(-6 + i * 3, -hh - 1, 1, 1, C_.wood); }
+        r(-7, -9, 16, 1, C_.woodD); r(-7, -4, 16, 1, C_.woodD);
+      } else if (s.level === 2) {
+        r(-6, -20, 13, 20, C_.stone); for (let y = 4; y < 20; y += 4) { r(-6, -y, 13, 1, C_.stoneD); r(-3 + (y % 8 ? 3 : 0), -y - 3, 1, 3, C_.stoneD); }
+        r(-6, -23, 3, 3, C_.stone); r(-1, -23, 3, 3, C_.stone); r(4, -23, 3, 3, C_.stone);
+      } else {
+        r(-8, -28, 17, 28, C_.sand); for (let y = 6; y < 28; y += 6) r(-8, -y, 17, 1, C_.sandD);
+        r(-2, -15, 5, 8, C_.sandD); r(-1, -16, 3, 1, C_.sandD);
+        for (let i = 0; i < 4; i++) r(-8 + i * 5, -31, 3, 3, C_.sand);
+        r(0, -40, 1, 9, C_.woodD); r(1, -40, 6, 2, C_.saff); r(1, -38, 4 + (Math.sin(t * 5 + s.x) > 0 ? 1 : 0), 2, C_.saff);
+      }
+      if (s.level > 0 && s.hp < s.max * 0.5) { r(-3, -8, 1, 3, '#2a1d14'); r(2, -12, 1, 4, '#2a1d14'); r(-1, -5, 2, 1, '#2a1d14'); }
+      if (s.level > 0 && s.hp < s.max) { rect(sx - 8, GY - 36 - s.level * 3, 16, 2, 'rgba(0,0,0,.6)'); rect(sx - 8, GY - 36 - s.level * 3, Math.round(16 * s.hp / s.max), 2, s.hp < s.max * 0.35 ? '#e04a3a' : '#7fd07a'); }
+      break;
+    }
+    case 'altar': {
+      if (s.level >= 3) {
+        for (let k = 0; k < 8; k++) { const w = 24 - k * 2.5; r(-w / 2, -14 - k * 4 - 4, w, 4, k % 2 ? C_.sand : '#d6b07a'); }
+        r(-5, -50, 10, 2, C_.sandD); r(-1, -54, 2, 4, C_.gold); r(0, -62, 1, 8, C_.woodD); r(1, -62, 6, 3, C_.saff);
+        r(-4, -16, 8, 12, '#2a1a14');
+      }
+      if (s.level >= 2) {
+        r(-14, -4, 28, 4, C_.stone); r(-14, -4, 28, 1, '#a9a3b0');
+        r(-12, -16, 1, 12, C_.woodD); r(11, -16, 1, 12, C_.woodD); r(-12, -16, 24, 1, C_.woodD);
+        r(-11, -15, 2, 3, C_.bronze); r(9, -15, 2, 3, C_.bronze);
+        r(-4, -8, 8, 3, C_.bronze); r(-1, -5, 2, 1, C_.bronze);
+        drawFlame(sx, GY - 8, 6, t);
+      } else {
+        r(-7, -2, 3, 2, C_.stoneD); r(-3, -2, 2, 2, C_.stone); r(2, -2, 3, 2, C_.stoneD); r(5, -2, 2, 2, C_.stone);
+        r(-4, -3, 8, 1, C_.woodD);
+        drawFlame(sx, GY - 2, 6, t);
+      }
+      if (s.job) drawScaffold(sx, s.level >= 2 ? 50 : 22, s.job);
+      break;
+    }
+    case 'shop': {
+      r(-7, -15, 1, 15, C_.woodD); r(7, -15, 1, 15, C_.woodD); r(-8, -16, 17, 2, C_.wood);
+      const flag = { bow: C_.teal, hammer: C_.saff, scythe: '#d8b25a', shield: C_.steel }[s.tool];
+      r(-6, -14, 13, 3, flag);
+      for (let i = 0; i < s.stock; i++) {
+        const x = -5 + i * 3;
+        if (s.tool === 'bow') { r(x, -10, 1, 7, C_.wood); r(x + 1, -11, 1, 1, C_.wood); r(x + 1, -3, 1, 1, C_.wood); }
+        else if (s.tool === 'hammer') { r(x + 1, -10, 1, 6, C_.wood); r(x, -10, 3, 2, '#8a8a92'); }
+        else if (s.tool === 'scythe') { r(x + 1, -10, 1, 7, C_.wood); r(x - 1, -10, 3, 1, '#cfd2d8'); }
+        else { r(x, -9, 3, 4, C_.bronze); r(x + 1, -8, 1, 1, C_.gold); }
+      }
+      break;
+    }
+    case 'farm': {
+      if (!s.built) { r(-20, -1, 40, 1, '#5a4532'); for (let i = -18; i <= 18; i += 9) r(i, -3, 1, 3, C_.woodD); if (s.job) drawScaffold(sx, 10, s.job); }
+      else {
+        for (let i = -20; i <= 20; i += 3) { const sw = Math.round(Math.sin(t * 2 + i * 0.4) * 0.6); const hh = 4 + ((i * 13) & 3); r(i + sw, -hh, 1, hh, i % 2 ? '#7aa04a' : '#c9a743'); if (hh > 5) r(i + sw, -hh - 1, 1, 1, '#e3c25a'); }
+        r(0, -14, 1, 14, C_.woodD); r(-3, -11, 7, 1, C_.woodD); r(-1, -16, 3, 2, '#d8b25a'); r(-1, -12, 3, 4, C_.verm);
+      }
+      break;
+    }
+    case 'lamp': {
+      r(-1, -16, 3, 16, C_.stone); r(-2, -2, 5, 2, C_.stoneD); r(-2, -17, 5, 1, C_.bronze);
+      if (s.lit) { drawFlame(sx + 1, GY - 17, 3, t + s.x); r(-3, -12, 1, 1, C_.saff); r(3, -12, 1, 1, C_.saff); r(-2, -11, 1, 1, '#f2c14e'); r(2, -11, 1, 1, '#f2c14e'); }
+      if (s.job) drawScaffold(sx, 18, s.job);
+      break;
+    }
+    case 'camp': {
+      for (let i = 0; i < 10; i++) r(-i - 2, -10 + i, i * 2 + 3, 1, i % 3 === 0 ? '#8a6d4c' : '#6d5a44');
+      r(-1, -6, 2, 6, '#1e140c'); r(-8, -4, 3, 2, '#9a3a2a');
+      r(12, -2, 4, 1, C_.woodD); drawFlame(sx + 14, GY - 2, 3, t + 3);
+      break;
+    }
+    case 'chest': {
+      if (!s.open) { r(-5, -6, 10, 6, '#6b3d1e'); r(-5, -4, 10, 1, C_.gold); r(-1, -5, 2, 2, C_.gold); r(-5, -7, 10, 1, '#53301a'); }
+      else { r(-5, -5, 10, 5, '#53301a'); r(-5, -9, 10, 2, '#6b3d1e'); r(-5, -7, 1, 2, '#6b3d1e'); }
+      break;
+    }
+    case 'shrine': {
+      r(-8, -3, 16, 3, C_.stoneD); r(-6, -16, 12, 13, C_.stone); r(-7, -18, 14, 2, C_.stoneD);
+      r(-4, -21, 8, 3, C_.stone); r(-2, -24, 4, 3, C_.stone); r(-1, -26, 2, 2, s.done ? C_.gold : C_.stoneD);
+      r(-2, -12, 4, 7, '#1a1214');
+      if (s.done) { r(-1, -9, 2, 3, '#ffd36b'); for (let i = -6; i <= 5; i += 2) r(i, -17 + (Math.abs(i) < 3 ? 1 : 0), 1, 1, C_.saff); }
+      else if (Math.sin(t * 3) > 0.6) r(0, -9, 1, 1, '#ffd36b');
+      break;
+    }
+    case 'stable': {
+      r(-16, -18, 32, 18, C_.wood); r(-18, -21, 36, 3, '#7a3b22'); r(-14, -14, 10, 14, '#1e140c');
+      for (let i = -16; i < 16; i += 4) r(i, -18, 1, 18, C_.woodD);
+      r(-12, -12, 6, 6, '#7d7a86'); r(-13, -9, 2, 5, '#7d7a86'); r(-10, -11, 1, 1, '#111');
+      break;
+    }
+    case 'conch': {
+      r(-1, -10, 2, 10, C_.woodD); r(-4, -10, 8, 1, C_.wood);
+      r(-3, -15, 6, 5, '#f2ebdc'); r(3, -14, 2, 3, '#f2ebdc'); r(-4, -13, 1, 2, '#e6d6c0'); r(-1, -14, 2, 1, '#d8b9a0');
+      r(6, -22, 1, 22, C_.woodD); r(7, -22, 5, 8, C_.verm); r(7, -16, 5, 1, C_.gold);
+      break;
+    }
+    case 'rift': {
+      if (!s.alive) { r(-3, -20, 6, 20, '#2a1238'); r(-1, -26, 2, 6, '#3c1c50'); break; }
+      for (let dy = 0; dy < 64; dy++) {
+        const u = (dy - 32) / 32; const w = Math.max(0, Math.round(12 * Math.sqrt(1 - u * u) * (1 + 0.18 * Math.sin(t * 3 + dy * 0.25))));
+        rect(sx - w, GY - 2 - dy, w * 2 + 1, 1, '#14051f'); if (w > 0) { rect(sx - w - 1, GY - 2 - dy, 1, 1, '#c13cff'); rect(sx + w + 1, GY - 2 - dy, 1, 1, '#c13cff'); }
+      }
+      if (s.max && s.hp < s.max) { rect(sx - 15, GY - 74, 30, 2, 'rgba(0,0,0,.7)'); rect(sx - 15, GY - 74, Math.round(30 * Math.max(0, s.hp) / s.max), 2, '#c13cff'); }
+      break;
+    }
+  }
+  if (s.type === 'wall' && s.job) drawScaffold(sx, 16 + s.level * 8, s.job);
+}
+function drawScaffold(sx, h, job) {
+  rect(sx - 8, GY - h, 1, h, C_.woodD); rect(sx + 8, GY - h, 1, h, C_.woodD);
+  for (let y = GY - h; y < GY; y += 6) rect(sx - 8, y, 17, 1, C_.woodD);
+  rect(sx - 8, GY - h - 4, 17, 2, 'rgba(0,0,0,.6)'); rect(sx - 8, GY - h - 4, Math.round(17 * job.prog / job.time), 2, '#ffcf6b');
+}
+function drawBoat(s) {
+  const sx = X(s.x); if (sx < -80 || sx > W + 80) return;
+  const dir = sgn(s.x) || 1, bx = sx + dir * 24, n = s.costs.length, f = s.stage / n, bob = Math.round(Math.sin(S.t * 1.5));
+  // pier
+  for (let i = 0; i < 4; i++) rect(sx + dir * (i * 6) - 1, GY, 2, WY - GY + 8, C_.woodD);
+  rect(Math.min(sx, sx + dir * 22) - 2, GY - 1, 26, 2, C_.wood);
+  const y = WY + 2 + bob;
+  if (f === 0) { rect(bx - 12, y, 10, 2, C_.woodD); rect(bx + 2, y + 1, 9, 2, C_.woodD); rect(bx - 2, y - 3, 2, 4, C_.woodD); return; }
+  if (f < 0.5) { for (let i = -12; i <= 12; i += 4) rect(bx + i, y - 4, 1, 5, C_.wood); rect(bx - 14, y + 1, 28, 2, C_.woodD); return; }
+  rect(bx - 16, y - 3, 32, 4, C_.wood); rect(bx - 14, y + 1, 28, 2, C_.woodD); rect(bx - 18, y - 6, 3, 4, C_.wood); rect(bx + 15, y - 6, 3, 4, C_.wood);
+  rect(bx - 16, y - 3, 32, 1, C_.gold);
+  if (f >= 0.75) { rect(bx, y - 30, 1, 27, C_.woodD); rect(bx + 1, y - 28, 10, 16, s.stage >= n ? C_.saff : '#b9ad96'); if (s.stage >= n) rect(bx + 4, y - 24, 4, 4, C_.verm); }
+}
+
+// ================= unit drawing =================
+function drawMonarch() {
+  const m = S.m, sx = X(m.x), f = m.face, r = F(sx, f), moving = Math.abs(m.vx) > 5, ph = m.anim;
+  if (m.inv > 0 && Math.floor(m.inv * 12) % 2) return;
+  const legs = (xs, top, len, col, amp) => xs.forEach((dx, i) => { const off = moving ? Math.round(Math.sin(ph * 6 + i * 1.7) * amp) : 0; r(dx + off, top, i % 2 ? 2 : 1, len, col); });
+  let ry;
+  if (m.mount === 'elephant') {
+    const bob = moving ? Math.round(Math.sin(ph * 4) * 0.8) : 0, E = '#8e8a95', Ed = '#6c6874';
+    legs([-9, -5, 3, 7], -8, 8, Ed, m.gallop ? 2 : 1);
+    r(-11, -19 + bob, 21, 11, E); r(-10, -9 + bob, 19, 1, Ed); r(-12, -17 + bob, 1, 6, Ed);
+    r(8, -21 + bob, 7, 10, E); r(6, -19 + bob, 4, 7, Ed);
+    const sw = Math.round(Math.sin(S.t * 2.2)); r(14, -14 + bob, 2, 6, E); r(15 + sw, -9 + bob, 2, 3, E); r(16 + sw, -7 + bob, 1, 2, E);
+    r(13, -13 + bob, 3, 1, '#f0ead8'); r(11, -18 + bob, 1, 1, '#111'); r(9, -22 + bob, 5, 1, C_.gold);
+    r(-8, -22 + bob, 14, 6, C_.verm); r(-8, -17 + bob, 14, 1, C_.gold); for (let i = -8; i < 6; i += 3) r(i, -16 + bob, 1, 2, C_.gold);
+    ry = -32 + bob;
+  } else {
+    const bob = moving ? Math.round(Math.sin(ph * 6) * (m.gallop ? 1.5 : 0.7)) : 0, HB = '#e6ddcb', HS = '#b5a990', MN = '#5a4636';
+    legs([-6, -4, 3, 5], -6, 6, HS, m.gallop ? 2.5 : 1.5);
+    r(-7, -11 + bob, 13, 5, HB); r(-6, -7 + bob, 11, 1, HS); r(5, -12 + bob, 2, 5, HB); r(6, -15 + bob, 3, 5, HB);
+    r(7, -17 + bob, 5, 3, HB); r(11, -16 + bob, 2, 2, HS); r(8, -18 + bob, 1, 1, HB); r(9, -16 + bob, 1, 1, '#222');
+    r(6, -17 + bob, 1, 5, MN); const tw = moving ? Math.round(Math.sin(ph * 6)) : 0; r(-9, -11 + bob, 2, 1, MN); r(-10 + tw, -10 + bob, 1, 5, MN);
+    r(-5, -12 + bob, 8, 3, C_.verm); r(-5, -10 + bob, 8, 1, C_.gold);
+    ry = -23 + bob;
+  }
+  // rider (ry = top of saddle line offset)
+  const y = ry;
+  r(0, y + 11, 2, 4, C_.saffD);
+  r(-1, y + 5, 4, 7, C_.saff); r(-1, y + 8, 4, 1, C_.gold); r(2, y + 6, 1, 4, C_.skin);
+  const cape = m.gallop ? 2 : moving ? 1 : 0; r(-3 - cape, y + 5, 2 + cape, 7 - (cape ? 1 : 0), C_.verm);
+  r(0, y + 1, 3, 4, C_.skin); r(-1, y + 1, 1, 3, C_.hair); r(2, y + 2, 1, 1, '#2a1a1a');
+  if (m.crown) { r(-1, y - 1, 5, 2, C_.gold); r(-1, y - 2, 1, 1, C_.gold); r(1, y - 2, 1, 1, C_.gold); r(3, y - 2, 1, 1, C_.gold); r(1, y - 1, 1, 1, C_.verm); }
+  r(3, y + 1, 1, 6, C_.woodD); r(4, y + 1, 2, 1, C_.woodD); r(5, y + 2, 1, 1, '#3a2a1a'); r(5, y + 3, 3, 3, '#ffcf6b');
+  S.lanternPos = { x: f > 0 ? sx + 6 : sx - 6, y: GY + y + 4 };
+}
+const ROLECOL = {
+  vagrant: ['#6e5d4b', '#54463a', null], peasant: ['#ddd2b8', '#b8ad96', null], archer: [C_.teal, C_.tealD, C_.saff],
+  builder: ['#c4672f', '#8e4a22', '#e9d9b8'], farmer: ['#b4a36b', '#857845', null], knight: [C_.steel, '#6f7482', C_.verm],
+};
+function drawCit(c) {
+  const sx = X(c.x); if (sx < -20 || sx > W + 20) return;
+  const r = F(sx, c.face), [bc, bd, hc] = ROLECOL[c.role], step = c.moving ? Math.floor(c.anim * 8) % 2 : 0;
+  r(-1 - step, -3, 1, 3, bd); r(1 + step, -3, 1, 3, bd);
+  r(-2, -8, 4, 5, bc); r(-2, -4, 4, 1, bd);
+  r(-1, -11, 3, 3, C_.skin); r(-1, -11, 1, 2, C_.hair);
+  if (c.flash > 0) r(-2, -11, 4, 8, '#ffffff');
+  switch (c.role) {
+    case 'vagrant': r(-2, -12, 3, 1, '#4d4034'); r(-4, -10, 1, 6, C_.woodD); r(-5, -11, 3, 2, '#8a7458'); break;
+    case 'archer': r(-1, -12, 4, 2, hc); r(-2, -11, 1, 1, hc); r(3, -11, 1, 1, C_.wood); r(4, -10, 1, 6, C_.wood); r(3, -4, 1, 1, C_.wood); r(3, -10, 1, 6, 'rgba(230,230,230,0.5)'); r(-3, -9, 1, 4, C_.woodD); break;
+    case 'builder': r(-1, -12, 3, 1, hc); r(2, -8, 1, 4, C_.wood); r(c.working && Math.floor(c.anim * 6) % 2 ? 2 : 1, c.working && Math.floor(c.anim * 6) % 2 ? -7 : -9, 3, 2, '#8a8a92'); break;
+    case 'farmer': r(-3, -12, 7, 1, '#d8b25a'); r(-1, -13, 3, 1, '#d8b25a'); r(3, -12, 1, 10, C_.wood); r(1, -12, 3, 1, '#cfd2d8'); break;
+    case 'knight': r(-1, -12, 4, 2, '#8d93a3'); r(0, -14, 1, 2, hc); r(c.swing > 0 ? 4 : 3, c.swing > 0 ? -9 : -14, 1, c.swing > 0 ? 1 : 12, C_.wood); if (c.swing > 0) r(4, -9, 6, 1, C_.wood); r(-4, -9, 3, 6, C_.bronze); r(-3, -7, 1, 1, C_.gold); break;
+    case 'peasant': r(-1, -12, 3, 1, '#efe6d2'); break;
+  }
+}
+function drawHollow(h) {
+  const sx = X(h.x); if (sx < -40 || sx > W + 40) return;
+  const r = F(sx + (h.lunge > 0 ? h.face * 2 : 0), h.face || 1), w = Math.sin(h.anim * 10) > 0 ? 1 : 0, fl = h.flash > 0;
+  const B = fl ? '#ffffff' : C_.hol, M = fl ? '#ffffff' : C_.mask;
+  if (h.type === 'small') {
+    r(-3, -9, 6, 8, B); r(-3 + w, -1, 1, 1, B); r(-1 - w, -1, 1, 1, B); r(1 + w, -1, 1, 1, B);
+    r(3, -7 + w, 2, 1, B); r(-3, -13, 6, 5, M); r(-3, -11, 1, 1, C_.verm); r(-1, -12, 1, 1, '#120a0a'); r(1, -12, 1, 1, '#120a0a'); r(-1, -10, 3, 1, '#3a2a28');
+    h.eyes = [[1, -12], [-1, -12]];
+    if (h.loot) rect(sx - 1, GY - 17, 3, 3, C_.gold);
+  } else if (h.type === 'brute') {
+    r(-6, -18, 12, 17, B); for (let i = -6; i < 6; i += 2) r(i + w, -1, 1, 1, B);
+    r(6, -14 + w, 3, 2, B); r(-8, -13 - w, 2, 2, B);
+    r(-5, -25, 10, 8, M); r(-6, -28, 2, 4, M); r(5, -28, 2, 4, M); r(-5, -22, 10, 1, C_.verm);
+    r(-3, -23, 2, 1, '#120a0a'); r(2, -23, 2, 1, '#120a0a'); r(-2, -19, 5, 1, '#3a2a28');
+    h.eyes = [[-3, -23], [2, -23]];
+    if (h.loot) rect(sx - 2, GY - 32, 4, 3, C_.gold);
+  } else {
+    const ww = Math.sin(h.anim * 4);
+    r(-10, -36, 20, 35, B); for (let i = -10; i < 10; i += 3) r(i + (ww > 0 ? 1 : 0), -1, 2, 1, B);
+    r(-12, -30, 2, 14, B); r(10, -28, 3, 12, B);
+    r(-7, -46, 7, 11, M); r(0, -46, 7, 11, fl ? '#fff' : C_.gold);
+    r(-5, -42, 3, 1, '#120a0a'); r(2, -42, 3, 1, '#120a0a'); r(-3, -38, 6, 1, '#3a2a28'); r(0, -46, 1, 11, '#120a0a');
+    h.eyes = [[-5, -42], [2, -42], [-4, -42], [3, -42]];
+    for (let i = -7; i <= 6; i += 2) { const fh = 3 + Math.round(Math.abs(Math.sin(S.t * 6 + i)) * 4); r(i, -47 - fh, 2, fh, '#1b0628'); }
+    rect(sx - 20, GY - 66, 40, 3, 'rgba(0,0,0,.7)'); rect(sx - 20, GY - 66, Math.round(40 * Math.max(0, h.hp) / h.max), 3, '#c13cff');
+  }
+  if (h.crown) { rect(sx - 2, GY - (h.type === 'small' ? 17 : 32), 5, 2, C_.gold); rect(sx - 2, GY - (h.type === 'small' ? 18 : 33), 1, 1, C_.gold); rect(sx + 2, GY - (h.type === 'small' ? 18 : 33), 1, 1, C_.gold); }
+}
+function drawRabbit(rb) {
+  const sx = X(rb.x); if (sx < -10 || sx > W + 10) return;
+  const r = F(sx, rb.face), y = rb.hop > 0 ? -Math.round(Math.sin((0.32 - rb.hop) / 0.32 * Math.PI) * 4) : 0;
+  r(-2, -3 + y, 4, 3, '#cfc4b4'); r(1, -4 + y, 2, 2, '#cfc4b4'); r(2, -6 + y, 1, 2, '#cfc4b4'); r(-3, -3 + y, 1, 1, '#fff');
+}
+
+// ================= render =================
+function render() {
+  const P = palNow();
+  drawSky(P); drawFar(P); drawTrees(P); drawGround(P);
+  for (const s of S.st) if (s.type !== 'rift') drawStruct(s, P);
+  for (const s of S.st) if (s.type === 'rift') drawStruct(s, P);
+  for (const rb of S.rabbits) drawRabbit(rb);
+  for (const c of S.cits) drawCit(c);
+  for (const k of S.coins) { const sx = X(k.x); if (sx > -4 && sx < W + 4) { rect(sx - 1, k.y - 1, 3, 3, C_.gold); rect(sx - 1, k.y + 1, 3, 1, C_.goldD); if (Math.sin(S.t * 6 + k.x) > 0.8) rect(sx, k.y - 1, 1, 1, '#fff6c8'); } }
+  if (!S.preview) drawMonarch();
+  for (const h of S.hol) drawHollow(h);
+  for (const a of S.arrows) {
+    const u = a.t / a.T, x = lerp(a.x0, a.x1, u), y = lerp(a.y0, a.y1, u) - Math.sin(u * Math.PI) * a.arc;
+    const u2 = Math.min(1, u + 0.05), x2 = lerp(a.x0, a.x1, u2), y2 = lerp(a.y0, a.y1, u2) - Math.sin(u2 * Math.PI) * a.arc;
+    const dx = x2 - x, dy = y2 - y, L = Math.hypot(dx, dy) || 1;
+    for (let i = 0; i < 5; i++) rect(X(x) - dx / L * i, y - dy / L * i, 1, 1, i === 0 ? '#ddd' : '#8a5a30');
+  }
+  for (const p of S.parts) if (!p.glow) { ctx.fillStyle = p.col; ctx.globalAlpha = clamp(p.life / p.max, 0, 1); ctx.fillRect(Math.round(X(p.x)), Math.round(p.y), p.sz, p.sz); }
+  ctx.globalAlpha = 1;
+  // reflection
+  rctx.clearRect(0, 0, W, H); rctx.drawImage(cv, 0, 0);
+  for (let i = 0; i < H - WY; i++) {
+    const sy = WY - 1 - Math.floor(i * 1.05); if (sy < 0) break;
+    const off = Math.sin(S.t * 1.7 + i * 0.37) * (0.5 + i * 0.045);
+    ctx.drawImage(refl, 0, sy, W, 1, off, WY + i, W, 1);
+  }
+  ctx.fillStyle = rgba(P.water, 0.55); ctx.fillRect(0, WY, W, H - WY);
+  ctx.fillStyle = 'rgba(255,255,255,0.12)'; ctx.fillRect(0, WY, W, 1);
+  for (let i = 0; i < 14; i++) { const wx = mod(i * 97 - S.cam * 1.0 + Math.sin(S.t * 0.6 + i) * 10, W + 40) - 20; const y = WY + 4 + (i * 17) % (H - WY - 6); ctx.fillStyle = 'rgba(255,255,255,0.08)'; ctx.fillRect(Math.round(wx), y, 6 + (i % 3) * 4, 1); }
+  for (const s of S.st) if (s.type === 'dock') drawBoat(s);
+  // darkness
+  const lights = [];
+  const al = altar(); lights.push({ x: X(al.x), y: GY - 12, r: 70 + al.level * 18, s: 1 });
+  for (const s of S.st) {
+    if (s.type === 'lamp' && s.lit) lights.push({ x: X(s.x), y: GY - 18, r: 58, s: 0.95 });
+    if (s.type === 'camp') lights.push({ x: X(s.x + 14), y: GY - 4, r: 30, s: 0.7 });
+    if (s.type === 'shrine' && s.done) lights.push({ x: X(s.x), y: GY - 10, r: 34, s: 0.7 });
+    if (s.type === 'rift' && s.alive) lights.push({ x: X(s.x), y: GY - 30, r: 50, s: 0.5 });
+  }
+  if (!S.preview && S.lanternPos) lights.push({ x: S.lanternPos.x, y: S.lanternPos.y, r: 46, s: 0.9 });
+  const dk = S.darkness * 0.72;
+  if (dk > 0.01) {
+    dctx.globalCompositeOperation = 'source-over'; dctx.clearRect(0, 0, W, H);
+    dctx.fillStyle = S.eclipse ? `rgba(28,3,8,${dk})` : `rgba(4,6,22,${dk})`; dctx.fillRect(0, 0, W, H);
+    dctx.globalCompositeOperation = 'destination-out';
+    for (const L of lights) {
+      if (L.x < -L.r || L.x > W + L.r) continue;
+      for (const [ly, ls] of [[L.y, L.s], [2 * WY - L.y, L.s * 0.45]]) {
+        const g = dctx.createRadialGradient(L.x, ly, 0, L.x, ly, L.r); g.addColorStop(0, `rgba(0,0,0,${ls})`); g.addColorStop(1, 'rgba(0,0,0,0)');
+        dctx.fillStyle = g; dctx.fillRect(L.x - L.r, ly - L.r, L.r * 2, L.r * 2);
+      }
+    }
+    ctx.drawImage(dark, 0, 0);
+  }
+  // glow pass
+  ctx.globalCompositeOperation = 'lighter';
+  const ga = 0.12 + S.darkness * 0.25;
+  for (const L of lights) {
+    if (L.x < -L.r || L.x > W + L.r) continue;
+    const g = ctx.createRadialGradient(L.x, L.y, 0, L.x, L.y, L.r * 0.6); g.addColorStop(0, `rgba(255,150,60,${ga * L.s})`); g.addColorStop(1, 'rgba(255,150,60,0)');
+    ctx.fillStyle = g; ctx.fillRect(L.x - L.r, L.y - L.r, L.r * 2, L.r * 2);
+  }
+  for (const p of S.parts) if (p.glow) { ctx.fillStyle = p.col; ctx.globalAlpha = clamp(p.life / p.max, 0, 1); ctx.fillRect(Math.round(X(p.x)), Math.round(p.y), p.sz, p.sz); }
+  ctx.globalAlpha = 1;
+  for (const h of S.hol) if (h.eyes) {
+    const sx = X(h.x) + (h.lunge > 0 ? h.face * 2 : 0), f = h.face || 1;
+    for (const [dx, dy] of h.eyes) { const x = f > 0 ? sx + dx : sx - dx; ctx.fillStyle = h.type === 'boss' ? '#ffd27a' : '#ff3b2f'; ctx.fillRect(x, GY + dy, 1, 1); ctx.fillStyle = 'rgba(255,60,40,0.25)'; ctx.fillRect(x - 1, GY + dy - 1, 3, 3); }
+  }
+  if (!S.preview) {
+    const jx = X(S.m.x) - S.m.face * 8 + Math.sin(S.t * 2.1) * 7, jy = GY - 34 + Math.sin(S.t * 3.3) * 4 - (S.m.mount === 'elephant' ? 10 : 0);
+    const g = ctx.createRadialGradient(jx, jy, 0, jx, jy, 9); g.addColorStop(0, 'rgba(255,226,122,0.7)'); g.addColorStop(1, 'rgba(255,226,122,0)');
+    ctx.fillStyle = g; ctx.fillRect(jx - 9, jy - 9, 18, 18); ctx.fillStyle = '#fff6c0'; ctx.fillRect(Math.round(jx), Math.round(jy), 1, 1);
+  }
+  ctx.globalCompositeOperation = 'source-over';
+  if (S.eclipse && S.darkness > 0) { ctx.fillStyle = `rgba(120,10,20,${0.12 * S.darkness})`; ctx.fillRect(0, 0, W, H); }
+  // payment slots
+  if (!S.preview && S.near && mode === 'play') {
+    const info = payInfo(S.near);
+    if (info && info.ok && info.cost) {
+      const n = info.cost, sx = X(S.near.x), y = GY - slotHeight(S.near), w = n * 5 - 1;
+      for (let i = 0; i < n; i++) { const x = sx - Math.floor(w / 2) + i * 5; const filled = S.pay.target === S.near && i < S.pay.paid; rect(x, y, 4, 4, filled ? C_.gold : 'rgba(0,0,0,0.55)'); if (!filled) { rect(x, y, 4, 1, 'rgba(242,193,78,.7)'); rect(x, y + 3, 4, 1, 'rgba(242,193,78,.7)'); rect(x, y, 1, 4, 'rgba(242,193,78,.7)'); rect(x + 3, y, 1, 4, 'rgba(242,193,78,.7)'); } }
+    }
+    if (info && info.board && S.pay.boardT > 0) { const sx = X(S.near.x); rect(sx - 12, GY - 32, 24, 3, 'rgba(0,0,0,.6)'); rect(sx - 12, GY - 32, Math.round(24 * Math.min(1, S.pay.boardT / 1.1)), 3, C_.saff); }
+  }
+}
+function slotHeight(s) { return Math.max(baseSlot(s), S.m.mount === 'elephant' ? 46 : 36); }
+function baseSlot(s) {
+  switch (s.type) {
+    case 'wall': return [16, 22, 30, 38][s.level] + 6;
+    case 'altar': return s.level >= 3 ? 70 : s.level === 2 ? 30 : 24;
+    case 'shop': return 24; case 'shrine': return 34; case 'stable': return 30; case 'conch': return 30; case 'dock': return 20; case 'lamp': return 28; case 'farm': return 22;
+  }
+  return 24;
+}
+
+// ================= HUD =================
+const hud = { coins: -1, ch: '', obj: '', day: '', stam: -1, tip: '' };
+function showHud(on) { $('hud').hidden = !on; $('touch').hidden = !(on && isTouch); }
+function updateHud() {
+  const m = S.m;
+  if (hud.coins !== m.coins) { hud.coins = m.coins; $('hCoins').textContent = m.coins; }
+  const ch = `Chapter ${S.C.roman} · ${S.C.name}`; if (hud.ch !== ch) { hud.ch = ch; $('hCh').textContent = ch; }
+  let obj = '';
+  if (S.C.obj === 'ferry') { const d = S.st.find(s => s.type === 'dock'); obj = d.stage >= d.costs.length ? 'Board the ferry' : `Mend the ferry ${d.x > 0 ? 'east' : 'west'}: ${d.stage} of ${d.costs.length}`; }
+  else { const R = riftObj(); obj = S.boss ? 'Defeat the Hollow Crown' : R && R.alive ? (S.assault ? `Break the Rift: ${Math.max(0, Math.ceil(R.hp / R.max * 100))}%` : 'Raise an army, then sound the conch') : 'The Rift is broken'; }
+  if (hud.obj !== obj) { hud.obj = obj; $('hObj').textContent = obj; }
+  const ph = { day: 'Day', dusk: 'Dusk', night: 'Night', dawn: 'Dawn' }[S.phase];
+  const day = `${ph} ${S.phase === 'day' ? S.night + 1 : S.phase === 'dawn' ? S.night : S.night}${S.eclipse ? ' · Eclipse' : ''}`;
+  if (hud.day !== day) { hud.day = day; $('hDay').textContent = day; $('hDay').classList.toggle('ecl', S.eclipse); }
+  const st = Math.round(m.stam * 100); if (hud.stam !== st) { hud.stam = st; $('hStam').firstChild.style.width = st + '%'; $('hStam').classList.toggle('tired', m.tired); }
+  const mems = $('hMems').children; for (let i = 0; i < 4; i++) mems[i].classList.toggle('on', !!save.mem[i]);
+  const tip = $('tip');
+  if (S.near && mode === 'play') {
+    const info = payInfo(S.near);
+    const label = info.label + (info.cost ? ` · ${info.cost} gold` : '');
+    if (hud.tip !== label) { hud.tip = label; tip.textContent = label; tip.classList.toggle('no', !info.ok); }
+    tip.style.left = (X(S.near.x) / W * 100) + '%'; tip.style.top = ((GY - slotHeight(S.near) - 4) / H * 100) + '%'; tip.hidden = false;
+  } else if (!tip.hidden) { tip.hidden = true; hud.tip = ''; }
+}
+
+// ================= overlays =================
+const panels = ['pTitle', 'pStory', 'pPause', 'pOver', 'pChoice', 'pEnd'];
+function showPanel(id, cls) { const ov = $('ov'); ov.hidden = !id; ov.className = cls || 'dim'; panels.forEach(p => $(p).hidden = p !== id); }
+const Story = { q: [], i: 0, cb: null, full: '', shown: 0, typing: false };
+function runStory(lines, cb) {
+  Story.q = lines; Story.i = 0; Story.cb = cb || null; mode = 'story';
+  showPanel('pStory', 'story'); storyShow();
+}
+function storyShow() {
+  const L = Story.q[Story.i], box = $('sBox');
+  box.className = 'story-p' + (L.card ? ' card' : L.who === J ? ' jugnu' : (L.who === MEM || L.who === 'Blessing') ? ' mem' : (L.who === CROWN) ? ' foe' : '');
+  $('sWho').textContent = L.who || ''; $('sWho').hidden = !L.who;
+  Story.full = L.text; Story.shown = 0; Story.typing = !L.card; $('sText').textContent = L.card ? L.text : '';
+  $('sMore').hidden = !!L.card;
+  if (L.card) Story.cardT = 2.4;
+}
+function storyTick(dt) {
+  if (mode !== 'story') return;
+  const L = Story.q[Story.i];
+  if (L && L.card) { Story.cardT -= dt; if (Story.cardT <= 0) storyNext(); return; }
+  if (Story.typing) { Story.shown += dt * 52; $('sText').textContent = Story.full.slice(0, Math.floor(Story.shown)); if (Story.shown >= Story.full.length) { Story.typing = false; $('sText').textContent = Story.full; } }
+}
+function storyNext() {
+  if (mode !== 'story') return;
+  if (Story.typing) { Story.shown = Story.full.length; return; }
+  Story.i++;
+  if (Story.i >= Story.q.length) { mode = 'play'; showPanel(null); const cb = Story.cb; Story.cb = null; if (cb) cb(); }
+  else storyShow();
+}
+function showOver() {
+  mode = 'over';
+  const lines = ['A masked thing runs for the river with the crown held over its head like a prize.', 'The Hollow scatter into the dark, and your crown goes with them.', 'Jugnu flickers in your hand. "Again," says the little light. "We will do it again."'];
+  $('overText').textContent = lines[Math.floor(Math.random() * lines.length)];
+  showPanel('pOver');
+}
+function showChoice() {
+  mode = 'choice'; const all = save.mem.every(Boolean), n = save.mem.filter(Boolean).length;
+  $('cC').disabled = !all; $('cCsub').textContent = all ? 'You remember everything now. Keep the promise.' : `Recover every memory to remember this promise (${n} of 4 found).`;
+  showPanel('pChoice');
+}
+function chooseEnding(k) {
+  const E = ENDINGS[k]; if (!save.endings.includes(k)) save.endings.push(k); writeSave();
+  runStory(E.lines, () => {
+    mode = 'end'; $('endName').textContent = E.name;
+    $('endMeta').textContent = `Endings found: ${save.endings.length} of 3. Memories recovered: ${save.mem.filter(Boolean).length} of 4.` + (save.endings.length < 3 ? ' The river has other endings.' : ' You have found every ending.');
+    showPanel('pEnd');
+  });
+}
+function goTitle() {
+  mode = 'title'; showHud(false); newState(Math.min(save.ch, 3), true); S.clock = DAY + DUSK * 0.6;
+  $('bCont').hidden = !(save.started && save.ch > 0);
+  if (save.started && save.ch > 0 && save.ch < 4) $('bCont').textContent = `Continue · Chapter ${CH[save.ch].roman}`;
+  $('bNew').textContent = save.started ? 'Begin a new tale' : 'Begin the tale';
+  const n = save.mem.filter(Boolean).length;
+  $('titleMeta').textContent = save.started ? `Memories ${n} of 4 · Endings ${save.endings.length} of 3` : 'Four chapters · three endings · about an hour by the river';
+  showPanel('pTitle');
+}
+function newGame() {
+  const keep = { mem: save.mem, endings: save.endings, hints: save.hints };
+  save = Object.assign(defSave(), keep); save.started = false; writeSave(); startChapter(0);
+}
+
+// ================= input wiring =================
+addEventListener('keydown', e => {
+  const k = e.key.toLowerCase();
+  if (['arrowleft', 'arrowright', 'arrowdown', 'arrowup', ' '].includes(k)) e.preventDefault();
+  Snd.init();
+  if (mode === 'story' && (k === ' ' || k === 'enter')) { if (!e.repeat) storyNext(); return; }
+  if (k === 'escape' || k === 'p') { if (mode === 'play') { mode = 'pause'; showPanel('pPause'); } else if (mode === 'pause') resume(); return; }
+  if (k === 'm') { toggleMute(); return; }
+  keys[k] = true;
+});
+addEventListener('keyup', e => { keys[e.key.toLowerCase()] = false; });
+addEventListener('blur', () => { for (const k in keys) keys[k] = false; if (mode === 'play') { mode = 'pause'; showPanel('pPause'); } });
+document.addEventListener('visibilitychange', () => { if (document.hidden && mode === 'play') { mode = 'pause'; showPanel('pPause'); } });
+$('ov').addEventListener('pointerdown', e => { Snd.init(); if (mode === 'story' && !e.target.closest('button')) storyNext(); });
+function resume() { mode = 'play'; showPanel(null); $('bRestart').textContent = 'Restart this ghat'; }
+function toggleMute() { Snd.setMuted(!Snd.muted); $('bMute').textContent = 'Sound: ' + (Snd.muted ? 'off' : 'on'); }
+$('bNew').onclick = () => { Snd.init(); newGame(); };
+$('bCont').onclick = () => { Snd.init(); startChapter(Math.min(save.ch, 3)); };
+$('bResume').onclick = resume;
+$('bMute').onclick = toggleMute;
+$('bRestart').onclick = () => { const b = $('bRestart'); if (b.textContent !== 'Click again to restart') { b.textContent = 'Click again to restart'; return; } b.textContent = 'Restart this ghat'; startChapter(S.ci); };
+$('bTitle').onclick = goTitle; $('bTitle2').onclick = goTitle;
+$('bRetry').onclick = () => startChapter(S.ci);
+$('cA').onclick = () => chooseEnding('A'); $('cB').onclick = () => chooseEnding('B'); $('cC').onclick = () => { if (save.mem.every(Boolean)) chooseEnding('C'); };
+$('bAgain').onclick = newGame;
+$('bFinal').onclick = () => { save.ch = 3; writeSave(); startChapter(3); };
+const bindTouch = (id, key) => {
+  const el = $(id);
+  const on = e => { e.preventDefault(); Snd.init(); touch[key] = true; el.classList.add('on'); try { el.setPointerCapture(e.pointerId); } catch (_) { } };
+  const off = () => { touch[key] = false; el.classList.remove('on'); };
+  el.addEventListener('pointerdown', on); el.addEventListener('pointerup', off); el.addEventListener('pointercancel', off); el.addEventListener('lostpointercapture', off);
+};
+bindTouch('tL', 'left'); bindTouch('tR', 'right'); bindTouch('tG', 'gallop'); bindTouch('tP', 'pay');
+
+// ================= layout =================
+function fit() {
+  const vw = innerWidth, vh = innerHeight, s = Math.min(vw / W, vh / H);
+  const st = $('stage'); st.style.width = Math.floor(W * s) + 'px'; st.style.height = Math.floor(H * s) + 'px';
+  st.style.left = Math.floor((vw - W * s) / 2) + 'px'; st.style.top = Math.floor((vh - H * s) / 2) + 'px';
+  st.style.setProperty('--s', s.toFixed(2));
+  $('rotate').hidden = !(isTouch && vh > vw);
+}
+addEventListener('resize', fit); fit();
+
+// ================= main loop =================
+let last = performance.now();
+function frame(now) {
+  const dt = Math.min(0.05, (now - last) / 1000); last = now;
+  try {
+    if (mode === 'play') update(dt);
+    else if (mode === 'title') { S.t += dt; S.cam = Math.sin(S.t * 0.05) * 400; updateTime(); updateParts(dt); }
+    else if (mode === 'story') { S.t += dt; updateParts(dt); if (toastTimer > 0) { toastTimer -= dt; if (toastTimer <= 0) nextToast(); } }
+    storyTick(dt);
+    render();
+    if (mode !== 'title') updateHud();
+  } catch (err) { console.error(err); }
+  requestAnimationFrame(frame);
+}
+function start(data) {
+  if (data && data.save) { save = Object.assign(defSave(), data.save); hintsSeen = save.hints || {}; }
+  goTitle(); requestAnimationFrame(frame);
+}
+const hot = window.claude && window.claude.hot;
+if (hot && hot.snapshot) { try { hot.snapshot(() => ({ save })); } catch (e) { } }
+if (hot && hot.ready) hot.ready(start); else start(hot && hot.data ? hot.data : {});
+window.__ember = { get S() { return S; }, get mode() { return mode; }, save: () => save, keys, step(n, dt) { for (let i = 0; i < n; i++) if (mode === 'play') update(dt); render(); updateHud(); }, startChapter, mkCit, storyNext };
+})();
+</script>
+</body>
+</html>
