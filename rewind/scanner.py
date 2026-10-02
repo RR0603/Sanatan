@@ -31,15 +31,20 @@ class ScanResult:
 
 
 def scan(root: Path, cfg: Config, store: BlobStore,
-         previous: dict[str, dict] | None = None) -> ScanResult:
+         previous: dict[str, dict] | None = None,
+         extra_ignore: list[str] | None = None) -> ScanResult:
     """Walk ``root`` and produce a manifest, storing any new file contents.
 
     ``previous`` is the last manifest; when a file's size and mtime are
     unchanged we trust its recorded hash instead of re-reading the file. That
     is what keeps repeated scans of a large tree cheap.
+
+    ``extra_ignore`` holds relative paths to prune on top of the configured
+    patterns. Rewind uses it for its own storage: protecting a folder that
+    happens to contain the vault must not make the recording record itself.
     """
     root = Path(root)
-    ignorer = Ignorer(cfg.ignore)
+    ignorer = Ignorer(list(cfg.ignore) + list(extra_ignore or []))
     previous = previous or {}
     result = ScanResult()
 

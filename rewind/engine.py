@@ -21,7 +21,8 @@ import time
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from .config import Config, REWIND_DIR
+from . import registry
+from .config import Config, REWIND_DIR, find_repo
 from .scanner import ScanResult, scan
 from .store import BlobStore
 from .timeline import Frame, Timeline
@@ -158,19 +159,41 @@ def build_plan(current: dict, target: dict, subtree: str | None = None) -> Plan:
 class Repo:
     """A tracked tree and its film."""
 
-    def __init__(self, root: Path):
+    def __init__(self, root: Path, repo_dir: Path | None = None):
         self.root = Path(root).resolve()
-        self.dir = self.root / REWIND_DIR
+        # History normally lives in a vault outside the folder, so that
+        # protecting a folder does not change its contents. It can also live in
+        # the folder itself, which travels with it.
+        self.dir = (Path(repo_dir).resolve() if repo_dir
+                    else self.root / REWIND_DIR)
         self.cfg = Config.load(self.dir / "config.json")
         self.store = BlobStore(self.dir / "objects")
         self.timeline = Timeline(self.dir)
 
+    @property
+    def extra_ignore(self) -> list[str]:
+        """Rewind's own storage, when it sits inside the folder being recorded."""
+        pruned = []
+        for path in (self.dir, registry.home()):
+            try:
+                rel = path.relative_to(self.root)
+            except ValueError:
+                continue
+            if str(rel) not in (".", ""):
+                pruned.append(str(rel).replace(os.sep, "/"))
+        return pruned
+
+    @property
+    def inside(self) -> bool:
+        return self.dir.parent == self.root
+
     # -- lifecycle ------------------------------------------------------
 
     @classmethod
-    def init(cls, root: Path, ignore: list[str] | None = None) -> "Repo":
+    def init(cls, root: Path, ignore: list[str] | None = None,
+             repo_dir: Path | None = None) -> "Repo":
         root = Path(root).resolve()
-        repo_dir = root / REWIND_DIR
+        repo_dir = Path(repo_dir).resolve() if repo_dir else root / REWIND_DIR
         if (repo_dir / "timeline.jsonl").exists():
             raise RewindError(f"{root} is already being recorded")
         (repo_dir / "objects").mkdir(parents=True, exist_ok=True)
@@ -180,17 +203,43 @@ class Repo:
             cfg.ignore = list(dict.fromkeys(cfg.ignore + list(ignore)))
         cfg.save(repo_dir / "config.json")
         (repo_dir / "timeline.jsonl").touch()
-        repo = cls(root)
+        repo = cls(root, repo_dir)
         repo.commit(label="init", note="recording started", force=True)
         return repo
 
     @classmethod
-    def open(cls, root: Path) -> "Repo":
+    def open(cls, root: Path, repo_dir: Path | None = None) -> "Repo":
         root = Path(root).resolve()
-        if not (root / REWIND_DIR / "timeline.jsonl").exists():
+        repo_dir = Path(repo_dir).resolve() if repo_dir else root / REWIND_DIR
+        if not (repo_dir / "timeline.jsonl").exists():
             raise RewindError(
-                f"{root} is not being recorded yet - run 'rewind init' there first")
-        return cls(root)
+                f"{root} is not being recorded yet - run 'rewind protect' on it first")
+        return cls(root, repo_dir)
+
+    @classmethod
+    def for_path(cls, path: Path) -> "Repo":
+        """Open whichever recorded folder covers ``path``.
+
+        Protected folders are found first, wherever you are standing inside
+        them; failing that, Rewind walks upwards looking for an in-folder
+        ``.rewind``. That is what makes a protected folder reversible from
+        anywhere, at any time.
+        """
+        path = Path(path).resolve()
+        entry = registry.Registry.load().covering(path)
+        if entry is not None and entry.recorded:
+            return cls(entry.folder, entry.vault_dir)
+        found = find_repo(path)
+        if found is not None:
+            return cls(found)
+        if entry is not None:
+            raise RewindError(
+                f"{entry.path} is protected but has no frames yet - "
+                f"run 'rewind snap' in it, or 'rewind service start'")
+        raise RewindError(
+            f"{path} is not in a folder Rewind is recording.\n"
+            f"       Protect it with:  rewind protect {path}\n"
+            f"       See what is protected with:  rewind list")
 
     # -- reading the world ----------------------------------------------
 
@@ -209,7 +258,7 @@ class Repo:
     def scan_disk(self, previous: dict | None = None) -> ScanResult:
         if previous is None:
             previous = self.head_manifest()
-        return scan(self.root, self.cfg, self.store, previous)
+        return scan(self.root, self.cfg, self.store, previous, self.extra_ignore)
 
     def pending_changes(self) -> tuple[list[Change], ScanResult]:
         """What has happened since the playhead frame was cut."""

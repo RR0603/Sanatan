@@ -4,6 +4,8 @@ set -e
 HERE=$(cd "$(dirname "$0")" && pwd)
 REWIND="$HERE/bin/rewind"
 DEMO=${1:-$(mktemp -d)}
+# Keep the demo's registry and vaults to itself.
+export REWIND_HOME="$DEMO/.rewind-home"
 
 say() { printf '\n\033[1m== %s\033[0m\n' "$1"; }
 
@@ -13,8 +15,9 @@ echo "buried treasure"   > "$DEMO/notes/deep/b.txt"
 echo "untouched"         > "$DEMO/readme.md"
 cd "$DEMO"
 
-say "Start recording"
-$REWIND init .
+say "Protect the folder - from now on it is reversible at any time"
+$REWIND protect "$DEMO" --no-start
+$REWIND list
 
 say "Do some work"
 echo "the edited version" > notes/a.txt
@@ -46,5 +49,14 @@ echo "readme.md    -> $(cat readme.md)"
 
 say "The film strip"
 $REWIND timeline
+
+say "Reverse the whole folder from somewhere else entirely"
+cd /
+$REWIND back f00002 --in "$DEMO" -y
+echo "notes/a.txt  -> $(cat "$DEMO/notes/a.txt")"
+echo "readme.md    -> $(cat "$DEMO/readme.md")   (the good version is back too)"
+
+say "Stop protecting it (its history is kept)"
+$REWIND forget "$DEMO"
 
 printf '\nDemo folder: %s\n' "$DEMO"

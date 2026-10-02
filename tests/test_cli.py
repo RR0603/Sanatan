@@ -90,7 +90,7 @@ class BasicCommandTests(CliTestCase):
             with redirect_stdout(out), redirect_stderr(out):
                 code = main(["--root", empty, "status"])
             self.assertEqual(code, 2)
-            self.assertIn("rewind init", out.getvalue())
+            self.assertIn("rewind protect", out.getvalue())
 
 
 class UndoTests(CliTestCase):

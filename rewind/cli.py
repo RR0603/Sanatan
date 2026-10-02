@@ -5,12 +5,12 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import shutil
 import sys
-import time
 from pathlib import Path
 
-from . import __version__, render, watcher
-from .config import find_repo
+from . import __version__, registry, render, watcher
+from .config import REWIND_DIR, find_repo
 from .engine import Repo, RewindError, build_plan, diff_manifests
 from .timeparse import ago, parse_when, stamp
 
@@ -18,16 +18,16 @@ from .timeparse import ago, parse_when, stamp
 # -- plumbing ---------------------------------------------------------------
 
 def _repo(args) -> Repo:
-    if getattr(args, "root", None):
-        root = Path(args.root).resolve()
-    else:
-        found = find_repo()
-        if found is None:
-            raise RewindError(
-                "nothing here is being recorded. Run 'rewind init' in the folder "
-                "you want to be able to reverse.")
-        root = found
-    return Repo.open(root)
+    """Open the recorded folder this command is about.
+
+    ``--in`` (or ``--root``) names it explicitly; otherwise it is whichever
+    protected folder you are standing in.
+    """
+    where = getattr(args, "in_folder", None) or getattr(args, "root", None)
+    target = Path(where).expanduser() if where else Path.cwd()
+    if where and not target.exists():
+        raise RewindError(f"{target} does not exist")
+    return Repo.for_path(target)
 
 
 def _rel(repo: Repo, path: str) -> str:
@@ -95,10 +95,13 @@ def cmd_init(args) -> int:
     print(f"Recording {render.bold(str(root))}")
     print(f"  first frame {frame.id}: {frame.files} files, "
           f"{render.human_bytes(frame.bytes)}")
+    print(render.dim(f"  history kept in {root / '.rewind'}, so it travels "
+                     f"with the folder"))
     print()
-    print("  " + render.dim("rewind watch") + "    keep recording in the background")
-    print("  " + render.dim("rewind undo") + "     step back one frame")
-    print("  " + render.dim("rewind back 10m") + " go back ten minutes")
+    print("  " + render.dim("rewind watch") + "     keep recording in the background")
+    print("  " + render.dim("rewind undo") + "      step back one frame")
+    print("  " + render.dim("rewind protect") + "   record it always, alongside "
+          "your other folders")
     return 0
 
 
@@ -119,7 +122,10 @@ def cmd_status(args) -> int:
     changes, result = repo.pending_changes()
     head = repo.head_frame()
     position, total = repo.timeline.position()
-    pid = watcher.running_pid(repo)
+    own_pid = watcher.running_pid(repo)
+    service_pid = watcher.service_running_pid()
+    protected = registry.Registry.load().get(repo.root) is not None
+    pid = own_pid or (service_pid if protected else None)
 
     if args.json:
         print(json.dumps({
@@ -129,6 +135,8 @@ def cmd_status(args) -> int:
             "frames": total,
             "recording": bool(pid),
             "pid": pid,
+            "protected": protected,
+            "via": "service" if pid and not own_pid else ("watch" if pid else None),
             "pending": [c.to_dict() for c in changes],
         }, indent=2))
         return 0
@@ -140,8 +148,16 @@ def cmd_status(args) -> int:
     if position < total:
         print(render.yellow(f"  you are {total - position} frame(s) back in the past - "
                             f"'rewind redo' plays forward"))
-    print(f"  recorder  " + (render.green(f"running (pid {pid})") if pid
-                             else render.dim("not running - 'rewind watch' starts it")))
+    if pid and own_pid:
+        recorder = render.green(f"running (pid {pid})")
+    elif pid:
+        recorder = render.green(f"running (pid {pid}, recording all protected folders)")
+    elif protected:
+        recorder = render.yellow("not running - 'rewind service start'")
+    else:
+        recorder = render.dim("not running - 'rewind watch', or "
+                              "'rewind protect' to record it always")
+    print(f"  recorder  {recorder}")
     print(f"  store     {total} frames, {render.human_bytes(repo.store.disk_usage())} on disk")
     if result.errors:
         print(render.yellow(f"  {len(result.errors)} path(s) could not be read "
@@ -398,13 +414,27 @@ def cmd_watch(args) -> int:
 
 
 def cmd_stop(args) -> int:
+    """Stop whichever recorder is covering this folder."""
     repo = _repo(args)
     if watcher.stop_daemon(repo):
-        print("Recorder stopped.")
+        print(f"Stopped recording {repo.root}.")
         frame = repo.commit(label="auto", note="recorded on stop")
         if frame:
             print(render.dim(f"  cut {frame.id} for changes that were still pending"))
         return 0
+
+    if watcher.service_running_pid():
+        if args.all or not sys.stdin.isatty():
+            watcher.stop_service()
+            print("Stopped recording every protected folder.")
+            return 0
+        print(render.yellow("This folder is recorded by the always-on service, "
+                            "which covers other folders too."))
+        print(render.dim("  stop all of it with:  rewind stop --all"))
+        print(render.dim("  or stop protecting just this one:  "
+                         f"rewind forget {repo.root}"))
+        return 1
+
     print(render.dim("the recorder was not running"))
     return 0
 
@@ -432,19 +462,36 @@ def cmd_verify(args) -> int:
     return 1
 
 
+def _note_dir() -> Path | None:
+    """Where to leave a note, without the cost of opening the whole repo.
+
+    This runs before every shell command, so it stays as cheap as reading the
+    registry and does not touch the timeline.
+    """
+    here = Path.cwd()
+    try:
+        entry = registry.Registry.load().covering(here)
+    except (ValueError, OSError):
+        entry = None
+    if entry is not None and entry.recorded:
+        return entry.vault_dir
+    found = find_repo(here)
+    return (found / REWIND_DIR) if found is not None else None
+
+
 def cmd_mark(args) -> int:
     """Leave a note for the next frame. Used by the shell hook."""
-    root = find_repo()
-    if root is None:
-        return 0
     words = list(args.text)
     while words and words[0] == "--":
         words.pop(0)
     text = " ".join(words).strip()
     if not text or text.startswith("rewind ") or text == "rewind":
         return 0
+    target = _note_dir()
+    if target is None:
+        return 0
     try:
-        (root / ".rewind" / "next-note").write_text(text[:300], encoding="utf-8")
+        (target / "next-note").write_text(text[:300], encoding="utf-8")
     except OSError:
         pass
     return 0
@@ -479,17 +526,350 @@ def cmd_hook(args) -> int:
     return 0
 
 
+# -- choosing folders --------------------------------------------------------
+
+COMMON_FOLDERS = ["Documents", "Desktop", "Downloads", "Pictures", "Projects",
+                  "projects", "code", "src", "work", "Notes"]
+
+
+def candidate_folders(cwd: Path | None = None) -> list[Path]:
+    """Folders worth offering when no folder was named."""
+    cwd = (cwd or Path.cwd()).resolve()
+    seen: list[Path] = [cwd]
+    try:
+        for child in sorted(cwd.iterdir()):
+            if child.is_dir() and not child.name.startswith("."):
+                seen.append(child.resolve())
+    except OSError:
+        pass
+    house = Path.home()
+    for name in COMMON_FOLDERS:
+        option = house / name
+        if option.is_dir():
+            seen.append(option.resolve())
+    unique: list[Path] = []
+    for path in seen:
+        if path not in unique:
+            unique.append(path)
+    return unique
+
+
+def pick_folder() -> Path | None:
+    """Ask which folder to protect. Returns ``None`` if the user backs out."""
+    options = candidate_folders()
+    print(render.bold("Which folder should be reversible?"))
+    for index, option in enumerate(options, 1):
+        label = f"{option}" + (render.dim("  (you are here)") if index == 1 else "")
+        print(f"  {render.cyan(str(index)):>3}  {label}")
+    print(render.dim("   or type a path. Enter to cancel."))
+    try:
+        answer = input("> ").strip()
+    except EOFError:
+        return None
+    if not answer:
+        return None
+    if answer.isdigit() and 1 <= int(answer) <= len(options):
+        return options[int(answer) - 1]
+    return Path(answer).expanduser()
+
+
+def _overlap_warning(reg: registry.Registry, folder: Path) -> str | None:
+    covering = reg.covering(folder)
+    if covering:
+        return (f"{folder} is already inside {covering.path}, which is protected. "
+                f"Reverse it from there:  rewind undo --in {covering.path}")
+    nested = reg.inside_of(folder)
+    if nested:
+        names = ", ".join(e.path for e in nested[:3])
+        return (f"{folder} contains folders that are already protected ({names}). "
+                f"Forget those first, or protect a different folder.")
+    return None
+
+
+def cmd_protect(args) -> int:
+    reg = registry.Registry.load()
+
+    if args.folder:
+        folder = Path(args.folder).expanduser()
+    elif sys.stdin.isatty():
+        chosen = pick_folder()
+        if chosen is None:
+            print(render.dim("nothing selected"))
+            return 0
+        folder = chosen
+    else:
+        folder = Path.cwd()
+
+    if not folder.exists():
+        raise RewindError(f"{folder} does not exist")
+    folder = folder.resolve()
+
+    refusal = registry.refuses(folder)
+    if refusal:
+        raise RewindError(refusal)
+
+    if reg.get(folder) is not None:
+        print(render.dim(f"{folder} is already protected"))
+        return 0
+    clash = _overlap_warning(reg, folder)
+    if clash and not args.force:
+        raise RewindError(clash + "\n       Use --force to do it anyway.")
+
+    vault = (folder / ".rewind") if args.inside else registry.vault_for(folder)
+    entry = reg.add(folder, vault)
+    try:
+        repo = Repo.init(folder, ignore=args.ignore, repo_dir=vault)
+    except RewindError:
+        # Frames already exist in that vault: adopt them rather than refuse.
+        repo = Repo.open(folder, vault)
+    reg.save()
+
+    frame = repo.timeline.latest()
+    print(f"{render.green('Protected')} {render.bold(str(folder))}")
+    if frame:
+        print(f"  {frame.id}: {frame.files} files, {render.human_bytes(frame.bytes)}")
+    print(render.dim(f"  history kept in {entry.vault}"))
+
+    if args.no_start:
+        print(render.dim("  not starting the recorder (--no-start)"))
+    else:
+        pid = watcher.ensure_service()
+        if pid:
+            print(render.dim(f"  recorder running (pid {pid}) - this folder is now "
+                             f"reversible at any time"))
+        else:
+            print(render.yellow("  could not start the recorder - "
+                                "run 'rewind service start' to see why"))
+    return 0
+
+
+def cmd_forget(args) -> int:
+    reg = registry.Registry.load()
+    folder = Path(args.folder).expanduser().resolve()
+    entry = reg.get(folder)
+    if entry is None:
+        covering = reg.covering(folder)
+        hint = f" Did you mean {covering.path}?" if covering else ""
+        raise RewindError(f"{folder} is not protected.{hint}")
+
+    reg.remove(folder)
+    reg.save()
+    print(f"Stopped protecting {render.bold(str(folder))}")
+
+    if args.delete_history:
+        import shutil
+        try:
+            shutil.rmtree(entry.vault_dir)
+            print(render.yellow(f"  deleted its history - that cannot be undone"))
+        except OSError as exc:
+            print(render.red(f"  could not delete {entry.vault}: {exc}"))
+            return 1
+    else:
+        print(render.dim(f"  its history is kept at {entry.vault}"))
+        print(render.dim(f"  protect it again to pick up where it left off, or "
+                         f"'rewind forget --delete-history' to remove it"))
+    return 0
+
+
+def cmd_list(args) -> int:
+    reg = registry.Registry.load()
+    pid = watcher.service_running_pid()
+    rows = []
+    for entry in reg.sorted():
+        info = {"folder": entry.path, "vault": entry.vault, "exists": entry.exists,
+                "paused": entry.paused, "frames": 0, "bytes": 0, "last": None}
+        if entry.recorded:
+            try:
+                repo = Repo.open(entry.folder, entry.vault_dir)
+                latest = repo.timeline.latest()
+                info["frames"] = len(repo.timeline.frames)
+                info["bytes"] = repo.store.disk_usage()
+                info["last"] = latest.ts if latest else None
+            except (RewindError, OSError, ValueError):
+                pass
+        rows.append(info)
+
+    if args.json:
+        print(json.dumps({"recording": bool(pid), "pid": pid, "folders": rows}, indent=2))
+        return 0
+
+    if not rows:
+        print("No folders are protected yet.")
+        print()
+        print("  " + render.dim("rewind protect ~/Documents") + "   make a folder reversible")
+        print("  " + render.dim("rewind protect") + "               choose one from a list")
+        return 0
+
+    print(render.bold("Folders you can reverse at any time"))
+    for row in rows:
+        if not row["exists"]:
+            state = render.red("missing")
+        elif row["paused"]:
+            state = render.yellow("paused")
+        elif pid:
+            state = render.green("recording")
+        else:
+            state = render.yellow("not recording")
+        last = f"last frame {ago(row['last'])}" if row["last"] else "no frames yet"
+        print(f"  {render.bold(row['folder'])}")
+        print(f"      {row['frames']:>5} frames  {render.human_bytes(row['bytes']):>10}  "
+              f"{state}  {render.dim(last)}")
+    print()
+    if pid:
+        print(render.dim(f"  recorder running (pid {pid})"))
+    else:
+        print(render.yellow("  the recorder is not running - 'rewind service start'"))
+    return 0
+
+
+# -- the always-on recorder ---------------------------------------------------
+
+def cmd_service(args) -> int:
+    action = args.action or "status"
+
+    if action == "status":
+        pid = watcher.service_running_pid()
+        folders = registry.Registry.load().active()
+        if pid:
+            print(f"{render.green('Recording')} {len(folders)} folder(s) (pid {pid})")
+        else:
+            print(render.yellow("Not recording.") +
+                  f" {len(folders)} folder(s) are protected.")
+            print(render.dim("  start it with 'rewind service start'"))
+        print(render.dim(f"  log: {watcher.service_log_file()}"))
+        return 0 if pid else 1
+
+    if action == "stop":
+        if watcher.stop_service():
+            print("Recorder stopped.")
+        else:
+            print(render.dim("the recorder was not running"))
+        return 0
+
+    if action == "restart":
+        watcher.stop_service()
+        action = "start"
+
+    if args.foreground:
+        service = watcher.Service(args.interval, args.settle)
+        import signal
+        signal.signal(signal.SIGINT, service.request_stop)
+        signal.signal(signal.SIGTERM, service.request_stop)
+        service.run()
+        return 0
+
+    try:
+        pid = watcher.start_service(args.interval, args.settle)
+    except RuntimeError as exc:
+        print(render.yellow(str(exc)))
+        return 1
+    folders = registry.Registry.load().active()
+    print(f"Recording {len(folders)} folder(s) in the background (pid {pid})")
+    for entry in folders:
+        print(render.dim(f"  {entry.path}"))
+    print(render.dim(f"  log: {watcher.service_log_file()}"))
+    return 0
+
+
+SYSTEMD_UNIT = """[Unit]
+Description=Rewind - keeps your protected folders reversible
+After=default.target
+
+[Service]
+Type=simple
+ExecStart={command}
+Restart=always
+RestartSec=5
+{environment}
+[Install]
+WantedBy=default.target
+"""
+
+LAUNCHD_PLIST = """<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key><string>com.rewind.recorder</string>
+  <key>ProgramArguments</key>
+  <array>
+{arguments}  </array>
+  <key>RunAtLoad</key><true/>
+  <key>KeepAlive</key><true/>
+  <key>StandardErrorPath</key><string>{log}</string>
+</dict>
+</plist>
+"""
+
+
+def _service_command() -> tuple[list[str], str]:
+    """How this machine should launch the recorder, and any env it needs."""
+    installed = shutil.which("rewind")
+    if installed:
+        return [installed, "service", "start", "--foreground"], ""
+    here = Path(__file__).resolve().parent.parent
+    return ([sys.executable, "-m", "rewind", "service", "start", "--foreground"],
+            f"Environment=PYTHONPATH={here}\n")
+
+
+def cmd_autostart(args) -> int:
+    argv, environment = _service_command()
+    macos = sys.platform == "darwin"
+
+    if macos:
+        target = Path.home() / "Library" / "LaunchAgents" / "com.rewind.recorder.plist"
+        arguments = "".join(f"    <string>{part}</string>\n" for part in argv)
+        content = LAUNCHD_PLIST.format(arguments=arguments,
+                                       log=watcher.service_log_file())
+        enable = [f"launchctl load -w {target}"]
+    else:
+        target = Path.home() / ".config" / "systemd" / "user" / "rewind.service"
+        content = SYSTEMD_UNIT.format(command=" ".join(argv), environment=environment)
+        enable = ["systemctl --user daemon-reload",
+                  "systemctl --user enable --now rewind.service"]
+
+    if not args.install:
+        print(render.dim(f"# {target}"))
+        print(content, end="")
+        print(render.bold("Install it with:"))
+        print(f"  rewind autostart --install")
+        return 0
+
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(content, encoding="utf-8")
+    print(f"Wrote {render.bold(str(target))}")
+
+    if macos or not shutil.which("systemctl"):
+        print(render.bold("Now run:"))
+        for line in enable:
+            print(f"  {line}")
+        return 0
+
+    import subprocess
+    for line in enable:
+        result = subprocess.run(line.split(), capture_output=True, text=True)
+        if result.returncode != 0:
+            print(render.yellow(f"  '{line}' did not succeed "
+                                f"({result.stderr.strip() or 'no detail'})"))
+            print(render.bold("  Run it yourself once a session manager is available."))
+            return 1
+    print(render.green("Rewind will now start recording automatically at login."))
+    return 0
+
+
 # -- argument parsing ---------------------------------------------------------
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="rewind",
-        description="A time machine for your files. Record your work as a film, "
-                    "then play it backwards when you make a mistake.",
-        epilog="Try: rewind init  ->  rewind watch  ->  rewind undo")
+        description="A time machine for your files. Protect any folder and it "
+                    "becomes reversible at any time: record your work as a "
+                    "film, then play it backwards when you make a mistake.",
+        epilog="Try: rewind protect ~/Documents  ->  rewind list  ->  rewind undo")
     parser.add_argument("--version", action="version", version=f"rewind {__version__}")
-    parser.add_argument("--root", help="act on this recorded folder instead of "
-                                       "searching upwards from here")
+    parser.add_argument("--root", "--in", dest="root", metavar="FOLDER",
+                        help="act on this protected folder instead of the one "
+                             "you are standing in")
     subparsers = parser.add_subparsers(dest="command", metavar="<command>")
 
     def add(name, func, help_text, **kwargs):
@@ -497,7 +877,49 @@ def build_parser() -> argparse.ArgumentParser:
         sub.set_defaults(func=func)
         return sub
 
-    p = add("init", cmd_init, "start recording a folder")
+    def in_folder(sub):
+        sub.add_argument("--in", dest="in_folder", metavar="FOLDER",
+                         help="the protected folder to act on, if you are not "
+                              "standing in it")
+        return sub
+
+    p = add("protect", cmd_protect,
+            "make a folder reversible at any time (choose from a list if none given)")
+    p.add_argument("folder", nargs="?", help="the folder to protect")
+    p.add_argument("--inside", action="store_true",
+                   help="keep its history in the folder itself, so it travels "
+                        "with it, instead of in a central vault")
+    p.add_argument("--ignore", action="append", default=[],
+                   help="extra pattern to leave untracked (repeatable)")
+    p.add_argument("--no-start", action="store_true",
+                   help="do not start the recorder now")
+    p.add_argument("--force", action="store_true",
+                   help="protect it even if it overlaps another protected folder")
+
+    p = add("forget", cmd_forget, "stop protecting a folder")
+    p.add_argument("folder", help="the folder to stop protecting")
+    p.add_argument("--delete-history", action="store_true",
+                   help="also delete its recorded history, permanently")
+
+    p = add("list", cmd_list, "every folder you can reverse, and its state")
+    p.add_argument("--json", action="store_true")
+
+    p = add("service", cmd_service,
+            "the always-on recorder for every protected folder")
+    p.add_argument("action", nargs="?", choices=["start", "stop", "restart", "status"],
+                   help="default: status")
+    p.add_argument("--foreground", "-f", action="store_true", help="do not detach")
+    p.add_argument("--interval", type=float, help="seconds between scans")
+    p.add_argument("--settle", type=float,
+                   help="seconds of quiet before a burst of edits becomes a frame")
+
+    p = add("autostart", cmd_autostart,
+            "start the recorder automatically at login")
+    p.add_argument("--install", action="store_true",
+                   help="write the service file instead of printing it")
+
+    p = add("init", cmd_init,
+            "record just this folder, keeping its history inside it")
     p.add_argument("path", nargs="?", help="folder to record (default: here)")
     p.add_argument("--ignore", action="append", default=[],
                    help="extra pattern to leave untracked (repeatable)")
@@ -510,27 +932,29 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--settle", type=float,
                    help="seconds of quiet before a burst of edits becomes a frame")
 
-    add("stop", cmd_stop, "stop the background recorder")
+    p = in_folder(add("stop", cmd_stop, "stop the recorder covering this folder"))
+    p.add_argument("--all", action="store_true",
+                   help="stop the always-on service, for every folder")
 
-    p = add("snap", cmd_snap, "cut a frame right now, with a name")
+    p = in_folder(add("snap", cmd_snap, "cut a frame right now, with a name"))
     p.add_argument("-m", "--message", help="what this moment is")
     p.add_argument("--label", help="label instead of 'snapshot'")
     p.add_argument("--force", action="store_true", help="even if nothing changed")
 
-    p = add("status", cmd_status, "where the playhead is and what has changed since")
+    p = in_folder(add("status", cmd_status, "where the playhead is and what has changed since"))
     p.add_argument("--json", action="store_true")
 
-    p = add("timeline", cmd_timeline, "show the film strip")
+    p = in_folder(add("timeline", cmd_timeline, "show the film strip"))
     p.add_argument("-n", "--number", type=int, default=25, help="how many frames")
     p.add_argument("--all", action="store_true", help="every frame")
     p.add_argument("--path", help="only frames that touched this path")
     p.add_argument("--json", action="store_true")
 
-    p = add("show", cmd_show, "what changed in one frame")
+    p = in_folder(add("show", cmd_show, "what changed in one frame"))
     p.add_argument("frame", help="a frame id, or a time like '2h'")
     p.add_argument("-n", "--number", type=int, default=200)
 
-    p = add("diff", cmd_diff, "compare two moments")
+    p = in_folder(add("diff", cmd_diff, "compare two moments"))
     p.add_argument("a", nargs="?", help="from (default: the playhead)")
     p.add_argument("b", nargs="?", help="to (default: the files as they are now)")
     p.add_argument("-n", "--number", type=int, default=200)
@@ -541,7 +965,7 @@ def build_parser() -> argparse.ArgumentParser:
                          help="show what would change, change nothing")
         sub.add_argument("--yes", "-y", action="store_true", help="do not ask")
         sub.add_argument("--path", help="rewind only this file or folder")
-        return sub
+        return in_folder(sub)
 
     p = travel_args(add("undo", cmd_undo, "step back one frame - the mistake button"))
     p.add_argument("count", nargs="?", type=int, default=1,
@@ -557,18 +981,19 @@ def build_parser() -> argparse.ArgumentParser:
     p = travel_args(add("goto", cmd_goto, "move the playhead to an exact frame"))
     p.add_argument("when", help="a frame id, duration or time")
 
-    p = add("restore", cmd_restore, "bring back one file or folder, leaving the rest alone")
+    p = in_folder(add("restore", cmd_restore, "bring back one file or folder, leaving the rest alone"))
     p.add_argument("path", help="the file or folder to bring back")
     p.add_argument("--at", help="from when (default: the last frame it existed in)")
     p.add_argument("--dry-run", "-n", action="store_true")
     p.add_argument("--yes", "-y", action="store_true")
 
-    p = add("gc", cmd_gc, "drop old automatic frames and unused data")
+    p = in_folder(add("gc", cmd_gc, "drop old automatic frames and unused data"))
     p.add_argument("--days", type=float, help="keep frames newer than this many days")
     p.add_argument("--keep", type=int, default=20, help="always keep the newest N frames")
     p.add_argument("--dry-run", "-n", action="store_true")
 
-    add("verify", cmd_verify, "check every frame can still be restored")
+    in_folder(add("verify", cmd_verify,
+                  "check every frame can still be restored"))
 
     p = add("mark", cmd_mark, "label the next frame (used by the shell hook)")
     p.add_argument("text", nargs=argparse.REMAINDER)

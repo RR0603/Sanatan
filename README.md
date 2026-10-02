@@ -1,7 +1,8 @@
 # Rewind
 
-**A time machine for your files.** Rewind records what you do as a film, so when
-you make a mistake you can simply play it backwards.
+**A time machine for your files.** Protect any folder and it becomes reversible
+at any time. Rewind records what you do as a film, so when you make a mistake
+you can simply play it backwards.
 
 ```console
 $ rm -rf notes/            # the mistake
@@ -17,6 +18,47 @@ a.txt  c.txt  deep/
 ```
 
 No dialog boxes, no "are you sure you want to permanently delete". You go back.
+
+---
+
+## Pick your folders once
+
+```console
+$ rewind protect ~/Documents
+Protected /home/you/Documents
+  f00001: 2,418 files, 184.2 MB
+  history kept in /home/you/.local/share/rewind/vaults/Documents-11464d3b
+  recorder running (pid 4471) - this folder is now reversible at any time
+
+$ rewind protect ~/code/app
+$ rewind autostart --install        # and it comes back after a reboot
+```
+
+From then on those folders are always being recorded, and either one can be
+reversed whenever you want — from inside it, or from anywhere else:
+
+```console
+$ rewind list
+Folders you can reverse at any time
+  /home/you/Documents
+        412 frames     18.2 MB  recording  last frame 2 minutes ago
+  /home/you/code/app
+         88 frames      4.1 MB  recording  last frame 1 hour ago
+
+  recorder running (pid 4471)
+
+$ rewind undo --in ~/Documents     # from wherever you happen to be
+```
+
+Running `rewind protect` with no folder offers a list to choose from. One
+recorder process handles every protected folder, so twenty folders cost one
+sleeping process rather than twenty.
+
+Reversing does not depend on the recorder having been running. Rewind always
+compares the frame you asked for against what is *actually on disk now*, so a
+folder is reversible even if the recorder was off when the mistake happened —
+the last frame it managed to take is still there, and your unrecorded work is
+captured before anything is undone.
 
 ---
 
@@ -63,18 +105,34 @@ Or just run it out of the checkout, with nothing installed:
 ./bin/rewind --help
 ```
 
-## Start recording
+## Two ways to record
+
+**Protected folders** (recommended) are listed centrally and recorded by one
+always-on service, so any of them can be reversed at any time:
+
+```sh
+rewind protect ~/Documents     # or bare 'rewind protect' to choose from a list
+rewind autostart --install     # start recording again after a reboot
+rewind list                    # what is protected, and its state
+rewind forget ~/Documents      # stop protecting it (history is kept)
+```
+
+Their history lives in `$REWIND_HOME` (normally `~/.local/share/rewind`), so
+protecting a folder does not add anything to it.
+
+**A single folder**, with its history kept inside it so it travels when you move
+or copy the folder:
 
 ```sh
 cd ~/important-project
-rewind init            # take the first frame
-rewind watch           # keep recording in the background
+rewind init                    # history goes in ./.rewind
+rewind watch                   # record this one folder in the background
 ```
 
-That is the whole setup. `rewind watch` starts a small recorder that watches for
-changes (via inotify on Linux, polling everywhere else) and cuts a frame each
-time a burst of edits settles. Save a file forty times and you get one frame,
-not forty.
+Either way the recorder watches for changes (via inotify on Linux, polling
+everywhere else) and cuts a frame each time a burst of edits settles. Save a
+file forty times and you get one frame, not forty. `rewind protect --inside`
+gives you both: central listing, in-folder history.
 
 To have every frame labelled with the shell command that caused it — so your
 timeline reads `rm -rf notes/` instead of `auto` — add the shell hook:
@@ -84,6 +142,9 @@ eval "$(rewind hook bash)"      # or: zsh, fish
 ```
 
 ## Going back
+
+All of these act on the protected folder you are standing in, or on the one you
+name with `--in <folder>`.
 
 | You want to | Command |
 | --- | --- |
@@ -97,6 +158,7 @@ eval "$(rewind hook bash)"      # or: zsh, fish
 | Bring back one deleted folder | `rewind restore notes/` |
 | Bring back a file as it was an hour ago | `rewind restore src/app.py --at 1h` |
 | Rewind one folder, leave the rest alone | `rewind back 1h --path src/` |
+| Reverse a folder you are not standing in | add `--in ~/Documents` |
 | See what would happen, change nothing | add `--dry-run` |
 
 Every one of these prints exactly what it is about to do, and asks before
@@ -123,9 +185,11 @@ $ rewind timeline
 ## Housekeeping
 
 ```sh
-rewind verify        # check every frame can still be restored
-rewind gc            # drop old automatic frames and the data nothing needs
-rewind stop          # stop the recorder
+rewind verify              # check every frame can still be restored
+rewind gc                  # drop old automatic frames and the data nothing needs
+rewind service status      # is the always-on recorder running?
+rewind service restart     # restart it
+rewind stop --all          # stop recording everything
 ```
 
 Frames are cheap: file contents are stored once, content-addressed and
@@ -162,19 +226,30 @@ snapshotter, and being honest about the edges matters more than a nice pitch:
 - **Running programs, databases mid-write, installed packages and system
   services** are outside the model. Rewinding a folder under a running service is
   as safe — and as unsafe — as editing those files by hand.
+- **The system itself cannot be protected.** `/`, `/proc`, `/sys`, `/dev`,
+  `/run` and `/boot` are refused: recording those would mean recording the
+  machine, which this is not. Your home directory is fine.
 - **This is not a backup.** It lives on the same disk as the thing it protects.
   It saves you from *you*, not from a failing drive.
 
 ## How it works
 
 ```
-.rewind/
-  config.json        what to record, what to leave alone
-  objects/           every distinct file version, once, compressed (sha256-addressed)
-  frames/            one gzipped manifest per frame
-  timeline.jsonl     the frame index, append-only
-  HEAD               where the playhead is
+~/.local/share/rewind/            $REWIND_HOME
+  registry.json                   which folders are protected
+  service.pid, service.log        the always-on recorder
+  vaults/Documents-11464d3b/      one vault per protected folder
+    config.json                   what to record, what to leave alone
+    objects/                      every distinct file version, once, compressed
+    frames/                       one gzipped manifest per frame
+    timeline.jsonl                the frame index, append-only
+    HEAD                          where the playhead is
 ```
+
+A folder recorded with `rewind init` (or `protect --inside`) keeps that same
+layout in its own `.rewind/` instead. Either way, Rewind's own storage is pruned
+while scanning, so protecting a folder that happens to contain the vault — your
+home directory, say — does not make the recording record itself.
 
 Cutting a frame means walking the tree, storing any contents not already in
 `objects/`, and appending a manifest. Unchanged files are recognised by size and
@@ -198,8 +273,10 @@ reachable, and `undo` always means "the state this one came from".
 python3 -m unittest discover -s tests -v
 ```
 
-100 tests covering the store, the scanner, diffing, planning, time parsing, the
-recorder, the daemon lifecycle and the command line.
+158 tests covering the store, the scanner, diffing, planning, time parsing, the
+folder registry, protecting and forgetting folders, reversing a folder from
+outside it, the single-folder recorder, the multi-folder service and both daemon
+lifecycles.
 
 ## License
 

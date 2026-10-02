@@ -278,7 +278,7 @@ class GuardTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             with self.assertRaises(RewindError) as ctx:
                 Repo.open(Path(tmp))
-            self.assertIn("rewind init", str(ctx.exception))
+            self.assertIn("rewind protect", str(ctx.exception))
 
     def test_initialising_twice_is_refused(self):
         with tempfile.TemporaryDirectory() as tmp:
