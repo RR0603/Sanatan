@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "rewind"
+version = "2.0.0"
+description = "A time machine for your files: record your work as a film, then play it backwards."
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+keywords = ["undo", "snapshot", "time-machine", "filesystem", "backup", "versioning"]
+classifiers = [
+  "Environment :: Console",
+  "Intended Audience :: End Users/Desktop",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: POSIX :: Linux",
+  "Operating System :: MacOS :: MacOS X",
+  "Programming Language :: Python :: 3",
+  "Topic :: System :: Archiving :: Backup",
+  "Topic :: Utilities",
+]
+dependencies = []
+
+[project.scripts]
+rewind = "rewind.cli:main"
+
+[tool.setuptools]
+packages = ["rewind"]
