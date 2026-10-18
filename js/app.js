@@ -5,11 +5,15 @@
   const $ = (id) => document.getElementById(id);
   const t = (k) => I.t(k);
   const nm = (o) => I.name(o);
+  const Nm = LS.Names;
 
   // ---------- icons ----------
   const svg = (p, extra = '') => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" ${extra}>${p}</svg>`;
   const ICON = {
     menu: svg('<path d="M4 7h16M4 12h10M4 17h16"/>'),
+    sky: svg('<path d="M12 3l1.6 4.4L18 9l-4.4 1.6L12 15l-1.6-4.4L6 9l4.4-1.6z"/><path d="M18.5 15l.7 1.8 1.8.7-1.8.7-.7 1.8-.7-1.8-1.8-.7 1.8-.7zM5 16.5l.5 1.2 1.2.5-1.2.5-.5 1.2-.5-1.2-1.2-.5 1.2-.5z"/>'),
+    chakra: svg('<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5.5"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><path d="M12 3v3.5M12 17.5V21M3 12h3.5M17.5 12H21M5.6 5.6l2.5 2.5M15.9 15.9l2.5 2.5M18.4 5.6l-2.5 2.5M8.1 15.9l-2.5 2.5"/>'),
+    names: svg('<text x="12" y="17.5" font-size="16" text-anchor="middle" fill="currentColor" stroke="none" font-family="Noto Sans Devanagari, serif">ॐ</text>'),
     search: svg('<circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/>'),
     close: svg('<path d="M6 6l12 12M18 6 6 18"/>'),
     plus: svg('<path d="M12 5v14M5 12h14"/>'),
@@ -70,6 +74,7 @@
     nakshatra: true, rashi: true, graha: true, constellations: false, grid: false, eqGrid: false,
     atmosphere: true, ground: true, milkyway: true, labels: true, starNames: true, night: false,
     groundOpacity: 0.82, starBrightness: 1, arFov: 62, compassOffset: 0,
+    mode: 'sky', names: 'vedic', jyTab: 'kundali', kStyle: 'north', kVarga: 'D1', birth: null,
     view: null,
   };
   const KEY = 'antariksha.v1';
@@ -195,7 +200,8 @@
   function superscript(s) { return s.replace(/[0-9]/g, (d) => '⁰¹²³⁴⁵⁶⁷⁸⁹'[d]); }
   function starTitle(i) {
     const vn = R.data.vedicNames[i];
-    if (vn) return { title: I.lang === 'hi' ? vn.hi : vn.en, sub: [I.lang === 'hi' ? vn.en : vn.hi, LS_DATA.stars.names[i], starDesig[i]].filter(Boolean).join(' · ') };
+    if (vn && (Nm.isVedic() || !LS_DATA.stars.names[i])) return { title: I.lang === 'hi' ? vn.hi : vn.en, sub: [I.lang === 'hi' ? vn.en : vn.hi, LS_DATA.stars.names[i], starDesig[i]].filter(Boolean).join(' · ') };
+    if (vn) return { title: LS_DATA.stars.names[i], sub: [I.lang === 'hi' ? vn.hi : vn.en, starDesig[i]].filter(Boolean).join(' · ') };
     return { title: LS_DATA.stars.names[i] || starDesig[i] || `#${i}`, sub: LS_DATA.stars.names[i] ? starDesig[i] || '' : '' };
   }
 
@@ -242,6 +248,7 @@
       invalidate();
     }
 
+    if (S.mode === 'jyotish') jyFrame(now);
     const realtime = clock.rate === 1;
     const interval = view.fov < 5 ? 100 : view.fov < 30 ? 400 : 1000;
     const timeDue = clock.rate !== 0 && (!realtime || now - lastFrame > interval);
@@ -383,7 +390,8 @@
   // ---------- dock ----------
   const DOCK = [
     { key: 'nakshatra', icon: 'nakshatra' }, { key: 'rashi', icon: 'rashi' }, { key: 'graha', icon: 'graha' },
-    { key: 'constellations', icon: 'western' }, { key: 'grid', icon: 'grid' }, { sep: true },
+    { key: 'constellations', icon: 'western', label: 'mandala' }, { key: 'grid', icon: 'grid' },
+    { key: 'names', icon: 'names', action: () => setNames(Nm.isVedic() ? 'western' : 'vedic'), state: () => Nm.isVedic(), dyn: () => (Nm.isVedic() ? 'vedicShort' : 'westernShort') }, { sep: true },
     { key: 'atmosphere', icon: 'atmosphere' }, { key: 'ground', icon: 'ground' }, { key: 'milkyway', icon: 'milkyway' }, { sep: true },
     { key: 'sensor', icon: 'sensor', cyan: true, action: () => setSensor(!view.sensor), state: () => view.sensor },
     { key: 'camera', icon: 'camera', cyan: true, action: () => setAR(!view.ar), state: () => view.ar },
@@ -411,10 +419,12 @@
     for (const b of $('dock').querySelectorAll('.dock-btn')) {
       const d = DOCK.find((x) => x.key === b.dataset.key);
       b.classList.toggle('on', d.state ? d.state() : !!S[d.key]);
-      b.querySelector('span').textContent = t(d.label || d.key);
-      b.title = t(d.label || d.key);
+      const lbl = d.dyn ? d.dyn() : (d.label || d.key);
+      b.querySelector('span').textContent = t(lbl);
+      b.title = d.key === 'names' ? t(Nm.isVedic() ? 'namesVedic' : 'namesWestern') : t(lbl);
     }
     for (const b of $('settingToggles').querySelectorAll('.toggle')) b.classList.toggle('on', !!S[b.dataset.key]);
+    $('namesSeg').querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.names === Nm.culture));
   }
   function applyNight() { document.body.classList.toggle('night', !!S.night); persist(); }
   function setZen(on) { document.body.classList.toggle('zen', on); $('btnShowUi').hidden = !on; }
@@ -456,7 +466,7 @@
     });
   }
   function renderSettingsText() {
-    for (const b of $('settingToggles').querySelectorAll('.toggle')) b.querySelector('span').textContent = t(b.dataset.key);
+    for (const b of $('settingToggles').querySelectorAll('.toggle')) b.querySelector('span').textContent = t(b.dataset.key === 'constellations' ? 'mandala' : b.dataset.key);
     const sel = $('citySelect');
     sel.innerHTML = `<option value="" disabled>${t('location')}</option>` + CITIES.map((c) => `<option value="${c.id}">${nm(c)}</option>`).join('');
     sel.value = CITIES.some((c) => c.id === S.loc.id) ? S.loc.id : '';
@@ -601,7 +611,7 @@
     const z = Sky.zodiacInfo(sidLon);
     return [
       [t('siderealLon'), dms(sidLon)],
-      [t('inRashi'), `${nm(V.rashis[z.rashi])} ${dms(z.degInRashi)}`],
+      [t('inRashi'), `${Nm.rashi(z.rashi)} ${dms(z.degInRashi)}`],
       [t('inNakshatra'), `${nm(V.nakshatras[z.nakshatra])} · ${t('pada')} ${I.num(z.pada)}`],
     ];
   }
@@ -632,13 +642,13 @@
     let type = '', title = '', sub = '', glyph = '✦', desc = '', rows = [];
     if (obj.type === 'graha') {
       const g = V.grahas[obj.id], gp = as.grahas[obj.id];
-      type = `${t('grahaType')}${g.modern ? ' · ' + t('modern') : ''}`; title = nm(g); glyph = g.glyph;
-      sub = [hi ? g.en : g.hi, g.west].join(' · ');
+      type = `${t('grahaType')}${g.modern ? ' · ' + t('modern') : ''}`; title = Nm.graha(obj.id); glyph = g.glyph;
+      sub = Nm.grahaAlt(obj.id);
       desc = nm(g.desc);
       rows = [...zodiacRows(gp.sidLon)];
       if (gp.retro && obj.id !== 'rahu' && obj.id !== 'ketu') rows.push([t('retrograde'), '℞']);
-      if (g.rules) rows.push([t('rules'), g.rules.map((k) => nm(V.rashis[k])).join(', ')]);
-      if (g.exalt != null) rows.push([t('exalted'), nm(V.rashis[g.exalt])], [t('debilitated'), nm(V.rashis[g.debil])]);
+      if (g.rules) rows.push([t('rules'), g.rules.map((k) => Nm.rashi(k)).join(', ')]);
+      if (g.exalt != null) rows.push([t('exalted'), Nm.rashi(g.exalt)], [t('debilitated'), Nm.rashi(g.debil)]);
       if (g.day != null) rows.push([t('vara'), nm(V.varas[g.day])]);
       if (g.body && gp.mag < 50 && obj.id !== 'surya') rows.push([t('magnitude'), I.num(gp.mag.toFixed(1))]);
       if (obj.id === 'chandra') rows.push([t('illumination'), `${I.num((gp.illum * 100).toFixed(0))}%`]);
@@ -665,14 +675,14 @@
         const nk = V.nakshatras[obj.id];
         type = `${t('nakType')} ${I.num(obj.id + 1)} / ${I.num(27)}`; title = nm(nk); sub = `${hi ? nk.en : nk.hi} · ${nk.iast}`; glyph = I.num(obj.id + 1);
         const start = obj.id * Sky.NAK, end = start + Sky.NAK;
-        const span = (x) => `${nm(V.rashis[Math.floor(x / 30) % 12])} ${dms(x % 30)}`;
+        const span = (x) => `${Nm.rashi(Math.floor(x / 30) % 12)} ${dms(x % 30)}`;
         desc = `${nm(nk.deity)}.`;
         const moonHere = Math.floor(as.grahas.chandra.sidLon / Sky.NAK) === obj.id;
-        const inHere = Sky.GRAHA_ORDER.filter((id) => Math.floor(as.grahas[id].sidLon / Sky.NAK) === obj.id).map((id) => nm(V.grahas[id]));
+        const inHere = Sky.GRAHA_ORDER.filter((id) => Math.floor(as.grahas[id].sidLon / Sky.NAK) === obj.id).map((id) => Nm.graha(id));
         rows = [
           [t('span'), `${span(start)} – ${span(end - 1e-9).replace(/29°59′/, '30°00′')}`],
           [t('deity'), nm(nk.deity)], [t('symbol'), nm(nk.symbol)],
-          [t('lord'), nm(V.grahas[nk.lord])], [t('gana'), nm(V.ganas[nk.gana])],
+          [t('lord'), Nm.graha(nk.lord)], [t('gana'), nm(V.ganas[nk.gana])],
           [t('yogatara'), starTitle(R.data.nakFigs[obj.id].yt).sub.split(' · ').slice(-1)[0] || '—'],
           inHere.length ? [t('graha'), inHere.join(', ')] : null,
         ];
@@ -681,17 +691,17 @@
       }
     } else if (obj.type === 'rashi') {
       const rs = V.rashis[obj.id];
-      type = `${t('rashiType')} ${I.num(obj.id + 1)} / ${I.num(12)}`; title = nm(rs); sub = `${hi ? rs.en : rs.hi} · ${rs.west}`; glyph = '♈♉♊♋♌♍♎♏♐♑♒♓'[obj.id];
-      const inHere = Sky.GRAHA_ORDER.filter((id) => Math.floor(as.grahas[id].sidLon / 30) === obj.id).map((id) => nm(V.grahas[id]));
+      type = `${t('rashiType')} ${I.num(obj.id + 1)} / ${I.num(12)}`; title = Nm.rashi(obj.id); sub = Nm.rashiAlt(obj.id); glyph = '♈♉♊♋♌♍♎♏♐♑♒♓'[obj.id];
+      const inHere = Sky.GRAHA_ORDER.filter((id) => Math.floor(as.grahas[id].sidLon / 30) === obj.id).map((id) => Nm.graha(id));
       const firstNak = Math.floor(obj.id * 30 / Sky.NAK), lastNak = Math.floor((obj.id * 30 + 29.999) / Sky.NAK);
       const naks = []; for (let k = firstNak; k <= lastNak; k++) naks.push(nm(V.nakshatras[k]));
-      rows = [[t('symbol'), nm(rs.symbol)], [t('lord'), nm(V.grahas[rs.lord])], [t('element'), nm(V.elements[rs.el])],
+      rows = [[t('symbol'), nm(rs.symbol)], [t('lord'), Nm.graha(rs.lord)], [t('element'), nm(V.elements[rs.el])],
         [t('nakshatra'), naks.join(', ')], inHere.length ? [t('graha'), inHere.join(', ')] : null];
       sheetStatic = { star: null };
     } else if (obj.type === 'constellation') {
       const c = R.data.western.find((x) => x.id === obj.id);
       const meta = LS_DATA.constellations.find((x) => x.id === obj.id);
-      type = t('consType'); title = hi ? c.hi : c.en; sub = meta ? meta.la : ''; glyph = '✧';
+      type = t('consType'); title = Nm.constellation(c); sub = Nm.constellationAlt({ ...c, la: meta && meta.la }); glyph = '✧';
       sheetStatic = { star: null };
     } else if (obj.type === 'asterism') {
       const a = V.asterisms[obj.id];
@@ -704,6 +714,10 @@
     if (window.innerWidth <= 720) $('panchang').hidden = true;
     $('sheet').hidden = false;
     $('btnTrack').classList.toggle('on', view.track);
+    const jyMode = S.mode === 'jyotish';
+    $('btnTrack').hidden = jyMode;
+    $('btnCenter').textContent = t(jyMode ? 'viewSky' : 'center');
+    $('btnKundali').hidden = jyMode || !((obj.type === 'graha' && LS.Jyotish.NAVA.includes(obj.id)) || obj.type === 'rashi' || (obj.type === 'nakshatra' && obj.id !== 'abhijit'));
     updateSheetLive(true);
   }
   let lastRiseSet = 0, riseSetCache = [];
@@ -722,7 +736,15 @@
     if (enu && enu[2] < 0) live[0][1] += ` · ${t('below')}`;
     $('sRows').innerHTML = rowsHtml([...live, ...riseSetCache, ...sheetStatic.rows]);
   }
-  $('btnCenter').addEventListener('click', () => { if (selected) goTo(selected, true); });
+  $('btnCenter').addEventListener('click', () => {
+    if (!selected) return;
+    if (S.mode === 'jyotish') { setMode('sky'); requestAnimationFrame(() => goTo(selected, true)); } else goTo(selected, true);
+  });
+  $('btnKundali').addEventListener('click', () => {
+    if (!selected) return;
+    if (selected.type === 'graha' && LS.Jyotish.NAVA.includes(selected.id)) jy.selected = selected.id;
+    setMode('jyotish');
+  });
   $('btnTrack').addEventListener('click', () => {
     if (!selected) return;
     view.track = !view.track; if (view.track) goTo(selected, false);
@@ -735,10 +757,10 @@
   let searchIndex = [];
   function buildSearchIndex() {
     const idx = [];
-    for (const id of Sky.GRAHA_ORDER) { const g = V.grahas[id]; idx.push({ obj: { type: 'graha', id }, glyph: g.glyph, names: [g.en, g.hi, g.iast, g.west], label: () => nm(g), sub: () => `${t('grahaType')} · ${g.west}` }); }
+    for (const id of Sky.GRAHA_ORDER) { const g = V.grahas[id]; idx.push({ obj: { type: 'graha', id }, glyph: g.glyph, names: [g.en, g.hi, g.iast, g.west], label: () => Nm.graha(id), sub: () => `${t('grahaType')} · ${Nm.grahaAlt(id)}` }); }
     V.nakshatras.forEach((nk, k) => idx.push({ obj: { type: 'nakshatra', id: k }, glyph: I.num(k + 1), names: [nk.en, nk.hi, nk.iast], label: () => nm(nk), sub: () => `${t('nakType')} · ${nm(nk.deity)}` }));
     idx.push({ obj: { type: 'nakshatra', id: 'abhijit' }, glyph: '★', names: [V.abhijit.en, V.abhijit.hi], label: () => nm(V.abhijit), sub: () => t('nakType') });
-    V.rashis.forEach((rs, k) => idx.push({ obj: { type: 'rashi', id: k }, glyph: '♈♉♊♋♌♍♎♏♐♑♒♓'[k], names: [rs.en, rs.hi, rs.iast, rs.west], label: () => nm(rs), sub: () => `${t('rashiType')} · ${rs.west}` }));
+    V.rashis.forEach((rs, k) => idx.push({ obj: { type: 'rashi', id: k }, glyph: '♈♉♊♋♌♍♎♏♐♑♒♓'[k], names: [rs.en, rs.hi, rs.iast, rs.west], label: () => Nm.rashi(k), sub: () => `${t('rashiType')} · ${Nm.rashiAlt(k)}` }));
     V.asterisms.forEach((a, k) => idx.push({ obj: { type: 'asterism', id: k }, glyph: '✶', names: [a.en, a.hi], label: () => nm(a), sub: () => t('asterismType') }));
     for (const [i, vn] of Object.entries(R.data.vedicNames)) {
       if (vn.kind !== 'star') continue;
@@ -748,7 +770,7 @@
       if (R.data.vedicNames[i] && R.data.vedicNames[i].kind === 'star') continue;
       idx.push({ obj: { type: 'star', id: +i }, glyph: '·', names: [name, starDesig[i]], label: () => name, sub: () => `${t('starType')} · ${starDesig[i] || ''}`, minor: true });
     }
-    for (const c of R.data.western) idx.push({ obj: { type: 'constellation', id: c.id }, glyph: '✧', names: [c.en, c.hi, c.id], label: () => (I.lang === 'hi' ? c.hi : c.en), sub: () => t('consType'), minor: true });
+    for (const c of R.data.western) idx.push({ obj: { type: 'constellation', id: c.id }, glyph: '✧', names: [c.en, c.hi, c.id, ...(V.constellations[c.id] || [])], label: () => Nm.constellation(c), sub: () => `${t('consType')} · ${Nm.constellationAlt(c)}`, minor: true });
     searchIndex = idx.map((e) => ({ ...e, keys: e.names.filter(Boolean).map(fold) }));
   }
   let activeResult = -1, currentResults = [];
@@ -788,6 +810,242 @@
   });
   document.addEventListener('pointerdown', (e) => { if (!$('searchBox').contains(e.target)) $('searchResults').hidden = true; });
 
+
+  // ---------- names & modes ----------
+  function setNames(c) {
+    S.names = c; Nm.set(c); persist();
+    syncDock();
+    if (selected && !$('sheet').hidden) showSheet(selected);
+    if ($('searchInput').value) runSearch($('searchInput').value);
+    if (!$('panchang').hidden) renderPanchang();
+    jyRefresh(true); invalidate();
+  }
+  function placeGlider() {
+    const on = $('modeSwitch').querySelector(`.mode[data-mode="${S.mode}"]`);
+    const g = $('modeSwitch').querySelector('.mode-glider');
+    if (!on || !g) return;
+    g.style.width = on.offsetWidth + 'px';
+    g.style.transform = `translateX(${on.offsetLeft - 4}px)`;
+  }
+  function setMode(m, initial) {
+    S.mode = m === 'jyotish' ? 'jyotish' : 'sky';
+    document.body.classList.toggle('mode-jyotish', S.mode === 'jyotish');
+    $('modeSwitch').querySelectorAll('.mode').forEach((b) => { b.classList.toggle('on', b.dataset.mode === S.mode); b.setAttribute('aria-selected', b.dataset.mode === S.mode); });
+    $('jyotish').hidden = S.mode !== 'jyotish';
+    if (S.mode === 'jyotish') {
+      $('panchang').hidden = true;
+      if (view.sensor && !view.ar) setSensor(false);
+      requestAnimationFrame(() => { jy.wheel.resize(); jyRefresh(true); });
+    }
+    if (!initial && selected && !$('sheet').hidden) showSheet(selected);
+    requestAnimationFrame(placeGlider);
+    persist(); invalidate();
+  }
+
+  // ---------- Jyotish view ----------
+  const jy = { wheel: null, chart: null, lastSim: NaN, lastLoc: '', lastDraw: 0, lastPanel: 0, selected: null, dashaOpen: null, panelSim: NaN };
+  const DIG_KEY = { exalted: 'dig_exalted', own: 'dig_own', friend: 'dig_friend', neutral: 'dig_neutral', enemy: 'dig_enemy', debilitated: 'dig_debilitated' };
+  const DIG_WEST = { exalted: 'Exalted', own: 'Own sign', friend: 'Friendly sign', neutral: 'Neutral sign', enemy: 'Enemy sign', debilitated: 'Debilitated' };
+  const DIG_SHORT = { exalted: ['Uchcha', 'Exalted', 'उच्च'], own: ['Svakshetra', 'Own', 'स्वक्षेत्री'], friend: ['Mitra', 'Friend', 'मित्र'],
+    neutral: ['Sama', 'Neutral', 'सम'], enemy: ['Shatru', 'Enemy', 'शत्रु'], debilitated: ['Neecha', 'Debilitated', 'नीच'] };
+  const digName = (d) => (Nm.isVedic() || I.lang === 'hi' ? t(DIG_KEY[d]) : DIG_WEST[d]);
+  const digShort = (d) => DIG_SHORT[d][I.lang === 'hi' ? 2 : Nm.isVedic() ? 0 : 1];
+  const fmtDay = (ms) => fmt(ms, { day: 'numeric', month: 'short', year: 'numeric' });
+
+  function initJyotish() {
+    jy.wheel = LS.ChartView.createWheel($('wheel'), {
+      t,
+      onTimeDelta: (ms) => { clock.sim += ms; clock.rate = 0; astro = null; invalidate(); jy.lastSim = NaN; },
+      onSelect: (obj) => {
+        if (!obj) { jy.selected = null; jy.wheel.setSelected(null); close('sheet'); renderJyPanel(); return; }
+        if (obj.type === 'graha') { jy.selected = obj.id; jy.wheel.setSelected(obj.id); }
+        select(obj); renderJyPanel();
+      },
+    });
+    $('modeSwitch').querySelector('[data-mode="sky"] .mi').innerHTML = ICON.sky;
+    $('modeSwitch').querySelector('[data-mode="jyotish"] .mi').innerHTML = ICON.chakra;
+    $('modeSwitch').querySelectorAll('.mode').forEach((b) => b.addEventListener('click', () => setMode(b.dataset.mode)));
+    $('namesSeg').querySelectorAll('button').forEach((b) => b.addEventListener('click', () => setNames(b.dataset.names)));
+    $('jyTabs').querySelectorAll('button').forEach((b) => b.addEventListener('click', () => { S.jyTab = b.dataset.tab; persist(); renderJyPanel(); }));
+    $('btnJyNow').addEventListener('click', () => { clock.sim = Date.now(); clock.rate = 1; afterTimeJump(); jyRefresh(true); });
+    $('btnJySky').addEventListener('click', () => setMode('sky'));
+    // Delegated clicks inside the panel.
+    $('jyBody').addEventListener('click', (e) => {
+      const g = e.target.closest('[data-g]');
+      if (g && g.dataset.g !== 'lagna') { jy.selected = g.dataset.g; jy.wheel.setSelected(jy.selected); select({ type: 'graha', id: jy.selected }); renderJyPanel(); return; }
+      const opt = e.target.closest('[data-opt]');
+      if (opt) { S[opt.dataset.opt] = opt.dataset.val; persist(); renderJyPanel(); return; }
+      const md = e.target.closest('[data-md]');
+      if (md) { jy.dashaOpen = jy.dashaOpen === +md.dataset.md ? -1 : +md.dataset.md; renderJyPanel(); return; }
+      const act = e.target.closest('[data-act]');
+      if (act) jyAction(act.dataset.act);
+    });
+    $('jyBody').addEventListener('change', (e) => {
+      if (e.target.id === 'bPlace') {
+        const c = CITIES.find((x) => x.id === e.target.value);
+        if (c) { $('bLat').value = c.lat.toFixed(4); $('bLon').value = c.lon.toFixed(4); }
+      }
+    });
+    window.addEventListener('resize', () => { if (S.mode === 'jyotish') { jy.wheel.resize(); placeGlider(); } });
+  }
+
+  function jyFrame(now) {
+    const lk = locKey();
+    const changed = clock.sim !== jy.lastSim || lk !== jy.lastLoc;
+    if (changed && (now - jy.lastDraw > 50 || Math.abs(clock.sim - jy.lastSim) > 3600e3 * 6)) {
+      jyCompute();
+      jy.lastDraw = now;
+    } else if (now - jy.lastDraw > 66) { jy.wheel.draw(now); jy.lastDraw = now; }
+    if (jy.chart && now - jy.lastPanel > 600 && Math.abs(jy.chart.ms - jy.panelSim) > 30e3) renderJyPanel();
+  }
+  function jyCompute() {
+    try {
+      jy.chart = LS.Jyotish.chart(A.MakeTime(new Date(clock.sim)), observer());
+      jy.lastSim = clock.sim; jy.lastLoc = locKey();
+      jy.wheel.setChart(jy.chart);
+      renderJyTitle();
+    } catch (e) { console.warn('chart failed', e); }
+  }
+  function jyRefresh(force) {
+    if (!jy.wheel || S.mode !== 'jyotish') return;
+    if (force) jyCompute();
+    renderJyPanel();
+  }
+  function isBirthChart() { return S.birth && Math.abs(S.birth.ms - clock.sim) < 60e3 && Math.abs(S.birth.lat - S.loc.lat) < 1e-4 && Math.abs(S.birth.lon - S.loc.lon) < 1e-4; }
+  function renderJyTitle() {
+    const who = isBirthChart() ? `${S.birth.name || t('birthChart')} · ` : '';
+    $('jyTitle').textContent = `${who}${fmtDate(clock.sim)} · ${fmtTime(clock.sim)} · ${nm(S.loc)}`;
+  }
+
+  function renderJyPanel() {
+    if (!jy.chart || S.mode !== 'jyotish') return;
+    jy.lastPanel = performance.now(); jy.panelSim = jy.chart.ms;
+    $('jyTabs').querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.tab === S.jyTab));
+    const c = jy.chart;
+    const html = { kundali: jyKundali, grahas: jyGrahas, dasha: jyDasha, janma: jyJanma }[S.jyTab] || jyKundali;
+    // Keep form fields intact while the clock ticks.
+    if (S.jyTab === 'janma' && $('jyBody').querySelector('#bDate')) return;
+    $('jyBody').innerHTML = html(c);
+  }
+  const optSeg = (key, opts) => `<div class="seg mini">${opts.map(([v, label]) => `<button data-opt="${key}" data-val="${v}" class="${S[key] === v ? 'on' : ''}">${label}</button>`).join('')}</div>`;
+
+  function jyKundali(c) {
+    const d9 = S.kVarga === 'D9';
+    const items = c.grahas.map((g) => ({ id: g.id, rashi: d9 ? g.navamsa : g.rashi, retro: g.retro, deg: d9 ? null : g.deg }));
+    const L = d9 ? c.navamsaLagna : c.lagnaRashi;
+    const title = t(d9 ? 'navamsa' : 'rashiChart');
+    const svg = LS.ChartView.kundaliSVG(L, items, S.kStyle, { selected: jy.selected, showDeg: !d9, title, subtitle: fmtDay(c.ms) });
+    const moon = c.byId.chandra;
+    return `<div class="jy-sub">${optSeg('kStyle', [['north', t('north')], ['south', t('south')]])}${optSeg('kVarga', [['D1', 'D1'], ['D9', 'D9']])}</div>
+      ${svg}
+      <div class="k-caption">${t('lagna')} <b>${Nm.rashi(L)}</b> · ${t('moonRashi')} <b>${Nm.rashi(d9 ? moon.navamsa : moon.rashi)}</b> · ${t('nakshatra')} <b>${Nm.nakshatra(moon.nak)}</b></div>
+      ${jyHouses(c, d9)}`;
+  }
+  function jyHouses(c, d9) {
+    if (d9) return '';
+    const sel = jy.selected && c.byId[jy.selected];
+    const asp = sel ? LS.Jyotish.aspects(sel.id, sel.house) : [];
+    const rows = c.houses.map((h) => {
+      const b = V.bhavas[h.n - 1];
+      const lordH = c.byId[h.lord] ? c.byId[h.lord].house : '';
+      const occ = h.occupants.map((id) => `<a data-g="${id}" style="color:${V.grahas[id].color}">${Nm.abbr(id)}</a>`).join(' ');
+      const mark = asp.includes(h.n) ? ` style="background:rgba(126,232,250,0.08)"` : '';
+      return `<tr${mark}><td class="gn">${I.num(h.n)} · ${I.lang === 'hi' ? b[1] : b[0]}<span class="s">${I.lang === 'hi' ? b[3] : b[2]}</span></td>
+        <td>${Nm.rashi(h.rashi)}<span class="s">${Nm.graha(h.lord)} → ${I.num(lordH)}</span></td><td>${occ || '<span class="s">—</span>'}</td></tr>`;
+    }).join('');
+    const head = sel ? `<div class="k-caption">${t('aspects')}: <b style="color:${V.grahas[sel.id].color}">${Nm.graha(sel.id)}</b> → ${asp.map((h) => I.num(h)).join(', ')}</div>` : '';
+    return `${head}<table class="gtable" style="margin-top:10px"><thead><tr><th>${t('bhavaName')}</th><th>${t('rashi')} · ${t('lordIn')}</th><th>${t('occupants')}</th></tr></thead><tbody>${rows}</tbody></table>`;
+  }
+
+  function jyGrahas(c) {
+    const lagnaRow = `<tr><td class="gn"><i style="color:#ffb347">↑</i>${t('lagna')}</td><td class="mono">${Nm.rashi(c.lagnaRashi)} ${dms(c.lagna % 30)}</td>
+      <td>${Nm.nakshatra(c.lagnaNak)} · ${I.num(c.lagnaPada)}</td><td class="mono">${I.num(1)}</td><td>—</td></tr>`;
+    const rows = c.grahas.map((g) => {
+      const flags = [g.retro && g.id !== 'rahu' && g.id !== 'ketu' ? (I.lang === 'hi' ? 'वक्री' : '℞') : '', g.combust ? t('combust') : ''].filter(Boolean).map((f) => `<span class="flag">${f}</span>`).join('');
+      return `<tr data-g="${g.id}" class="${jy.selected === g.id ? 'on' : ''}">
+        <td class="gn"><i style="color:${V.grahas[g.id].color}">${V.grahas[g.id].glyph}</i>${Nm.graha(g.id)}${flags}</td>
+        <td class="mono">${Nm.rashi(g.rashi)} ${dms(g.deg)}</td>
+        <td>${Nm.nakshatra(g.nak)} · ${I.num(g.pada)}<span class="s" title="${t('nakLord')}">⟡ ${Nm.graha(g.nakLord)}</span></td>
+        <td class="mono">${I.num(g.house)}</td>
+        <td><span class="dg ${g.dignity}" title="${digName(g.dignity)}">${digShort(g.dignity)}</span></td></tr>`;
+    }).join('');
+    return `<table class="gtable"><thead><tr><th>${t('graha')}</th><th>${t('rashi')}</th><th>${t('nakshatra')}</th><th>${t('house')}</th><th>${t('dignity')}</th></tr></thead><tbody>${lagnaRow}${rows}</tbody></table>`;
+  }
+
+  function jyDasha(c) {
+    const moon = c.byId.chandra;
+    const v = LS.Jyotish.vimshottari(moon.lon, c.ms);
+    const now = Date.now();
+    const y = Math.floor(v.balanceYears), mo = Math.floor((v.balanceYears - y) * 12);
+    const curIdx = v.mds.findIndex((m) => now >= m.start && now < m.end);
+    if (jy.dashaOpen == null) jy.dashaOpen = curIdx;
+    const row = (p, cls, attr) => {
+      const g = V.grahas[p.lord];
+      const cur = now >= p.start && now < p.end;
+      const pct = cur ? ((now - p.start) / (p.end - p.start) * 100).toFixed(1) : 0;
+      return `<button class="drow ${cls || ''}${cur ? ' cur' : ''}" ${attr || ''}><span class="g" style="color:${g.color}">${g.glyph}</span>
+        <span><div class="n">${Nm.graha(p.lord)}${cur ? ` · <span style="color:#ffd8a0">${t('current')}</span>` : ''}</div></span>
+        <span class="d">${fmtDay(Math.max(p.start, cls === 'md' ? v.birthMs : p.start))} → ${fmtDay(p.end)}</span>
+        ${cur ? `<span class="bar"><i style="width:${pct}%"></i></span>` : ''}</button>`;
+    };
+    let list = '';
+    v.mds.forEach((m, k) => {
+      list += row(m, 'md', `data-md="${k}"`);
+      if (jy.dashaOpen === k) list += `<div class="antar">${LS.Jyotish.antardashas(m).map((a) => row(a, 'ad')).join('')}</div>`;
+    });
+    return `<div class="dasha-head"><div class="eyebrow">${t('vimshottari')}</div>
+      <div class="v">${t('moonRashi')}: ${Nm.rashi(moon.rashi)} · ${Nm.nakshatra(moon.nak)} (${Nm.graha(v.lord)})</div>
+      <div class="s">${t('balance')}: ${Nm.graha(v.lord)} ${I.num(y)}${t('years')} ${I.num(mo)}${t('months')}</div></div>${list}`;
+  }
+
+  function jyJanma() {
+    const b = S.birth;
+    const ms = b ? b.ms : clock.sim;
+    const tz = b ? b.tz : S.loc.tz;
+    const off = tzOffsetMin(tz, ms) * 60000;
+    const val = new Date(ms + off).toISOString().slice(0, 16);
+    const placeId = b ? b.id : S.loc.id;
+    const lat = b ? b.lat : S.loc.lat, lon = b ? b.lon : S.loc.lon;
+    const opts = CITIES.map((c) => `<option value="${c.id}"${c.id === placeId ? ' selected' : ''}>${nm(c)}</option>`).join('');
+    return `<div class="form">
+      <div class="eyebrow">${t('birthTitle')}</div>
+      ${b ? `<div class="birth-chip">✦ ${b.name || t('birthChart')} · ${fmtDay(b.ms)}</div>` : ''}
+      <label>${t('birthName')}<input class="field" id="bName" value="${(b && b.name ? b.name : '').replace(/"/g, '&quot;')}" maxlength="40"></label>
+      <label>${t('birthDate')}<input class="field" id="bDate" type="datetime-local" value="${val}"></label>
+      <label>${t('birthPlace')}<select class="field" id="bPlace"><option value="custom">${t('custom')}</option>${opts}</select></label>
+      <div class="row2">
+        <label>${t('latitude')}<input class="field" id="bLat" type="number" step="0.0001" value="${lat.toFixed(4)}"></label>
+        <label>${t('longitude')}<input class="field" id="bLon" type="number" step="0.0001" value="${lon.toFixed(4)}"></label>
+      </div>
+      <button class="pill wide accent" data-act="cast">${t('cast')}</button>
+      ${b ? `<button class="pill wide" data-act="back">${t('backToBirth')}</button>` : ''}
+      <button class="pill wide" data-act="now">${t('transitNow')}</button>
+      <p class="note">${t('aboutJyotish')}</p>
+    </div>`;
+  }
+  function jyAction(act) {
+    if (act === 'now') { clock.sim = Date.now(); clock.rate = 1; afterTimeJump(); jyRefresh(true); return; }
+    if (act === 'back' && S.birth) { applyBirth(S.birth); return; }
+    if (act === 'cast') {
+      const v = $('bDate').value; if (!v) return;
+      const lat = parseFloat($('bLat').value), lon = parseFloat($('bLon').value);
+      if (isNaN(lat) || isNaN(lon) || Math.abs(lat) > 90 || Math.abs(lon) > 180) return;
+      const city = CITIES.find((c) => c.id === $('bPlace').value && Math.abs(c.lat - lat) < 1e-3 && Math.abs(c.lon - lon) < 1e-3);
+      const tz = city ? city.tz : DEVICE_TZ;
+      const [d, tm] = v.split('T'); const [yy, mm, dd] = d.split('-').map(Number); const [hh, mi] = tm.split(':').map(Number);
+      const guess = Date.UTC(yy, mm - 1, dd, hh, mi);
+      const ms = guess - tzOffsetMin(tz, guess) * 60000;
+      S.birth = { name: $('bName').value.trim(), ms, lat, lon, tz, id: city ? city.id : 'custom', en: city ? city.en : `${lat.toFixed(2)}°, ${lon.toFixed(2)}°`, hi: city ? city.hi : `${lat.toFixed(2)}°, ${lon.toFixed(2)}°` };
+      applyBirth(S.birth);
+    }
+  }
+  function applyBirth(b) {
+    S.loc = { id: b.id, en: b.en, hi: b.hi, lat: b.lat, lon: b.lon, tz: b.tz };
+    clock.sim = b.ms; clock.rate = 0;
+    S.jyTab = 'kundali'; persist();
+    renderSettingsText(); afterTimeJump(); jy.dashaOpen = null; jyRefresh(true);
+  }
+
   // ---------- language ----------
   function applyLang() {
     document.querySelectorAll('[data-t]').forEach((el) => { el.textContent = t(el.dataset.t); });
@@ -798,6 +1056,7 @@
     if (!$('panchang').hidden) renderPanchang();
     if (selected && !$('sheet').hidden) showSheet(selected);
     if ($('searchInput').value) runSearch($('searchInput').value);
+    placeGlider(); jyRefresh(true);
     invalidate();
   }
   $('btnLang').addEventListener('click', () => { S.lang = I.lang === 'en' ? 'hi' : 'en'; I.set(S.lang); persist(); });
@@ -845,8 +1104,10 @@
   });
 
   // ---------- boot ----------
-  buildDock(); buildSettings(); buildTimebar(); buildSearchIndex();
+  Nm.set(S.names);
+  buildDock(); buildSettings(); buildTimebar(); buildSearchIndex(); initJyotish();
   I.set(S.lang);
+  setMode(S.mode, true);
   applyNight();
   refreshPanchang(true);
   requestAnimationFrame(frame);
@@ -857,5 +1118,5 @@
     } else geolocate(false);
   }
   if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => {});
-  window.__antariksha = { view, clock, S, select, goTo };
+  window.__antariksha = { view, clock, S, select, goTo, setMode, setNames, jy };
 })();

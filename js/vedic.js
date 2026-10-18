@@ -229,3 +229,50 @@ LS.VEDIC = (function () {
   return { nakshatras, abhijit, asterisms, stars, rashis, elements, ganas, grahas, tithis, pakshas, yogas, karanas,
     varas, months, ritus, ayanas, directions, directionsShort };
 })();
+
+// Indian names for the 88 constellations (Jyotish naming culture), romanised + Devanagari.
+LS.VEDIC.constellations = {
+  And: ['Devayani', 'देवयानी'], Ant: ['Vatakarshaka', 'वाताकर्षक'], Aps: ['Kapota', 'कपोत'], Aqr: ['Kumbha', 'कुम्भ'],
+  Aql: ['Garuda', 'गरुड़'], Ara: ['Pitha', 'पीठ'], Ari: ['Mesha', 'मेष'], Aur: ['Sarathi', 'सारथी'],
+  Boo: ['Bhutapa', 'भूतप'], Cae: ['Tanka', 'टंक'], Cam: ['Karabha', 'करभ'], Cnc: ['Karka', 'कर्क'],
+  CVn: ['Shyama-Shabala', 'श्याम-शबल'], CMa: ['Brihad Lubdhaka', 'बृहद् लुब्धक'], CMi: ['Laghu Lubdhaka', 'लघु लुब्धक'], Cap: ['Makara', 'मकर'],
+  Car: ['Naukatala', 'नौकातल'], Cas: ['Sharmishtha', 'शर्मिष्ठा'], Cen: ['Naraturanga', 'नरतुरंग'], Cep: ['Vrishaparva', 'वृषपर्वा'],
+  Cet: ['Timingila', 'तिमिंगिल'], Cha: ['Vayubhaksha', 'वायुभक्ष'], Cir: ['Karkataka', 'कर्काटक'], Col: ['Paravata', 'पारावत'],
+  Com: ['Arundhati Kesha', 'अरुन्धती केश'], CrA: ['Dakshina Mukuta', 'दक्षिण मुकुट'], CrB: ['Uttara Mukuta', 'उत्तर मुकुट'], Crv: ['Dhvanksha', 'ध्वांक्ष'],
+  Crt: ['Chashaka', 'चषक'], Cru: ['Trishanku', 'त्रिशंकु'], Cyg: ['Hamsa', 'हंस'], Del: ['Timi', 'तिमि'],
+  Dor: ['Asidamshtra', 'असिदंष्ट्र'], Dra: ['Kaleya', 'कालेय'], Equ: ['Ashvamukha', 'अश्वमुख'], Eri: ['Yamuna', 'यमुना'],
+  For: ['Ashmanta', 'अश्मन्त'], Gem: ['Mithuna', 'मिथुन'], Gru: ['Baka', 'बक'], Her: ['Shauri', 'शौरि'],
+  Hor: ['Kalayantra', 'कालयन्त्र'], Hya: ['Vasuki', 'वासुकि'], Hyi: ['Alagarda', 'अलगर्द'], Ind: ['Yama', 'यम'],
+  Lac: ['Saratha', 'सरठ'], Leo: ['Simha', 'सिंह'], LMi: ['Laghu Simha', 'लघु सिंह'], Lep: ['Shashaka', 'शशक'],
+  Lib: ['Tula', 'तुला'], Lup: ['Vrika', 'वृक'], Lyn: ['Gavaya', 'गवय'], Lyr: ['Svaramandala', 'स्वरमण्डल'],
+  Men: ['Trikuta', 'त्रिकूट'], Mic: ['Sukshmadarshi', 'सूक्ष्मदर्शी'], Mon: ['Shringashva', 'शृंगाश्व'], Mus: ['Makshika', 'मक्षिका'],
+  Nor: ['Mapani', 'मापनी'], Oct: ['Ashtaka', 'अष्टक'], Oph: ['Bhujangadhari', 'भुजंगधारी'], Ori: ['Mriga (Kalapurusha)', 'मृग (कालपुरुष)'],
+  Pav: ['Mayura', 'मयूर'], Peg: ['Uchchaihshravas', 'उच्चैःश्रवा'], Per: ['Yayati', 'ययाति'], Phe: ['Jatayu', 'जटायु'],
+  Pic: ['Chitraphalaka', 'चित्रफलक'], Psc: ['Meena', 'मीन'], PsA: ['Dakshina Matsya', 'दक्षिण मत्स्य'], Pup: ['Nauka-Aritra', 'नौका-अरित्र'],
+  Pyx: ['Digdarshaka', 'दिग्दर्शक'], Ret: ['Jala', 'जाल'], Sge: ['Shara', 'शर'], Sgr: ['Dhanu', 'धनु'],
+  Sco: ['Vrishchika', 'वृश्चिक'], Scl: ['Pashanakuttaka', 'पाषाणकुट्टक'], Sct: ['Phalaka', 'फलक'], Ser: ['Bhujanga', 'भुजंग'],
+  Sex: ['Shadamsha', 'षडंश'], Tau: ['Vrishabha', 'वृषभ'], Tel: ['Duradarshi', 'दूरदर्शी'], Tri: ['Trikona', 'त्रिकोण'],
+  TrA: ['Dakshina Trikona', 'दक्षिण त्रिकोण'], Tuc: ['Karandava', 'कारण्डव'], UMa: ['Saptarishi', 'सप्तर्षि'], UMi: ['Dhruva Matsya', 'ध्रुव मत्स्य'],
+  Vel: ['Nau-Shirsha', 'नौ-शीर्ष'], Vir: ['Kanya', 'कन्या'], Vol: ['Udan Matsya', 'उड़न मत्स्य'], Vul: ['Jambuka', 'जम्बुक'],
+};
+
+// Chart abbreviations (Jyotish / Western / Hindi).
+LS.VEDIC.abbr = {
+  surya: ['Su', 'Su', 'सू'], chandra: ['Ch', 'Mo', 'चं'], mangala: ['Ma', 'Ma', 'मं'], budha: ['Bu', 'Me', 'बु'], guru: ['Gu', 'Ju', 'गु'],
+  shukra: ['Sk', 'Ve', 'शु'], shani: ['Sa', 'Sa', 'श'], rahu: ['Ra', 'Ra', 'रा'], ketu: ['Ke', 'Ke', 'के'], arun: ['Ar', 'Ur', 'अ'], varun: ['Va', 'Ne', 'व'],
+  lagna: ['La', 'Asc', 'ल'],
+};
+// Western names for the grahas in Hindi.
+LS.VEDIC.westHi = { surya: 'सूर्य', chandra: 'चन्द्रमा', mangala: 'मंगल', budha: 'बुध', guru: 'बृहस्पति', shukra: 'शुक्र', shani: 'शनि',
+  rahu: 'उत्तर पात', ketu: 'दक्षिण पात', arun: 'यूरेनस', varun: 'नेपच्यून' };
+LS.VEDIC.westDirections = ['North', 'North-east', 'East', 'South-east', 'South', 'South-west', 'West', 'North-west'];
+
+// Bhavas (whole-sign houses) with their classical names and significations.
+LS.VEDIC.bhavas = [
+  ['Tanu', 'तनु', 'Self, body, vitality', 'स्वयं, शरीर, प्राणशक्ति'], ['Dhana', 'धन', 'Wealth, family, speech', 'धन, कुटुम्ब, वाणी'],
+  ['Sahaja', 'सहज', 'Courage, siblings, effort', 'पराक्रम, भाई-बहन, प्रयास'], ['Sukha', 'सुख', 'Home, mother, inner peace', 'घर, माता, मन की शान्ति'],
+  ['Putra', 'पुत्र', 'Children, intellect, mantra', 'सन्तान, बुद्धि, मन्त्र'], ['Ari', 'अरि', 'Obstacles, health, service', 'शत्रु, रोग, सेवा'],
+  ['Yuvati', 'युवती', 'Partner, marriage, others', 'जीवनसाथी, विवाह, साझेदारी'], ['Randhra', 'रन्ध्र', 'Longevity, the hidden, change', 'आयु, गूढ़ विषय, परिवर्तन'],
+  ['Dharma', 'धर्म', 'Fortune, guru, dharma', 'भाग्य, गुरु, धर्म'], ['Karma', 'कर्म', 'Career, action, status', 'कर्म, व्यवसाय, प्रतिष्ठा'],
+  ['Labha', 'लाभ', 'Gains, friends, wishes', 'लाभ, मित्र, इच्छापूर्ति'], ['Vyaya', 'व्यय', 'Loss, retreat, moksha', 'व्यय, एकान्त, मोक्ष'],
+];

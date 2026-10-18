@@ -3,7 +3,7 @@
 window.LS = window.LS || {};
 
 LS.Renderer = (function () {
-  const Sky = LS.Sky, V = LS.VEDIC, I = LS.I18N;
+  const Sky = LS.Sky, V = LS.VEDIC, I = LS.I18N, Nm = LS.Names;
   const D2R = Math.PI / 180;
 
   const EQJ2GAL = [-0.0548755604, -0.8734370902, -0.4838350155,
@@ -162,7 +162,7 @@ void main(){
     V.stars.forEach((s, k) => { const i = idx(s.key); if (i != null) vedicNames[i] = { en: s.en, hi: s.hi, kind: 'star', ref: k }; });
 
     const western = LS_DATA.constellations.map((c) => ({
-      id: c.id, en: c.en, hi: c.hi, rank: c.rank, label: Sky.radec2vec(c.pos[0], c.pos[1]),
+      id: c.id, en: c.en, hi: c.hi, la: c.la, rank: c.rank, label: Sky.radec2vec(c.pos[0], c.pos[1]),
       lines: c.l.map((pl) => pl.map(([ra, dec]) => Sky.radec2vec(ra, dec))),
     }));
     return { n, vec, mag, bucket, names: sd.names, vedicNames, nakFigs, abhFig, asterisms, western };
@@ -317,7 +317,7 @@ void main(){
         ctx.stroke();
         if (st.labels) for (const c of data.western) {
           if (sc.fov > 120 && c.rank > 1) continue;
-          const pos = label(hiLang ? c.hi : c.en, eqj(c.label), COLORS.westernLabel, 11, { weight: 400 });
+          const pos = label(Nm.constellation(c), eqj(c.label), COLORS.westernLabel, 11, { weight: 400 });
           if (pos) hits.push({ x: pos.x, y: pos.y, r: 22, obj: { type: 'constellation', id: c.id }, prio: 0 });
         }
       }
@@ -339,7 +339,7 @@ void main(){
           polyline(pts);
           if (st.labels) {
             const rs = V.rashis[k];
-            const pos = label(hiLang ? rs.hi : rs.en.toUpperCase(), ect(lon + 15, -11), COLORS.rashiLabel, 13, { weight: 600 });
+            const pos = label(hiLang ? Nm.rashi(k) : Nm.rashi(k).toUpperCase(), ect(lon + 15, -11), COLORS.rashiLabel, 13, { weight: 600 });
             if (pos) hits.push({ x: pos.x, y: pos.y, r: 28, obj: { type: 'rashi', id: k }, prio: 1 });
           }
         }
@@ -412,9 +412,10 @@ void main(){
       for (const [i, x, y, rad] of starLabels) {
         const vn = data.vedicNames[i];
         let text = null, color = COLORS.starLabel;
-        if (vn && vn.kind !== 'nakshatra') { text = hiLang ? vn.hi : vn.en; color = COLORS.vedicStar; }
-        else if (vn && !st.nakshatra) { text = hiLang ? vn.hi : vn.en; color = COLORS.vedicStar; }
-        else if (!vn && data.names[i]) text = data.names[i];
+        // Yogataras are already named by their nakshatra figure when that layer is on.
+        if (vn && vn.kind === 'nakshatra' && st.nakshatra && (Nm.isVedic() || !data.names[i])) continue;
+        text = Nm.star(vn, data.names[i]);
+        if (vn && (Nm.isVedic() || !data.names[i])) color = COLORS.vedicStar;
         if (!text) continue;
         ctx.font = font(11, 400); ctx.fillStyle = color; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
         ctx.shadowColor = 'rgba(0,0,0,0.9)'; ctx.shadowBlur = 3;
@@ -464,7 +465,7 @@ void main(){
             ctx.font = font(13, 600); ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
             ctx.shadowColor = 'rgba(0,0,0,0.9)'; ctx.shadowBlur = 4;
             ctx.fillStyle = gv.color;
-            const txt = `${gv.glyph} ${hiLang ? gv.hi : gv.en}${g.retro && id !== 'rahu' && id !== 'ketu' ? (hiLang ? ' (व)' : ' ℞') : ''}`;
+            const txt = `${gv.glyph} ${Nm.graha(id)}${g.retro && id !== 'rahu' && id !== 'ketu' ? (hiLang ? ' (व)' : ' ℞') : ''}`;
             ctx.fillText(txt, x + rad + 6, y + rad + 4);
             ctx.shadowBlur = 0;
           }
@@ -486,7 +487,7 @@ void main(){
         ctx.font = font(main ? 18 : 12, 700);
         ctx.fillStyle = k === 0 ? '#ff8a6a' : 'rgba(255,214,150,0.95)';
         ctx.fillText(hiLang ? V.directions[k].hi : V.directionsShort[k], px, py - (main ? 16 : 12));
-        if (!hiLang) {
+        if (!hiLang && Nm.isVedic()) {
           ctx.font = font(10, 500); ctx.fillStyle = 'rgba(255,214,150,0.7)';
           ctx.fillText(V.directions[k].en, px, py + 2);
         }
