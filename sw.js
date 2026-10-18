@@ -1,9 +1,12 @@
 // Offline cache for the app shell. Bump VERSION when shipping changes.
-const VERSION = 'antariksha-v5';
+const VERSION = 'antariksha-v6';
 const SHELL = [
   './', 'index.html', 'css/app.css', 'manifest.webmanifest',
   'js/vendor/astronomy.browser.min.js', 'js/data/stars.js', 'js/data/constellations.js', 'js/data/art.js',
   'js/vedic.js', 'js/i18n.js', 'js/names.js', 'js/sky.js', 'js/jyotish.js', 'js/render.js', 'js/chart.js', 'js/magnetic.js', 'js/sensors.js', 'js/app.js',
+  'css/fonts.css', 'js/config.js', 'js/pro.js',
+  'fonts/space-grotesk-latin.woff2', 'fonts/space-grotesk-latin-ext.woff2', 'fonts/noto-sans-devanagari-devanagari.woff2',
+  'fonts/noto-sans-devanagari-latin.woff2', 'fonts/noto-sans-devanagari-latin-ext.woff2', 'fonts/jetbrains-mono-latin.woff2', 'fonts/jetbrains-mono-latin-ext.woff2',
   'img/milkyway.png', 'img/icon.svg', 'img/icon-192.png', 'img/icon-512.png',
 ];
 

@@ -15,6 +15,28 @@ Switch between them with the toggle in the top bar:
   - **Dasha**: Vimshottari mahadashas and antardashas, with the period running today highlighted.
   - **Birth**: enter a birth date, time and place to cast a Janma Kundali. "See this sky" then shows the actual sky at that moment.
 
+## Free and Pro
+
+Almost everything is free: the sky map, sensor and AR camera, Panchang, Bhachakra, the transit Kundali, graha details, time travel and both languages.
+**Antariksha Pro** is a one-time purchase (₹11 in India, about $3.33 elsewhere) that unlocks the personal features:
+
+- Janma Kundali and the birth-sky view
+- Vimshottari Dasha
+- Navamsa D9
+- Saved family profiles
+
+The iOS and Android apps sell Pro through the App Store and Google Play via [RevenueCat](https://www.revenuecat.com).
+The website shows the same paywall with links to the stores. Opening the site with `?preview` unlocks Pro for that tab, for demos.
+All launch settings live in `js/config.js`.
+
+## Publishing to the App Store and Google Play
+
+See **[LAUNCH.md](LAUNCH.md)** for the step-by-step map, and [STORE_LISTING.md](STORE_LISTING.md) for the listing text.
+
+- The apps are [Capacitor 8](https://capacitorjs.com) wrappers in `ios/` and `android/`.
+- The `Android release` and `iOS release` GitHub Actions build signed releases without a Mac. Run them manually, or push a `v*` tag.
+- Store screenshots are in `store/`.
+
 ## Naming culture vs. language
 
 Names are a separate setting from the interface language (the ॐ button in the dock, or Settings → Names):
@@ -65,6 +87,16 @@ python3 -m http.server 8000
 
 Deploy by copying the folder to any static host (GitHub Pages, Netlify, or a folder on livingsanatan.com). The app works offline once it has loaded, through `sw.js`, and can be installed to the home screen.
 
+Native apps and tests:
+
+```sh
+npm ci
+npm test            # Panchang/chart accuracy, sensor fusion, magnetic model, syntax
+npm run sync        # build www/ and copy it into ios/ and android/
+npm run android     # open in Android Studio
+npm run ios         # open in Xcode (Mac)
+```
+
 ## Accuracy
 
 Planetary positions come from [Astronomy Engine](https://github.com/cosinekitty/astronomy) (VSOP87/ELP based, accurate to under an arcminute). Results were cross-checked against an independent Jyotish engine:
@@ -83,11 +115,20 @@ js/chart.js          Bhachakra wheel + North/South Indian kundali
 js/names.js          Jyotish / Western naming culture
 js/render.js         WebGL sky (atmosphere, Milky Way, ground) + 2D overlay
 js/sensors.js        device orientation -> view, rear camera
-js/app.js            gestures, time, search, panels, settings
+js/app.js            gestures, time, search, panels, settings, paywall
+js/config.js         launch settings: RevenueCat keys, prices, store links
+js/pro.js            Pro entitlement (RevenueCat in the apps, store links on the web)
+js/magnetic.js       World Magnetic Model 2025 (true north for the compass)
 js/vedic.js          nakshatra / rashi / graha / Panchang vocabulary (EN + HI)
 js/i18n.js           interface strings (EN + HI)
 js/data/*.js         generated star and constellation data
 tools/build_data.py  regenerates js/data, img/milkyway.png and img/art
+tools/store-screenshots.mjs  regenerates store/ screenshots and the Play feature graphic
+privacy.html, terms.html, support.html   legal pages (needed by both stores)
+ios/, android/       Capacitor native projects
+resources/           source icon and splash (npm run assets)
+tests/               accuracy tests (npm test)
+.github/workflows/   CI, Android release (AAB → Play), iOS release (→ TestFlight)
 ```
 
 ## Credits
@@ -97,3 +138,5 @@ tools/build_data.py  regenerates js/data, img/milkyway.png and img/art
 - Constellation illustrations: Johan Meuris for [Stellarium](https://github.com/Stellarium/stellarium-skycultures), [Free Art License](https://artlibre.org/licence/lal/en/)
 - Magnetic declination: World Magnetic Model 2025 (NOAA / BGS, public domain), coefficients via [geomagnetism](https://github.com/naturalatlas/geomagnetism) (Apache-2.0)
 - Ephemeris: [Astronomy Engine](https://github.com/cosinekitty/astronomy), MIT
+- Fonts: Space Grotesk, Noto Sans Devanagari and JetBrains Mono, SIL Open Font License 1.1
+- Native shell: [Capacitor](https://capacitorjs.com), MIT. Purchases: [RevenueCat](https://github.com/RevenueCat/purchases-capacitor), MIT

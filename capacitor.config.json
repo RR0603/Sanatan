@@ -1,0 +1,28 @@
+{
+  "appId": "com.livingsanatan.antariksha",
+  "appName": "Antariksha",
+  "webDir": "www",
+  "backgroundColor": "#04060f",
+  "ios": {
+    "contentInset": "never",
+    "backgroundColor": "#04060f",
+    "allowsLinkPreview": false
+  },
+  "android": {
+    "backgroundColor": "#04060f",
+    "allowMixedContent": false
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 700,
+      "launchAutoHide": true,
+      "backgroundColor": "#04060f",
+      "showSpinner": false
+    },
+    "StatusBar": {
+      "style": "DARK",
+      "overlaysWebView": true,
+      "backgroundColor": "#00000000"
+    }
+  }
+}

@@ -13,6 +13,7 @@
     menu: svg('<path d="M4 7h16M4 12h10M4 17h16"/>'),
     sky: svg('<path d="M12 3l1.6 4.4L18 9l-4.4 1.6L12 15l-1.6-4.4L6 9l4.4-1.6z"/><path d="M18.5 15l.7 1.8 1.8.7-1.8.7-.7 1.8-.7-1.8-1.8-.7 1.8-.7zM5 16.5l.5 1.2 1.2.5-1.2.5-.5 1.2-.5-1.2-1.2-.5 1.2-.5z"/>'),
     chakra: svg('<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5.5"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><path d="M12 3v3.5M12 17.5V21M3 12h3.5M17.5 12H21M5.6 5.6l2.5 2.5M15.9 15.9l2.5 2.5M18.4 5.6l-2.5 2.5M8.1 15.9l-2.5 2.5"/>'),
+    pro: svg('<path d="M12 2.5l2.2 6.3 6.3 2.2-6.3 2.2L12 19.5l-2.2-6.3L3.5 11l6.3-2.2z"/><path d="M19 17l.8 2.2L22 20l-2.2.8L19 23l-.8-2.2L16 20l2.2-.8z"/>'),
     layers: svg('<path d="M12 3 2.5 8.2 12 13.4l9.5-5.2z"/><path d="m2.5 12.2 9.5 5.2 9.5-5.2"/><path d="m2.5 16.2 9.5 5.2 9.5-5.2"/>'),
     aperture: '<svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2"><circle cx="16" cy="16" r="14"/><g fill="currentColor" stroke="none"><path d="M16 2.5a13.5 13.5 0 0 1 11.7 6.75L18 14.8z"/><path d="M27.7 9.25a13.5 13.5 0 0 1 0 13.5L18.6 16.4z" opacity=".85"/><path d="M27.7 22.75A13.5 13.5 0 0 1 16 29.5l.9-11.2z"/><path d="M16 29.5a13.5 13.5 0 0 1-11.7-6.75L14 17.2z" opacity=".85"/><path d="M4.3 22.75a13.5 13.5 0 0 1 0-13.5l9.1 6.35z"/><path d="M4.3 9.25A13.5 13.5 0 0 1 16 2.5l-.9 11.2z" opacity=".85"/></g></svg>',
     clock: svg('<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>', 'stroke-width="2"'),
@@ -79,7 +80,7 @@
     nakshatra: true, rashi: true, graha: true, constellations: false, art: true, grid: false, eqGrid: false,
     atmosphere: true, ground: true, milkyway: true, labels: true, starNames: true, night: false,
     groundOpacity: 0.82, starBrightness: 1, arFov: 62, compassOffset: 0,
-    mode: 'sky', names: 'vedic', jyTab: 'kundali', kStyle: 'north', kVarga: 'D1', birth: null,
+    mode: 'sky', names: 'vedic', jyTab: 'kundali', kStyle: 'north', kVarga: 'D1', birth: null, profiles: [],
     view: null,
   };
   const KEY = 'antariksha.v1';
@@ -425,6 +426,7 @@
     { key: 'sensor', icon: 'sensor', cyan: true, action: () => setSensor(!view.sensor), state: () => view.sensor },
     { key: 'camera', icon: 'camera', cyan: true, action: () => setAR(!view.ar), state: () => view.ar },
     { key: 'art', icon: 'art' },
+    { key: 'pro', icon: 'pro', action: () => { $('dock').hidden = true; showPaywall(); }, state: () => LS.Pro.isPro(), label: 'proLocked' },
     { key: 'panchangBtn', icon: 'panchang', action: () => { $('dock').hidden = true; toggle('panchang'); }, state: () => !$('panchang').hidden, label: 'panchang' },
     { key: 'time', icon: 'time', cyan: true, action: () => { $('dock').hidden = true; toggle('timebar'); }, state: () => !$('timebar').hidden, label: 'time' },
     { key: 'night', icon: 'night', action: () => { S.night = !S.night; applyNight(); }, state: () => S.night },
@@ -517,13 +519,22 @@
     if (selected) showSheet(selected);
   }
   function geolocate(userAsked) {
-    if (!navigator.geolocation) { if (userAsked) toast(t('locFailed')); return; }
-    if (userAsked) toast(t('locating'));
-    navigator.geolocation.getCurrentPosition((pos) => {
-      const lat = pos.coords.latitude, lon = pos.coords.longitude;
+    const done = (lat, lon) => {
       setLocation({ id: 'gps', en: `My location · ${lat.toFixed(2)}°, ${lon.toFixed(2)}°`, hi: `मेरा स्थान · ${lat.toFixed(2)}°, ${lon.toFixed(2)}°`, lat, lon, tz: DEVICE_TZ });
       if (userAsked) close('drawer');
-    }, () => { if (userAsked) toast(t('locFailed')); }, { enableHighAccuracy: false, timeout: 12000, maximumAge: 10 * 60e3 });
+    };
+    const fail = () => { if (userAsked) toast(t('locFailed')); };
+    if (userAsked) toast(t('locating'));
+    // In the iOS / Android apps use the native location service (one clear system prompt).
+    const G = LS.Pro.isNative && window.Capacitor.Plugins && window.Capacitor.Plugins.Geolocation;
+    if (G) {
+      G.getCurrentPosition({ enableHighAccuracy: false, timeout: 12000, maximumAge: 10 * 60e3 })
+        .then((pos) => done(pos.coords.latitude, pos.coords.longitude)).catch(fail);
+      return;
+    }
+    if (!navigator.geolocation) { fail(); return; }
+    navigator.geolocation.getCurrentPosition((pos) => done(pos.coords.latitude, pos.coords.longitude), fail,
+      { enableHighAccuracy: false, timeout: 12000, maximumAge: 10 * 60e3 });
   }
 
   // ---------- panels ----------
@@ -907,7 +918,10 @@
     $('modeSwitch').querySelector('[data-mode="jyotish"] .mi').innerHTML = ICON.chakra;
     $('modeSwitch').querySelectorAll('.mode').forEach((b) => b.addEventListener('click', () => setMode(b.dataset.mode)));
     $('namesSeg').querySelectorAll('button').forEach((b) => b.addEventListener('click', () => setNames(b.dataset.names)));
-    $('jyTabs').querySelectorAll('button').forEach((b) => b.addEventListener('click', () => { S.jyTab = b.dataset.tab; persist(); renderJyPanel(); }));
+    $('jyTabs').querySelectorAll('button').forEach((b) => b.addEventListener('click', () => {
+      if (PRO_TABS.includes(b.dataset.tab) && !LS.Pro.isPro()) { showPaywall(); return; }
+      S.jyTab = b.dataset.tab; persist(); renderJyPanel();
+    }));
     $('btnJyNow').addEventListener('click', () => { clock.sim = Date.now(); clock.rate = 1; afterTimeJump(); jyRefresh(true); });
     $('btnJySky').addEventListener('click', () => setMode('sky'));
     // Delegated clicks inside the panel.
@@ -915,7 +929,10 @@
       const g = e.target.closest('[data-g]');
       if (g && g.dataset.g !== 'lagna') { jy.selected = g.dataset.g; jy.wheel.setSelected(jy.selected); select({ type: 'graha', id: jy.selected }); renderJyPanel(); return; }
       const opt = e.target.closest('[data-opt]');
-      if (opt) { S[opt.dataset.opt] = opt.dataset.val; persist(); renderJyPanel(); return; }
+      if (opt) {
+        if (opt.dataset.opt === 'kVarga' && opt.dataset.val === 'D9' && !LS.Pro.isPro()) { showPaywall(); return; }
+        S[opt.dataset.opt] = opt.dataset.val; persist(); renderJyPanel(); return;
+      }
       const md = e.target.closest('[data-md]');
       if (md) { jy.dashaOpen = jy.dashaOpen === +md.dataset.md ? -1 : +md.dataset.md; renderJyPanel(); return; }
       const act = e.target.closest('[data-act]');
@@ -961,7 +978,12 @@
   function renderJyPanel() {
     if (!jy.chart || S.mode !== 'jyotish') return;
     jy.lastPanel = performance.now(); jy.panelSim = jy.chart.ms;
-    $('jyTabs').querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.tab === S.jyTab));
+    const pro = LS.Pro.isPro();
+    if (!pro && PRO_TABS.includes(S.jyTab)) S.jyTab = 'kundali';
+    $('jyTabs').querySelectorAll('button').forEach((b) => {
+      b.classList.toggle('on', b.dataset.tab === S.jyTab);
+      b.classList.toggle('locked', !pro && PRO_TABS.includes(b.dataset.tab));
+    });
     const c = jy.chart;
     const html = { kundali: jyKundali, grahas: jyGrahas, dasha: jyDasha, janma: jyJanma }[S.jyTab] || jyKundali;
     // Keep form fields intact while the clock ticks.
@@ -971,13 +993,13 @@
   const optSeg = (key, opts) => `<div class="seg mini">${opts.map(([v, label]) => `<button data-opt="${key}" data-val="${v}" class="${S[key] === v ? 'on' : ''}">${label}</button>`).join('')}</div>`;
 
   function jyKundali(c) {
-    const d9 = S.kVarga === 'D9';
+    const d9 = S.kVarga === 'D9' && LS.Pro.isPro();
     const items = c.grahas.map((g) => ({ id: g.id, rashi: d9 ? g.navamsa : g.rashi, retro: g.retro, deg: d9 ? null : g.deg }));
     const L = d9 ? c.navamsaLagna : c.lagnaRashi;
     const title = t(d9 ? 'navamsa' : 'rashiChart');
     const svg = LS.ChartView.kundaliSVG(L, items, S.kStyle, { selected: jy.selected, showDeg: !d9, title, subtitle: fmtDay(c.ms) });
     const moon = c.byId.chandra;
-    return `<div class="jy-sub">${optSeg('kStyle', [['north', t('north')], ['south', t('south')]])}${optSeg('kVarga', [['D1', 'D1'], ['D9', 'D9']])}</div>
+    return `<div class="jy-sub">${optSeg('kStyle', [['north', t('north')], ['south', t('south')]])}${optSeg('kVarga', [['D1', 'D1'], ['D9', LS.Pro.isPro() ? 'D9' : 'D9 ✦']])}</div>
       ${svg}
       <div class="k-caption">${t('lagna')} <b>${Nm.rashi(L)}</b> · ${t('moonRashi')} <b>${Nm.rashi(d9 ? moon.navamsa : moon.rashi)}</b> · ${t('nakshatra')} <b>${Nm.nakshatra(moon.nak)}</b></div>
       ${jyHouses(c, d9)}`;
@@ -1048,8 +1070,13 @@
     const placeId = b ? b.id : S.loc.id;
     const lat = b ? b.lat : S.loc.lat, lon = b ? b.lon : S.loc.lon;
     const opts = CITIES.map((c) => `<option value="${c.id}"${c.id === placeId ? ' selected' : ''}>${nm(c)}</option>`).join('');
+    const profiles = (S.profiles || []).map((p) => `<div class="profile${b && b.pid === p.pid ? ' on' : ''}">
+        <button class="pf-main" data-act="load:${p.pid}"><b>${esc(p.name || t('birthChart'))}</b><span>${fmtDay(p.ms)} · ${esc(nm(p))}</span></button>
+        <button class="pf-del" data-act="del:${p.pid}" aria-label="${t('remove')}">×</button></div>`).join('');
     return `<div class="form">
-      <div class="eyebrow">${t('birthTitle')}</div>
+      <div class="eyebrow">${t('profiles')}</div>
+      <div class="profiles">${profiles || `<p class="note">${t('noProfiles')}</p>`}</div>
+      <div class="eyebrow" style="margin-top:16px">${t('birthTitle')}</div>
       ${b ? `<div class="birth-chip">✦ ${b.name || t('birthChart')} · ${fmtDay(b.ms)}</div>` : ''}
       <label>${t('birthName')}<input class="field" id="bName" value="${(b && b.name ? b.name : '').replace(/"/g, '&quot;')}" maxlength="40"></label>
       <label>${t('birthDate')}<input class="field" id="bDate" type="datetime-local" value="${val}"></label>
@@ -1066,6 +1093,8 @@
   }
   function jyAction(act) {
     if (act === 'now') { clock.sim = Date.now(); clock.rate = 1; afterTimeJump(); jyRefresh(true); return; }
+    if (act.startsWith('load:')) { const p = (S.profiles || []).find((x) => x.pid === act.slice(5)); if (p) { S.birth = p; applyBirth(p); } return; }
+    if (act.startsWith('del:')) { S.profiles = (S.profiles || []).filter((x) => x.pid !== act.slice(4)); persist(); $('jyBody').innerHTML = jyJanma(); return; }
     if (act === 'back' && S.birth) { applyBirth(S.birth); return; }
     if (act === 'cast') {
       const v = $('bDate').value; if (!v) return;
@@ -1076,7 +1105,10 @@
       const [d, tm] = v.split('T'); const [yy, mm, dd] = d.split('-').map(Number); const [hh, mi] = tm.split(':').map(Number);
       const guess = Date.UTC(yy, mm - 1, dd, hh, mi);
       const ms = guess - tzOffsetMin(tz, guess) * 60000;
-      S.birth = { name: $('bName').value.trim(), ms, lat, lon, tz, id: city ? city.id : 'custom', en: city ? city.en : `${lat.toFixed(2)}°, ${lon.toFixed(2)}°`, hi: city ? city.hi : `${lat.toFixed(2)}°, ${lon.toFixed(2)}°` };
+      const name = $('bName').value.trim();
+      const prev = (S.profiles || []).find((p) => p.name === name && name);
+      S.birth = { pid: prev ? prev.pid : String(Date.now()), name, ms, lat, lon, tz, id: city ? city.id : 'custom', en: city ? city.en : `${lat.toFixed(2)}°, ${lon.toFixed(2)}°`, hi: city ? city.hi : `${lat.toFixed(2)}°, ${lon.toFixed(2)}°` };
+      S.profiles = [S.birth, ...(S.profiles || []).filter((p) => p.pid !== S.birth.pid)].slice(0, 50);
       applyBirth(S.birth);
     }
   }
@@ -1085,6 +1117,59 @@
     clock.sim = b.ms; clock.rate = 0;
     S.jyTab = 'kundali'; persist();
     renderSettingsText(); afterTimeJump(); jy.dashaOpen = null; jyRefresh(true);
+  }
+
+  // ---------- Antariksha Pro ----------
+  const PRO_TABS = ['dasha', 'janma'];
+  const esc = (x) => String(x).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const PRO_FEATURES = [['proF1', 'proF1s', '◎'], ['proF2', 'proF2s', '✦'], ['proF3', 'proF3s', '◔'], ['proF4', 'proF4s', '❖'], ['proF5', 'proF5s', '⚇'], ['proF6', 'proF6s', '🙏']];
+  function renderPaywall() {
+    $('pwList').innerHTML = PRO_FEATURES.map(([k, ks, g]) => `<li><i>${g}</i><span><b>${t(k)}</b><small>${t(ks)}</small></span></li>`).join('');
+    const pro = LS.Pro.isPro();
+    $('pwBuy').textContent = pro ? t('proActive') : `${t('unlockFor')} ${LS.Pro.price()}`;
+    $('pwBuy').disabled = pro;
+    $('pwRestore').hidden = !LS.Pro.isNative;
+    const stores = $('pwStores');
+    stores.hidden = true;
+  }
+  function showPaywall() { renderPaywall(); $('paywall').hidden = false; }
+  function hidePaywall() { $('paywall').hidden = true; }
+  async function buyPro() {
+    const btn = $('pwBuy');
+    btn.classList.add('busy');
+    const res = await LS.Pro.purchase();
+    btn.classList.remove('busy');
+    if (res === 'purchased') { toast(t('proActive')); hidePaywall(); return; }
+    if (res === 'stores') {
+      const links = LS.Pro.storeLinks();
+      const items = [links.ios && `<a class="store-badge" href="${links.ios}" target="_blank" rel="noopener"> App Store</a>`,
+        links.android && `<a class="store-badge" href="${links.android}" target="_blank" rel="noopener">▶ Google Play</a>`].filter(Boolean);
+      $('pwStores').innerHTML = `<p>${items.length ? t('proGetApp') : t('proSoon')}</p>${items.join('')}`;
+      $('pwStores').hidden = false;
+      return;
+    }
+    if (res === 'unavailable') toast(t('proUnavailable'), 5000);
+  }
+  function renderProRow() {
+    const pro = LS.Pro.isPro();
+    $('proRow').innerHTML = pro
+      ? `<div class="pro-on">✦ ${t('proActive')}</div>`
+      : `<button class="pill wide accent" id="proRowBuy">✦ ${t('unlockPro')} · ${LS.Pro.price()}</button>`;
+    if (!pro) $('proRowBuy').addEventListener('click', () => { close('drawer'); showPaywall(); });
+    if (LS.Pro.isNative) {
+      const r = document.createElement('button'); r.className = 'pill wide'; r.textContent = t('restore');
+      r.addEventListener('click', async () => { const ok = await LS.Pro.restore(); toast(t(ok ? 'proRestored' : 'proNothing')); });
+      $('proRow').appendChild(r);
+    }
+  }
+  $('pwClose').addEventListener('click', hidePaywall);
+  $('paywall').addEventListener('click', (e) => { if (e.target.id === 'paywall') hidePaywall(); });
+  $('pwBuy').addEventListener('click', buyPro);
+  $('pwRestore').addEventListener('click', async () => { const ok = await LS.Pro.restore(); toast(t(ok ? 'proRestored' : 'proNothing')); renderPaywall(); });
+  LS.Pro.onChange(() => { renderProRow(); syncDock(); if (!$('paywall').hidden) renderPaywall(); jyRefresh(false); if (LS.Pro.isPro()) hidePaywall(); });
+  {
+    const L = LS.CONFIG.links;
+    for (const [id, href] of [['pwTerms', L.terms], ['pwPrivacy', L.privacy], ['lnkPrivacy', L.privacy], ['lnkTerms', L.terms], ['lnkSupport', L.support]]) $(id).href = href;
   }
 
   // ---------- language ----------
@@ -1096,7 +1181,9 @@
     if (!$('panchang').hidden) renderPanchang();
     if (selected && !$('sheet').hidden) showSheet(selected);
     if ($('searchInput').value) runSearch($('searchInput').value);
-    placeGlider(); jyRefresh(true);
+    placeGlider(); jyRefresh(true); renderProRow();
+    $('appVersion').textContent = `${t('versionLabel')} ${LS.CONFIG.version}`;
+    if (!$('paywall').hidden) renderPaywall();
     invalidate();
   }
   $('langSeg').querySelectorAll('button').forEach((b) => b.addEventListener('click', () => { S.lang = b.dataset.lang; I.set(S.lang); persist(); }));
@@ -1112,10 +1199,13 @@
   // ---------- phone intro & sensor help ----------
   const isTouch = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
   const isIOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  let interacted = false;
+  ['pointerdown', 'keydown'].forEach((ev) => window.addEventListener(ev, () => { interacted = true; }, { once: true, capture: true }));
   function showIntro() {
-    if (!isTouch || view.sensor) return;
+    if (!isTouch || view.sensor || interacted || S.mode !== 'sky' || !$('paywall').hidden) return;
+    try { if (sessionStorage.getItem('antariksha.intro')) return; sessionStorage.setItem('antariksha.intro', '1'); } catch (e) { /* ignore */ }
     const p = $('intro').querySelector('p');
-    p.textContent = t('introText') + (isIOS && !navigator.standalone ? ' ' + t('addHome') : '');
+    p.textContent = t('introText') + (isIOS && !navigator.standalone && !LS.Pro.isNative ? ' ' + t('addHome') : '');
     $('intro').hidden = false;
   }
   let locToastTimer = null;
@@ -1167,6 +1257,7 @@
   document.addEventListener('keydown', (e) => {
     if (e.target.tagName === 'INPUT') return;
     if (e.key === '/') { e.preventDefault(); $('searchBox').hidden = false; $('searchInput').focus(); }
+    if (e.key === 'Escape' && !$('paywall').hidden) { hidePaywall(); return; }
     if (e.key === 'Escape') { PANELS.forEach((p) => { if (!$(p).hidden) close(p); }); if (!$('sheet').hidden) close('sheet'); setZen(false); }
     const step = 4 * view.fov / 60;
     if (e.key === 'ArrowLeft') { view.az = (view.az - step + 360) % 360; invalidate(); }
@@ -1183,6 +1274,7 @@
 
   // ---------- boot ----------
   Nm.set(S.names);
+  LS.Pro.init().then(() => { renderProRow(); syncDock(); jyRefresh(false); });
   buildDock(); buildSettings(); buildTimebar(); buildSearchIndex(); initJyotish();
   I.set(S.lang);
   setMode(S.mode, true);
@@ -1191,11 +1283,13 @@
   requestAnimationFrame(frame);
   if (!saved.loc) {
     // First run: try the device's location (falls back to Ujjain, the prime meridian of Jyotisha).
-    if (navigator.permissions && navigator.permissions.query) {
+    if (LS.Pro.isNative) geolocate(false);
+    else if (navigator.permissions && navigator.permissions.query) {
       navigator.permissions.query({ name: 'geolocation' }).then((p) => { if (p.state !== 'denied') geolocate(false); }).catch(() => geolocate(false));
     } else geolocate(false);
   }
-  if ('serviceWorker' in navigator && location.protocol === 'https:') {
+  // Offline cache for the website only; the apps already ship every file.
+  if ('serviceWorker' in navigator && location.protocol === 'https:' && !LS.Pro.isNative) {
     // When an updated worker takes over, reload once so the new code runs.
     const hadController = !!navigator.serviceWorker.controller;
     let reloaded = false;
@@ -1204,5 +1298,5 @@
   }
   showLocToast();
   setTimeout(showIntro, 3300);
-  window.__antariksha = { view, clock, S, select, goTo, setMode, setNames, jy, invalidate };
+  window.__antariksha = { view, clock, S, select, goTo, setMode, setNames, jy, invalidate, showPaywall };
 })();
