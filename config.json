@@ -1,0 +1,29 @@
+{
+  "name": "",
+
+  "location": {
+    "name": "Delhi",
+    "latitude": 28.6139,
+    "longitude": 77.2090,
+    "timezone": "Asia/Kolkata"
+  },
+
+  "sections": [
+    "greeting",
+    "panchang",
+    "weather",
+    "calendar",
+    "news",
+    "shloka"
+  ],
+
+  "news_feeds": [
+    "https://feeds.bbci.co.uk/news/world/rss.xml",
+    "https://www.thehindu.com/news/national/feeder/default.rss"
+  ],
+  "news_limit": 5,
+
+  "shloka_enabled": true,
+
+  "calendar_ids": ["primary"]
+}

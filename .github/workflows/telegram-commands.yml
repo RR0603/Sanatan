@@ -1,0 +1,48 @@
+name: Telegram commands
+
+# Lets you type /brief, /panchang or /weather to the bot and get an answer
+# without running a server.
+#
+# COST NOTE: this polls on a schedule, so it consumes Actions minutes. On a
+# PUBLIC repository Actions minutes are free and unlimited, so leave it on.
+# On a PRIVATE repository you get 2,000 free minutes a month, and polling
+# every 15 minutes uses roughly 500-900 of them. It is therefore OFF unless
+# you opt in by creating a repository variable:
+#
+#   Settings -> Secrets and variables -> Actions -> Variables -> New
+#   Name: ENABLE_COMMAND_POLLING    Value: true
+
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: telegram-commands
+  cancel-in-progress: false
+
+jobs:
+  poll:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    # Skip the job entirely unless opted in. The run still appears, but it
+    # costs no minutes beyond scheduling.
+    if: vars.ENABLE_COMMAND_POLLING == 'true'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Answer pending commands
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+          GOOGLE_REFRESH_TOKEN: ${{ secrets.GOOGLE_REFRESH_TOKEN }}
+        run: python3 -m brief.commands

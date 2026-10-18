@@ -1,0 +1,30 @@
+name: Tests
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Run the test suite
+        # Offline by design: the suite uses fixtures and reference ephemeris
+        # values, so it does not depend on any external service being up.
+        run: python3 -m unittest discover -s tests -v
+
+      - name: Build a brief without sending it
+        # Catches rendering and config errors that unit tests might not.
+        run: python3 -m brief.main --dry-run --date 2026-11-08

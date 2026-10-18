@@ -1,0 +1,96 @@
+name: Morning brief
+
+on:
+  schedule:
+    # 03:00 UTC = 08:30 IST. GitHub's scheduler is best-effort and can run
+    # late by 5-15 minutes (sometimes more) when the platform is busy; there
+    # is no way to make it exact. Shift this line to change your delivery time.
+    - cron: "0 3 * * *"
+  workflow_dispatch:
+    inputs:
+      date:
+        description: "Build for a specific date (YYYY-MM-DD). Blank = today."
+        required: false
+        type: string
+      dry_run:
+        description: "Print the brief in the logs instead of sending it"
+        required: false
+        type: boolean
+        default: false
+
+# If a run is somehow still going when the next fires, let it finish rather
+# than sending two briefs.
+concurrency:
+  group: morning-brief
+  cancel-in-progress: false
+
+jobs:
+  send:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      # No `pip install` step: the bot is standard library only, which keeps
+      # the run a few seconds long and removes a whole class of failure.
+
+      - name: Send the brief
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+          GOOGLE_REFRESH_TOKEN: ${{ secrets.GOOGLE_REFRESH_TOKEN }}
+          # Quoted into the environment rather than interpolated into the
+          # shell line, so a crafted dispatch input cannot run commands.
+          INPUT_DATE: ${{ inputs.date }}
+          INPUT_DRY_RUN: ${{ inputs.dry_run }}
+        run: |
+          ARGS=""
+          if [ -n "$INPUT_DATE" ]; then
+            ARGS="$ARGS --date $INPUT_DATE"
+          fi
+          if [ "$INPUT_DRY_RUN" = "true" ]; then
+            ARGS="$ARGS --dry-run"
+          fi
+          python3 -m brief.main $ARGS
+
+      - name: Report a failure to Telegram
+        # The brief already survives a dead data source on its own, so if we
+        # get here something structural broke (a bad token, a syntax error).
+        # Better to be told than to quietly stop receiving briefs.
+        if: failure()
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          python3 - <<'PY'
+          import os, json, urllib.request
+          token = os.environ.get("TELEGRAM_BOT_TOKEN", "")
+          chat = os.environ.get("TELEGRAM_CHAT_ID", "")
+          if not token or not chat:
+              raise SystemExit(0)
+          text = (
+              "⚠️ Morning brief failed to build.\n\n"
+              f"<a href=\"{os.environ.get('RUN_URL','')}\">See the workflow logs</a>"
+          )
+          body = json.dumps({
+              "chat_id": chat, "text": text, "parse_mode": "HTML",
+          }).encode()
+          req = urllib.request.Request(
+              f"https://api.telegram.org/bot{token}/sendMessage",
+              data=body, headers={"Content-Type": "application/json"},
+          )
+          try:
+              urllib.request.urlopen(req, timeout=15).read()
+          except Exception as exc:
+              print(f"could not send failure notice: {exc}")
+          PY
