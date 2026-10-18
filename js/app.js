@@ -231,6 +231,7 @@
 
   // ---------- main loop ----------
   let lastFrame = 0, lastHud = 0;
+  const perf = { ms: 0, n: 0 };
   function frame(now) {
     requestAnimationFrame(frame);
     const dt = Math.min(0.1, (now - clock.lastReal) / 1000);
@@ -269,10 +270,16 @@
       if (e) { const aa = azAltOf(e); view.az = aa.az; view.alt = clamp(aa.alt - sheetOffset(view.fov), -90, 90); }
     }
     if (!view.sensor || !view.basis) view.basis = basisFromAzAlt(view.az, view.alt);
+    const t0 = performance.now();
     R.render({
       basis: view.basis, fov: view.fov, fr: as.fr, grahas: as.grahas, sunAlt: as.sunAlt, ayanamsa: as.ayanamsa,
       settings: S, ar: view.ar, time: now, selectedEnu: selected ? objEnu(selected, as) : null,
     });
+    // Keep motion fluid: if frames take too long at 3x, render the overlay at 2x instead.
+    if (view.sensor || drag.active) {
+      perf.ms = perf.ms * 0.9 + (performance.now() - t0) * 0.1;
+      if (++perf.n > 60 && perf.ms > 14 && R.lowerQuality()) invalidate();
+    }
     dirty = false; lastFrame = now;
     if (now - lastHud > 250) { lastHud = now; renderClock(); renderReadout(); refreshPanchang(false); if (selected && !$('sheet').hidden) updateSheetLive(); }
   }
@@ -360,6 +367,16 @@
   }
 
   // ---------- sensors / AR ----------
+  // Magnetic declination for the current place (WMM2025), cached per location.
+  let declCache = { key: '', value: 0 };
+  function magneticDeclination() {
+    const key = locKey();
+    if (declCache.key !== key) {
+      try { declCache = { key, value: LS.Magnetic.declination(S.loc.lat, S.loc.lon, LS.Magnetic.decimalYear(new Date())) }; }
+      catch (e) { declCache = { key, value: 0 }; }
+    }
+    return declCache.value;
+  }
   // Returns true once motion data is flowing (or at least permitted and listening).
   async function setSensor(on) {
     if (on === view.sensor) return view.sensor;
@@ -368,7 +385,7 @@
       const ok = await LS.Sensors.start((b) => { view.basis = b; invalidate(); }, (err) => {
         if (err === 'denied') showHelp('sensorBlocked'); else toast(t('sensorNone'), 6000);
         setSensor(false); if (view.ar) setAR(false);
-      }, () => S.compassOffset);
+      }, () => S.compassOffset, () => magneticDeclination());
       if (!ok) { syncDock(); return false; }
       view.sensor = true; view.track = false; view.anim = null;
       toast(`${t('sensorHint')} · ${t('calibHint')}`);

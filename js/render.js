@@ -206,16 +206,17 @@ void main(){
     try { glc = makeGL(glCanvas, mwImage); } catch (e) { console.warn('WebGL unavailable', e); }
     const ctx = canvas.getContext('2d');
     const halos = makeHalos();
+    const widthCache = new Map();
     let W = 0, H = 0, dpr = 1;
     let hits = [];
     let textureReady = null;
     if (glc) glc.onTexture = () => textureReady && textureReady();
 
-    let glDpr = 1;
+    let glDpr = 1, maxDpr = 3, lastRatio = 1;
     // The 2D layer renders at full device resolution (3x on iPhone) for crisp stars and text;
     // the smooth WebGL background is capped at 2x.
     function resize(w, h, ratio) {
-      W = w; H = h; dpr = Math.min(ratio, 3); glDpr = Math.min(ratio, 2);
+      W = w; H = h; lastRatio = ratio; dpr = Math.min(ratio, maxDpr); glDpr = Math.min(ratio, 2);
       canvas.width = Math.round(w * dpr); canvas.height = Math.round(h * dpr);
       glCanvas.width = Math.round(w * glDpr); glCanvas.height = Math.round(h * glDpr);
       for (const c of [glCanvas, canvas]) { c.style.width = w + 'px'; c.style.height = h + 'px'; }
@@ -315,9 +316,14 @@ void main(){
         labelQueue.sort((a, b) => b.prio - a.prio);
         const placed = [];
         ctx.textBaseline = 'middle';
+        let curFont = '';
         for (const l of labelQueue) {
-          ctx.font = font(l.size, l.weight);
-          const w = ctx.measureText(l.text).width, h = l.size + 2;
+          const fnt = font(l.size, l.weight);
+          if (fnt !== curFont) { ctx.font = fnt; curFont = fnt; }
+          const key = fnt + '|' + l.text;
+          let w = widthCache.get(key);
+          if (w === undefined) { w = ctx.measureText(l.text).width; if (widthCache.size > 4000) widthCache.clear(); widthCache.set(key, w); }
+          const h = l.size + 2;
           const x0 = l.align === 'left' ? l.x : l.x - w / 2, y0 = l.y - h / 2;
           if (placed.some((b) => x0 < b[0] + b[2] && x0 + w > b[0] && y0 < b[1] + b[3] && y0 + h > b[1])) continue;
           placed.push([x0 - 2, y0, w + 4, h]);
@@ -478,29 +484,42 @@ void main(){
       const groundDim = st.ground && !sc.ar ? 1 - st.groundOpacity * 0.85 : 1;
       ctx.globalCompositeOperation = 'lighter';
       const starLabels = [];
+      // Hot loop: ~9,000 stars every frame while the phone moves, so no allocations here (no GC stutter).
+      const E = sc.fr.eqj2enu, V3 = data.vec, MAG = data.mag;
+      const r0 = r[0], r1 = r[1], r2 = r[2], u0 = u[0], u1 = u[1], u2 = u[2], f0 = f[0], f1 = f[1], f2 = f[2];
+      const SIN20 = 0.342;
+      let lastFill = -1;
       for (let i = 0; i < data.n; i++) {
-        const m = data.mag[i];
+        const m = MAG[i];
         if (m > limit) break;
-        const e = starEnu(i);
-        if (groundDim < 0.2 && e[2] < -0.01) continue;
-        const p = proj(e);
-        if (!onScreen(p, 8)) continue;
+        const vx = V3[i * 3], vy = V3[i * 3 + 1], vz = V3[i * 3 + 2];
+        let ex = E[0] * vx + E[1] * vy + E[2] * vz, ey = E[3] * vx + E[4] * vy + E[5] * vz, ez = E[6] * vx + E[7] * vy + E[8] * vz;
+        if (ez < -0.01 && groundDim < 0.2) continue;
+        if (ez > -0.035 && ez < SIN20) { // atmospheric refraction near the horizon
+          const alt = Math.asin(ez) / D2R, na = (alt + Sky.refraction(alt)) * D2R, c = Math.cos(alt * D2R);
+          const k = c > 1e-6 ? Math.cos(na) / c : 1;
+          ex *= k; ey *= k; ez = Math.sin(na);
+        }
+        const z = ex * f0 + ey * f1 + ez * f2;
+        if (z < -0.94) continue;
+        const kk = 2 / (1 + z);
+        const px = cx + scale * kk * (ex * r0 + ey * r1 + ez * r2), py = cy - scale * kk * (ex * u0 + ey * u1 + ez * u2);
+        if (px < -8 || px > W + 8 || py < -8 || py > H + 8) continue;
         const d = limit - m;
         const rp = Math.min(4.6, (0.42 + 0.3 * Math.pow(d, 1.18) + zoom * 0.5) * gain);
-        const a = Math.min(1, 0.12 + d / 1.6) * (e[2] < 0 ? groundDim : 1);
+        const a = Math.min(1, 0.12 + d / 1.6) * (ez < 0 ? groundDim : 1);
         const b = data.bucket[i];
-        ctx.globalAlpha = a;
         if (d > 3.4) {
-          const H = rp * 5.5;
+          const HR = rp * 5.5;
           ctx.globalAlpha = a * Math.min(0.55, (d - 3.4) * 0.22 + 0.15);
-          ctx.drawImage(halos[b], p.x - H, p.y - H, H * 2, H * 2);
-          ctx.globalAlpha = a;
+          ctx.drawImage(halos[b], px - HR, py - HR, HR * 2, HR * 2);
         }
-        ctx.fillStyle = CORE[b];
-        if (rp < 0.9) ctx.fillRect(p.x - rp, p.y - rp, rp * 2, rp * 2);
-        else { ctx.beginPath(); ctx.arc(p.x, p.y, rp, 0, 6.2832); ctx.fill(); }
-        if (m < 4.6 || data.vedicNames[i]) hits.push({ x: p.x, y: p.y, r: 16, obj: { type: 'star', id: i }, prio: data.vedicNames[i] ? 3 : 1 });
-        if (st.labels && st.starNames && (m < labelLimit || (data.vedicNames[i] && m < labelLimit + 1.5))) starLabels.push([i, p.x, p.y, rp]);
+        ctx.globalAlpha = a;
+        if (b !== lastFill) { ctx.fillStyle = CORE[b]; lastFill = b; }
+        if (rp < 0.9) ctx.fillRect(px - rp, py - rp, rp * 2, rp * 2);
+        else { ctx.beginPath(); ctx.arc(px, py, rp, 0, 6.2832); ctx.fill(); }
+        if (m < 4.6 || data.vedicNames[i]) hits.push({ x: px, y: py, r: 16, obj: { type: 'star', id: i }, prio: data.vedicNames[i] ? 3 : 1 });
+        if (st.labels && st.starNames && (m < labelLimit || (data.vedicNames[i] && m < labelLimit + 1.5))) starLabels.push([i, px, py, rp]);
       }
       ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
       for (const [i, x, y, rp] of starLabels) {
@@ -625,7 +644,13 @@ void main(){
       return best;
     }
 
-    return { data, resize, render, hitTest, set onTextureReady(f) { textureReady = f; }, hasGL: !!glc };
+    // Drop the 2D layer to 2x if a phone can't keep up at 3x (checked by the app from frame times).
+    function lowerQuality() {
+      if (maxDpr <= 2 || lastRatio <= 2) return false;
+      maxDpr = 2; resize(W, H, lastRatio); return true;
+    }
+
+    return { data, resize, render, hitTest, lowerQuality, set onTextureReady(f) { textureReady = f; }, hasGL: !!glc };
   }
 
   return { create };
