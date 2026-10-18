@@ -13,6 +13,11 @@
     menu: svg('<path d="M4 7h16M4 12h10M4 17h16"/>'),
     sky: svg('<path d="M12 3l1.6 4.4L18 9l-4.4 1.6L12 15l-1.6-4.4L6 9l4.4-1.6z"/><path d="M18.5 15l.7 1.8 1.8.7-1.8.7-.7 1.8-.7-1.8-1.8-.7 1.8-.7zM5 16.5l.5 1.2 1.2.5-1.2.5-.5 1.2-.5-1.2-1.2-.5 1.2-.5z"/>'),
     chakra: svg('<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5.5"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><path d="M12 3v3.5M12 17.5V21M3 12h3.5M17.5 12H21M5.6 5.6l2.5 2.5M15.9 15.9l2.5 2.5M18.4 5.6l-2.5 2.5M8.1 15.9l-2.5 2.5"/>'),
+    layers: svg('<path d="M12 3 2.5 8.2 12 13.4l9.5-5.2z"/><path d="m2.5 12.2 9.5 5.2 9.5-5.2"/><path d="m2.5 16.2 9.5 5.2 9.5-5.2"/>'),
+    aperture: '<svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2"><circle cx="16" cy="16" r="14"/><g fill="currentColor" stroke="none"><path d="M16 2.5a13.5 13.5 0 0 1 11.7 6.75L18 14.8z"/><path d="M27.7 9.25a13.5 13.5 0 0 1 0 13.5L18.6 16.4z" opacity=".85"/><path d="M27.7 22.75A13.5 13.5 0 0 1 16 29.5l.9-11.2z"/><path d="M16 29.5a13.5 13.5 0 0 1-11.7-6.75L14 17.2z" opacity=".85"/><path d="M4.3 22.75a13.5 13.5 0 0 1 0-13.5l9.1 6.35z"/><path d="M4.3 9.25A13.5 13.5 0 0 1 16 2.5l-.9 11.2z" opacity=".85"/></g></svg>',
+    clock: svg('<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>', 'stroke-width="2"'),
+    panchang: svg('<rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 9.5h16M8.5 3v4M15.5 3v4"/><path d="M14.5 12.5a2.6 2.6 0 1 0 0 5 3 3 0 0 1 0-5z" fill="currentColor"/>'),
+    art: svg('<path d="M4 18c2.5-1 3.5-4 6-5s5 1 6-1 1-4 4-5"/><circle cx="6" cy="7" r="1.2"/><circle cx="12" cy="5" r="1"/><circle cx="18" cy="9" r="1.2"/><path d="M5 20c3 0 4-2 7-2s4 2 7 2"/>'),
     names: svg('<text x="12" y="17.5" font-size="16" text-anchor="middle" fill="currentColor" stroke="none" font-family="Noto Sans Devanagari, serif">ॐ</text>'),
     search: svg('<circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/>'),
     close: svg('<path d="M6 6l12 12M18 6 6 18"/>'),
@@ -71,7 +76,7 @@
   const DEFAULTS = {
     lang: (navigator.language || '').toLowerCase().startsWith('hi') ? 'hi' : 'en',
     loc: { ...CITIES[0] },
-    nakshatra: true, rashi: true, graha: true, constellations: false, grid: false, eqGrid: false,
+    nakshatra: true, rashi: true, graha: true, constellations: false, art: true, grid: false, eqGrid: false,
     atmosphere: true, ground: true, milkyway: true, labels: true, starNames: true, night: false,
     groundOpacity: 0.82, starBrightness: 1, arFov: 62, compassOffset: 0,
     mode: 'sky', names: 'vedic', jyTab: 'kundali', kStyle: 'north', kVarga: 'D1', birth: null,
@@ -113,7 +118,8 @@
   mw.src = 'img/milkyway.png';
   const R = LS.Renderer.create($('gl'), $('sky'), mw);
   R.onTextureReady = invalidate;
-  function resize() { R.resize(window.innerWidth, window.innerHeight, Math.min(window.devicePixelRatio || 1, 2)); invalidate(); }
+  LS.Renderer.onArt = invalidate;
+  function resize() { R.resize(window.innerWidth, window.innerHeight, window.devicePixelRatio || 1); invalidate(); }
   window.addEventListener('resize', resize);
   window.addEventListener('orientationchange', () => setTimeout(resize, 200));
   resize();
@@ -332,6 +338,7 @@
     invalidate(); persist();
   }
   function tap(x, y) {
+    if (!$('dock').hidden) { $('dock').hidden = true; syncDock(); return; }
     const o = R.hitTest(x, y);
     if (o) select(o); else { selected = null; view.track = false; hideSheet(); invalidate(); }
   }
@@ -400,7 +407,9 @@
     { key: 'atmosphere', icon: 'atmosphere' }, { key: 'ground', icon: 'ground' }, { key: 'milkyway', icon: 'milkyway' }, { sep: true },
     { key: 'sensor', icon: 'sensor', cyan: true, action: () => setSensor(!view.sensor), state: () => view.sensor },
     { key: 'camera', icon: 'camera', cyan: true, action: () => setAR(!view.ar), state: () => view.ar },
-    { key: 'time', icon: 'time', cyan: true, action: () => toggle('timebar'), state: () => !$('timebar').hidden, label: 'time' },
+    { key: 'art', icon: 'art' },
+    { key: 'panchangBtn', icon: 'panchang', action: () => { $('dock').hidden = true; toggle('panchang'); }, state: () => !$('panchang').hidden, label: 'panchang' },
+    { key: 'time', icon: 'time', cyan: true, action: () => { $('dock').hidden = true; toggle('timebar'); }, state: () => !$('timebar').hidden, label: 'time' },
     { key: 'night', icon: 'night', action: () => { S.night = !S.night; applyNight(); }, state: () => S.night },
     { key: 'hideUi', icon: 'eye', action: () => setZen(true), state: () => false },
   ];
@@ -429,13 +438,18 @@
       b.title = d.key === 'names' ? t(Nm.isVedic() ? 'namesVedic' : 'namesWestern') : t(lbl);
     }
     for (const b of $('settingToggles').querySelectorAll('.toggle')) b.classList.toggle('on', !!S[b.dataset.key]);
+    $('btnSensor').classList.toggle('on', view.sensor);
+    $('btnCam').hidden = !view.sensor && !view.ar;
+    $('btnCam').classList.toggle('on', view.ar);
+    $('btnLayers').classList.toggle('on', !$('dock').hidden);
+    $('langSeg').querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.lang === I.lang));
     $('namesSeg').querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.names === Nm.culture));
   }
   function applyNight() { document.body.classList.toggle('night', !!S.night); persist(); }
   function setZen(on) { document.body.classList.toggle('zen', on); $('btnShowUi').hidden = !on; }
 
   // ---------- settings drawer ----------
-  const SETTING_TOGGLES = ['nakshatra', 'rashi', 'graha', 'constellations', 'grid', 'eqGrid', 'atmosphere', 'ground', 'milkyway', 'labels', 'starNames'];
+  const SETTING_TOGGLES = ['nakshatra', 'rashi', 'graha', 'constellations', 'art', 'grid', 'eqGrid', 'atmosphere', 'ground', 'milkyway', 'labels', 'starNames'];
   function buildSettings() {
     const box = $('settingToggles'); box.innerHTML = '';
     for (const k of SETTING_TOGGLES) {
@@ -480,6 +494,7 @@
 
   function setLocation(loc) {
     S.loc = loc; persist();
+    showLocToast();
     renderSettingsText();
     astro = null; refreshPanchang(true); invalidate();
     if (selected) showSheet(selected);
@@ -514,20 +529,16 @@
   document.querySelectorAll('[data-close]').forEach((b) => b.addEventListener('click', () => close(b.dataset.close)));
   $('scrim').addEventListener('click', () => close('drawer'));
 
-  function renderHud() {
-    $('hudLoc').textContent = nm(S.loc);
-    if (panch) {
-      const nk = V.nakshatras[panch.nakshatra];
-      $('hudTithi').textContent = `${tithiName(panch.tithi)} · ☾ ${nm(nk)}`;
-    }
-  }
+  function renderHud() { renderClock(); }
+  // Bottom-right clock, Stellarium-style: a small line (tithi when live) above a large HH:MM.
   function renderClock() {
-    $('hudTime').textContent = fmtTime(clock.sim, true);
-    $('hudDate').textContent = fmtDate(clock.sim);
+    $('hudTime').textContent = fmtTime(clock.sim);
+    $('hudDate').textContent = `${fmtDate(clock.sim)} · ${nm(S.loc)}`;
     const live = clock.rate === 1 && Math.abs(clock.sim - Date.now()) < 5000;
-    const b = $('liveBadge');
-    b.textContent = live ? t('live') : (clock.rate === 0 ? t('paused') : `×${rateText()}`);
-    b.classList.toggle('off', !live);
+    const sub = $('hudTithi');
+    if (live && panch) { sub.innerHTML = `<i class="dot"></i>${tithiName(panch.tithi)}`; sub.classList.add('tithi'); }
+    else if (live) { sub.textContent = t('realTime'); sub.classList.remove('tithi'); }
+    else { sub.textContent = `${fmt(clock.sim, { day: 'numeric', month: 'short', year: 'numeric' })} · ${clock.rate === 0 ? t('paused') : '×' + rateText()}`; sub.classList.remove('tithi'); }
     if (!$('timebar').hidden) syncTimebar(true);
   }
   function renderReadout() {
@@ -537,10 +548,13 @@
     let sensorTxt = '';
     if (view.sensor) {
       const st = LS.Sensors.status();
-      sensorTxt = st.receiving ? `  ·  ● ${t('sensorLive')}${st.absolute ? '' : ' ' + t('sensorRelative')}` : `  ·  ○ ${t('sensorWaiting')}`;
+      sensorTxt = st.receiving ? ` · <span class="live">● ${t('sensorLive')}${st.absolute ? '' : ' ' + t('sensorRelative')}</span>` : ` · <span class="wait">○ ${t('sensorWaiting')}</span>`;
     }
-    $('readout').textContent = `${t('fov')} ${I.num(view.fov.toFixed(view.fov < 10 ? 1 : 0))}°  ·  ${dir} ${I.num(az)}°  ·  ${I.num(alt)}°${sensorTxt}`;
+    const fovTxt = `${t('fov')} ${I.num(view.fov.toFixed(1))}°`;
+    $('readout').innerHTML = view.sensor || view.fov < 179 ? `${fovTxt}${view.sensor ? ` · ${dir} ${I.num(az)}° · ${I.num(alt)}°` : ''}${sensorTxt}` : fovTxt;
     $('compassNeedle').style.transform = `rotate(${-aa.az}deg)`;
+    $('dial').style.transform = `rotate(${-aa.az}deg)`;
+    $('dial').style.setProperty('--upright', `${aa.az}deg`);
   }
 
   function renderPanchang() {
@@ -805,13 +819,13 @@
   }
   function chooseResult(k) {
     const e = currentResults[k]; if (!e) return;
-    $('searchInput').value = ''; $('searchResults').hidden = true; $('searchInput').blur();
+    $('searchInput').value = ''; $('searchResults').hidden = true; $('searchInput').blur(); $('searchBox').hidden = true;
     select(e.obj); goTo(e.obj, true);
   }
   $('searchInput').addEventListener('input', (e) => runSearch(e.target.value));
   $('searchInput').addEventListener('keydown', (e) => {
     if (e.key === 'Enter') { chooseResult(Math.max(0, activeResult)); e.preventDefault(); }
-    if (e.key === 'Escape') { $('searchInput').value = ''; runSearch(''); $('searchInput').blur(); }
+    if (e.key === 'Escape') { $('searchInput').value = ''; runSearch(''); $('searchInput').blur(); $('searchBox').hidden = true; }
     if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
       e.preventDefault();
       activeResult = clamp(activeResult + (e.key === 'ArrowDown' ? 1 : -1), 0, currentResults.length - 1);
@@ -1060,7 +1074,6 @@
   function applyLang() {
     document.querySelectorAll('[data-t]').forEach((el) => { el.textContent = t(el.dataset.t); });
     $('searchInput').placeholder = t('search');
-    $('btnLang').querySelectorAll('span').forEach((s) => s.classList.toggle('on', s.dataset.l === I.lang));
     $('btnTrack').textContent = t(view.track ? 'tracking' : 'track');
     renderSettingsText(); syncDock(); renderHud(); renderClock(); renderReadout();
     if (!$('panchang').hidden) renderPanchang();
@@ -1069,7 +1082,7 @@
     placeGlider(); jyRefresh(true);
     invalidate();
   }
-  $('btnLang').addEventListener('click', () => { S.lang = I.lang === 'en' ? 'hi' : 'en'; I.set(S.lang); persist(); });
+  $('langSeg').querySelectorAll('button').forEach((b) => b.addEventListener('click', () => { S.lang = b.dataset.lang; I.set(S.lang); persist(); }));
   I.onChange(applyLang);
 
   // ---------- misc controls ----------
@@ -1081,9 +1094,21 @@
 
   // ---------- phone intro & sensor help ----------
   const isTouch = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+  const isIOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
   function showIntro() {
     if (!isTouch || view.sensor) return;
+    const p = $('intro').querySelector('p');
+    p.textContent = t('introText') + (isIOS && !navigator.standalone ? ' ' + t('addHome') : '');
     $('intro').hidden = false;
+  }
+  let locToastTimer = null;
+  function showLocToast() {
+    const el = $('locToast');
+    $('ltPlace').textContent = nm(S.loc);
+    $('ltMode').textContent = clock.rate === 1 ? t('realTime') : fmtShort(clock.sim);
+    el.classList.remove('out'); el.hidden = false;
+    clearTimeout(locToastTimer);
+    locToastTimer = setTimeout(() => { el.classList.add('out'); locToastTimer = setTimeout(() => { el.hidden = true; }, 650); }, 2600);
   }
   function showHelp(kind) {
     $('helpText').textContent = t(kind === 'sensorBlocked' ? 'helpBlocked' : 'helpNone');
@@ -1095,14 +1120,25 @@
   $('helpClose').addEventListener('click', () => { $('help').hidden = true; });
   $('btnMenu').innerHTML = ICON.menu;
   $('searchIco').innerHTML = ICON.search;
+  $('btnSearch').innerHTML = ICON.search;
+  $('searchClose').innerHTML = ICON.close;
+  $('btnLayers').innerHTML = ICON.layers;
+  $('btnCam').innerHTML = ICON.camera;
+  $('aperture').innerHTML = ICON.aperture;
+  $('ltIco').innerHTML = ICON.clock;
+  $('btnSearch').addEventListener('click', () => { $('searchBox').hidden = false; $('searchInput').focus(); });
+  $('searchClose').addEventListener('click', () => { $('searchInput').value = ''; runSearch(''); $('searchBox').hidden = true; });
+  $('btnLayers').addEventListener('click', () => { $('dock').hidden = !$('dock').hidden; if (!$('dock').hidden) { $('timebar').hidden = true; } syncDock(); });
+  $('btnSensor').addEventListener('click', () => { setSensor(!view.sensor); });
+  $('btnCam').addEventListener('click', () => { setAR(!view.ar); });
+  $('btnPanchang').addEventListener('click', () => { close('timebar'); open('panchang'); });
   $('btnZoomIn').innerHTML = ICON.plus;
   $('btnZoomOut').innerHTML = ICON.minus;
   $('compassNeedle').innerHTML = ICON.compass;
   $('btnShowUi').innerHTML = ICON.eyeOpen;
   document.querySelectorAll('[data-close]').forEach((b) => { b.innerHTML = ICON.close; });
   $('btnMenu').addEventListener('click', () => toggle('drawer'));
-  $('hudMain').addEventListener('click', () => toggle('panchang'));
-  $('hudClock').addEventListener('click', () => toggle('timebar'));
+  $('hudClock').addEventListener('click', () => { $('dock').hidden = true; toggle('timebar'); });
   const zoomBy = (k) => { view.anim = { t0: performance.now(), dur: 300, az0: view.az, daz: 0, alt0: view.alt, alt1: view.alt, fov0: view.fov, fov1: clamp(view.fov * k, 1, 180) }; };
   $('btnZoomIn').addEventListener('click', () => zoomBy(1 / 1.6));
   $('btnZoomOut').addEventListener('click', () => zoomBy(1.6));
@@ -1113,7 +1149,7 @@
   $('btnShowUi').addEventListener('click', () => setZen(false));
   document.addEventListener('keydown', (e) => {
     if (e.target.tagName === 'INPUT') return;
-    if (e.key === '/') { e.preventDefault(); $('searchInput').focus(); }
+    if (e.key === '/') { e.preventDefault(); $('searchBox').hidden = false; $('searchInput').focus(); }
     if (e.key === 'Escape') { PANELS.forEach((p) => { if (!$(p).hidden) close(p); }); if (!$('sheet').hidden) close('sheet'); setZen(false); }
     const step = 4 * view.fov / 60;
     if (e.key === 'ArrowLeft') { view.az = (view.az - step + 360) % 360; invalidate(); }
@@ -1149,6 +1185,7 @@
     navigator.serviceWorker.addEventListener('controllerchange', () => { if (hadController && !reloaded) { reloaded = true; location.reload(); } });
     navigator.serviceWorker.register('sw.js').catch(() => {});
   }
-  setTimeout(showIntro, 600);
-  window.__antariksha = { view, clock, S, select, goTo, setMode, setNames, jy };
+  showLocToast();
+  setTimeout(showIntro, 3300);
+  window.__antariksha = { view, clock, S, select, goTo, setMode, setNames, jy, invalidate };
 })();

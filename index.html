@@ -26,31 +26,26 @@
 
 <div id="ui">
   <header class="topbar">
-    <button class="glass icon-btn" id="btnMenu" aria-label="Settings"></button>
-    <div class="modes glass" id="modeSwitch" role="tablist">
+    <button class="bare" id="btnMenu" aria-label="Menu"></button>
+    <div class="modes" id="modeSwitch" role="tablist">
       <button class="mode" data-mode="sky" role="tab"><span class="mi"></span><span class="ml" data-t="modeSky"></span></button>
       <button class="mode" data-mode="jyotish" role="tab"><span class="mi"></span><span class="ml" data-t="modeJyotish"></span></button>
       <i class="mode-glider"></i>
     </div>
-    <div class="search glass" id="searchBox">
-      <span class="search-ico" id="searchIco"></span>
-      <input id="searchInput" type="search" autocomplete="off" spellcheck="false">
-      <div class="results glass" id="searchResults" hidden></div>
-    </div>
-    <button class="glass chip lang" id="btnLang" aria-label="Language"><span data-l="en">EN</span><i></i><span data-l="hi">हि</span></button>
+    <button class="bare" id="btnSearch" aria-label="Search"></button>
   </header>
 
-  <section class="hud glass" id="hud">
-    <button class="hud-main" id="hudMain">
-      <span class="hud-loc" id="hudLoc"></span>
-      <span class="hud-tithi" id="hudTithi"></span>
-    </button>
-    <button class="hud-clock" id="hudClock">
-      <span class="badge" id="liveBadge"></span>
-      <span class="hud-time" id="hudTime"></span>
-      <span class="hud-date" id="hudDate"></span>
-    </button>
-  </section>
+  <div class="search glass" id="searchBox" hidden>
+    <span class="search-ico" id="searchIco"></span>
+    <input id="searchInput" type="search" autocomplete="off" spellcheck="false" enterkeyhint="search">
+    <button class="bare small" id="searchClose" aria-label="Close search"></button>
+    <div class="results glass" id="searchResults" hidden></div>
+  </div>
+
+  <div class="loc-toast" id="locToast" hidden>
+    <span class="lt-ico" id="ltIco"></span>
+    <span class="lt-text"><b id="ltPlace"></b><span id="ltMode"></span></span>
+  </div>
 
   <aside class="panel glass panchang" id="panchang" hidden>
     <div class="panel-head">
@@ -64,12 +59,27 @@
   </aside>
 
   <div class="side-ctrls">
-    <button class="glass icon-btn" id="btnZoomIn" aria-label="Zoom in"></button>
-    <button class="glass icon-btn" id="btnZoomOut" aria-label="Zoom out"></button>
-    <button class="glass icon-btn compass" id="btnCompass" aria-label="Face north"><span id="compassNeedle"></span></button>
+    <button class="bare" id="btnZoomIn" aria-label="Zoom in"></button>
+    <button class="bare" id="btnZoomOut" aria-label="Zoom out"></button>
+    <button class="bare compass" id="btnCompass" aria-label="Face north"><span id="compassNeedle"></span></button>
   </div>
 
-  <div class="readout" id="readout"></div>
+  <div class="fov" id="readout"></div>
+
+  <footer class="bottombar">
+    <button class="bare" id="btnLayers" aria-label="Layers"></button>
+    <div class="center">
+      <button class="bare cam" id="btnCam" aria-label="Camera view" hidden></button>
+      <button class="compass-btn" id="btnSensor" aria-label="Follow my phone">
+        <span class="aperture" id="aperture"></span>
+        <span class="dial" id="dial"><i class="dn">N</i><i class="de">E</i><i class="ds">S</i><i class="dw">W</i></span>
+      </button>
+    </div>
+    <button class="clock" id="hudClock">
+      <span class="clk-sub" id="hudTithi"></span>
+      <span class="clk-time" id="hudTime"></span>
+    </button>
+  </footer>
 
   <section class="timebar glass" id="timebar" hidden>
     <div class="tb-row">
@@ -86,9 +96,13 @@
       <span class="tb-rate" id="rateLabel"></span>
       <button class="tb-now" id="btnNow" data-t="now"></button>
     </div>
+    <div class="tb-row">
+      <span class="tb-date" id="hudDate"></span>
+      <button class="pill" id="btnPanchang" data-t="panchang"></button>
+    </div>
   </section>
 
-  <nav class="dock glass" id="dock"></nav>
+  <nav class="dock glass" id="dock" hidden></nav>
 
   <section class="jyotish" id="jyotish" hidden>
     <div class="jy-wrap">
@@ -151,6 +165,12 @@
       <button class="icon-btn ghost" data-close="drawer" aria-label="Close"></button>
     </div>
     <div class="drawer-body">
+      <h3 data-t="language"></h3>
+      <div class="seg wide" id="langSeg">
+        <button data-lang="en">English</button>
+        <button data-lang="hi">हिन्दी</button>
+      </div>
+
       <h3 data-t="location"></h3>
       <button class="pill wide accent" id="btnGeo" data-t="useMyLocation"></button>
       <select id="citySelect" class="field"></select>
@@ -179,6 +199,7 @@
       <p class="about" data-t="aboutJyotish"></p>
       <a class="pill wide accent link" href="https://livingsanatan.com" target="_blank" rel="noopener" data-t="visit"></a>
       <p class="credits" data-t="credits"></p>
+      <p class="credits" data-t="artCredits"></p>
     </div>
   </aside>
 
@@ -204,6 +225,7 @@
 <script src="js/vendor/astronomy.browser.min.js"></script>
 <script src="js/data/stars.js"></script>
 <script src="js/data/constellations.js"></script>
+<script src="js/data/art.js"></script>
 <script src="js/vedic.js"></script>
 <script src="js/i18n.js"></script>
 <script src="js/names.js"></script>

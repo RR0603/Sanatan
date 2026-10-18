@@ -87,11 +87,12 @@ js/app.js            gestures, time, search, panels, settings
 js/vedic.js          nakshatra / rashi / graha / Panchang vocabulary (EN + HI)
 js/i18n.js           interface strings (EN + HI)
 js/data/*.js         generated star and constellation data
-tools/build_data.py  regenerates js/data and img/milkyway.png
+tools/build_data.py  regenerates js/data, img/milkyway.png and img/art
 ```
 
 ## Credits
 
 - Star catalogue: [HYG Database](https://github.com/astronexus/HYG-Database) v4.1, CC BY-SA 4.0
 - Constellation lines and Milky Way outlines: [d3-celestial](https://github.com/ofrohn/d3-celestial), BSD-3-Clause
+- Constellation illustrations: Johan Meuris for [Stellarium](https://github.com/Stellarium/stellarium-skycultures), [Free Art License](https://artlibre.org/licence/lal/en/)
 - Ephemeris: [Astronomy Engine](https://github.com/cosinekitty/astronomy), MIT

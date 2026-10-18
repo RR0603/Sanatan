@@ -11,12 +11,36 @@ LS.Renderer = (function () {
     -0.8676661490, -0.1980763734, 0.4559837762];
 
   const COLORS = {
-    nakLine: 'rgba(255,184,92,0.55)', nakLabel: 'rgba(255,200,120,0.95)',
-    zodiac: 'rgba(120,220,255,0.35)', rashiLabel: 'rgba(150,230,255,0.9)', nakTick: 'rgba(255,184,92,0.35)',
-    western: 'rgba(130,160,255,0.32)', westernLabel: 'rgba(160,185,255,0.7)',
-    grid: 'rgba(140,200,255,0.16)', eqGrid: 'rgba(255,140,200,0.14)', horizon: 'rgba(255,170,80,0.75)',
-    starLabel: 'rgba(225,235,255,0.8)', vedicStar: 'rgba(255,214,150,0.95)', select: '#7ee8fa',
+    nakLine: 'rgba(255,190,120,0.5)', nakLabel: 'rgba(255,198,135,0.92)',
+    zodiac: 'rgba(120,210,240,0.28)', rashiLabel: 'rgba(140,215,240,0.8)', nakTick: 'rgba(255,190,120,0.28)',
+    western: 'rgba(120,155,205,0.42)', westernLabel: 'rgba(125,160,210,0.72)',
+    grid: 'rgba(120,170,230,0.13)', eqGrid: 'rgba(230,140,200,0.12)', horizon: 'rgba(255,170,90,0.55)',
+    starLabel: 'rgba(175,195,235,0.85)', vedicStar: 'rgba(255,212,160,0.92)', select: '#7ee8fa',
   };
+  function hexA(hex, a) {
+    const n = parseInt(hex.slice(1), 16);
+    return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${a})`;
+  }
+  // Least-squares-free exact affine map from three image points to three screen points: [a b c d e f].
+  function affine(anchors, P) {
+    const [x1, y1] = anchors[0].px, [x2, y2] = anchors[1].px, [x3, y3] = anchors[2].px;
+    const det = x1 * (y2 - y3) + x2 * (y3 - y1) + x3 * (y1 - y2);
+    if (Math.abs(det) < 1e-6) return null;
+    const solve = (u1, u2, u3) => [
+      (u1 * (y2 - y3) + u2 * (y3 - y1) + u3 * (y1 - y2)) / det,
+      (u1 * (x3 - x2) + u2 * (x1 - x3) + u3 * (x2 - x1)) / det,
+      (u1 * (x2 * y3 - x3 * y2) + u2 * (x3 * y1 - x1 * y3) + u3 * (x1 * y2 - x2 * y1)) / det,
+    ];
+    const X = solve(P[0][0], P[1][0], P[2][0]), Y = solve(P[0][1], P[1][1], P[2][1]);
+    // canvas setTransform(a, b, c, d, e, f): X = a*x + c*y + e, Y = b*x + d*y + f
+    return [X[0], Y[0], X[1], Y[1], X[2], Y[2]];
+  }
+  const artCache = {};
+  function artImage(a) {
+    let img = artCache[a.file];
+    if (!img) { img = artCache[a.file] = new Image(); img.decoding = 'async'; img.onload = () => LS.Renderer.onArt && LS.Renderer.onArt(); img.src = a.file; }
+    return img;
+  }
 
   // ---------- WebGL background ----------
   const VS = `attribute vec2 p; void main(){ gl_Position = vec4(p, 0.0, 1.0); }`;
@@ -111,19 +135,22 @@ void main(){
   // ---------- star sprites ----------
   const BV_STOPS = [[-0.4, [155, 176, 255]], [-0.1, [175, 195, 255]], [0.15, [210, 222, 255]], [0.4, [248, 247, 255]],
     [0.65, [255, 242, 226]], [0.9, [255, 226, 190]], [1.3, [255, 206, 150]], [1.9, [255, 176, 110]]];
-  function makeSprites() {
+  // Soft halo used only around bright stars; the star itself is drawn as a crisp disc.
+  function makeHalos() {
     return BV_STOPS.map(([, c]) => {
       const cv = document.createElement('canvas'); cv.width = cv.height = 64;
       const g = cv.getContext('2d');
       const gr = g.createRadialGradient(32, 32, 0, 32, 32, 32);
-      gr.addColorStop(0, 'rgba(255,255,255,1)');
-      gr.addColorStop(0.12, `rgba(${c[0]},${c[1]},${c[2]},1)`);
-      gr.addColorStop(0.3, `rgba(${c[0]},${c[1]},${c[2]},0.35)`);
+      gr.addColorStop(0, `rgba(${c[0]},${c[1]},${c[2]},0.9)`);
+      gr.addColorStop(0.18, `rgba(${c[0]},${c[1]},${c[2]},0.28)`);
+      gr.addColorStop(0.5, `rgba(${c[0]},${c[1]},${c[2]},0.06)`);
       gr.addColorStop(1, `rgba(${c[0]},${c[1]},${c[2]},0)`);
       g.fillStyle = gr; g.fillRect(0, 0, 64, 64);
       return cv;
     });
   }
+  // Star core colours: mostly white with a hint of the B-V tint, like the naked eye sees.
+  const CORE = BV_STOPS.map(([, c]) => `rgb(${Math.round(c[0] * 0.55 + 255 * 0.45)},${Math.round(c[1] * 0.55 + 255 * 0.45)},${Math.round(c[2] * 0.55 + 255 * 0.45)})`);
   function bvBucket(bv) {
     for (let i = BV_STOPS.length - 1; i >= 0; i--) if (bv >= BV_STOPS[i][0] - 0.12) return i;
     return 0;
@@ -165,7 +192,11 @@ void main(){
       id: c.id, en: c.en, hi: c.hi, la: c.la, rank: c.rank, label: Sky.radec2vec(c.pos[0], c.pos[1]),
       lines: c.l.map((pl) => pl.map(([ra, dec]) => Sky.radec2vec(ra, dec))),
     }));
-    return { n, vec, mag, bucket, names: sd.names, vedicNames, nakFigs, abhFig, asterisms, western };
+    const art = (LS_DATA.art || []).map((a) => ({
+      id: a.id, file: a.file, size: a.size,
+      anchors: a.anchors.map(([px, py, ra, dec]) => ({ px: [px, py], v: Sky.radec2vec(ra, dec) })),
+    }));
+    return { n, vec, mag, bucket, names: sd.names, vedicNames, nakFigs, abhFig, asterisms, western, art };
   }
 
   // ---------- renderer ----------
@@ -174,18 +205,20 @@ void main(){
     let glc = null;
     try { glc = makeGL(glCanvas, mwImage); } catch (e) { console.warn('WebGL unavailable', e); }
     const ctx = canvas.getContext('2d');
-    const sprites = makeSprites();
+    const halos = makeHalos();
     let W = 0, H = 0, dpr = 1;
     let hits = [];
     let textureReady = null;
     if (glc) glc.onTexture = () => textureReady && textureReady();
 
+    let glDpr = 1;
+    // The 2D layer renders at full device resolution (3x on iPhone) for crisp stars and text;
+    // the smooth WebGL background is capped at 2x.
     function resize(w, h, ratio) {
-      W = w; H = h; dpr = ratio;
-      for (const c of [glCanvas, canvas]) {
-        c.width = Math.round(w * ratio); c.height = Math.round(h * ratio);
-        c.style.width = w + 'px'; c.style.height = h + 'px';
-      }
+      W = w; H = h; dpr = Math.min(ratio, 3); glDpr = Math.min(ratio, 2);
+      canvas.width = Math.round(w * dpr); canvas.height = Math.round(h * dpr);
+      glCanvas.width = Math.round(w * glDpr); glCanvas.height = Math.round(h * glDpr);
+      for (const c of [glCanvas, canvas]) { c.style.width = w + 'px'; c.style.height = h + 'px'; }
       if (glc) glc.gl.viewport(0, 0, glCanvas.width, glCanvas.height);
     }
 
@@ -200,8 +233,8 @@ void main(){
       // GL pass
       if (glc) {
         const gl = glc.gl, U = glc.u;
-        gl.uniform2f(U.uCenter, cx * dpr, cy * dpr);
-        gl.uniform1f(U.uScale, scale * dpr);
+        gl.uniform2f(U.uCenter, cx * glDpr, cy * glDpr);
+        gl.uniform1f(U.uScale, scale * glDpr);
         gl.uniformMatrix3fv(U.uCam2Enu, false, new Float32Array([r[0], r[1], r[2], u[0], u[1], u[2], f[0], f[1], f[2]]));
         const enu2gal = Sky.mul(EQJ2GAL, sc.fr.enu2eqj);
         gl.uniformMatrix3fv(U.uEnu2Gal, false, new Float32Array(Sky.transpose(enu2gal)));
@@ -258,29 +291,43 @@ void main(){
         if (close && points.length) { const p = proj(points[0]); if (p && pen) ctx.lineTo(p.x, p.y); }
         ctx.stroke();
       }
-      function seg(a, b) {
+      const starEnu = (i) => eqj([data.vec[i * 3], data.vec[i * 3 + 1], data.vec[i * 3 + 2]]);
+
+      // Thin, quiet lines that stop short of the stars, Stellarium-style.
+      function segGap(a, b, ga, gb) {
         const pa = proj(a); if (!pa) return;
         const ax = pa.x, ay = pa.y;
         const pb = proj(b); if (!pb) return;
         if (!onScreen({ x: ax, y: ay }, 400) && !onScreen(pb, 400)) return;
-        ctx.moveTo(ax, ay); ctx.lineTo(pb.x, pb.y);
+        const dx = pb.x - ax, dy = pb.y - ay, L = Math.hypot(dx, dy);
+        if (L < ga + gb + 2) return;
+        const ux = dx / L, uy = dy / L;
+        ctx.moveTo(ax + ux * ga, ay + uy * ga); ctx.lineTo(pb.x - ux * gb, pb.y - uy * gb);
       }
-      function label(text, e, color, size, opts = {}) {
-        const p = proj(e);
-        if (!onScreen(p, 0)) return null;
-        ctx.font = font(size, opts.weight || 500);
-        ctx.fillStyle = color;
-        ctx.textAlign = opts.align || 'center';
+      const hairspace = (s) => (/[ऀ-ॿ]/.test(s) ? s : s.toUpperCase().split('').join(' '));
+      // Labels are queued and drawn last, most important first; a label that would overlap
+      // one already placed is skipped, so the sky never turns into a pile of text.
+      const labelQueue = [];
+      function tag(text, x, y, color, size, opts = {}) {
+        labelQueue.push({ text, x, y, color, size, weight: opts.weight || 500, align: opts.align || 'center', prio: opts.prio || 0 });
+      }
+      function flushLabels() {
+        labelQueue.sort((a, b) => b.prio - a.prio);
+        const placed = [];
         ctx.textBaseline = 'middle';
-        if (opts.shadow !== false) { ctx.shadowColor = 'rgba(0,0,0,0.85)'; ctx.shadowBlur = 4; }
-        ctx.fillText(text, p.x + (opts.dx || 0), p.y + (opts.dy || 0));
-        ctx.shadowBlur = 0;
-        return { x: p.x, y: p.y };
+        for (const l of labelQueue) {
+          ctx.font = font(l.size, l.weight);
+          const w = ctx.measureText(l.text).width, h = l.size + 2;
+          const x0 = l.align === 'left' ? l.x : l.x - w / 2, y0 = l.y - h / 2;
+          if (placed.some((b) => x0 < b[0] + b[2] && x0 + w > b[0] && y0 < b[1] + b[3] && y0 + h > b[1])) continue;
+          placed.push([x0 - 2, y0, w + 4, h]);
+          ctx.fillStyle = l.color; ctx.textAlign = l.align;
+          ctx.fillText(l.text, l.x, l.y);
+        }
       }
-      const starEnu = (i) => eqj([data.vec[i * 3], data.vec[i * 3 + 1], data.vec[i * 3 + 2]]);
 
       // Grids
-      ctx.lineWidth = 1;
+      ctx.lineWidth = 0.8;
       if (st.grid) {
         ctx.strokeStyle = COLORS.grid;
         for (let alt = -80; alt <= 80; alt += 10) {
@@ -309,118 +356,162 @@ void main(){
         }
       }
 
-      // Western constellations
-      if (st.constellations) {
-        ctx.strokeStyle = COLORS.western; ctx.lineWidth = 1;
-        ctx.beginPath();
-        for (const c of data.western) for (const pl of c.lines) for (let i = 1; i < pl.length; i++) seg(eqj(pl[i - 1]), eqj(pl[i]));
-        ctx.stroke();
-        if (st.labels) for (const c of data.western) {
-          if (sc.fov > 120 && c.rank > 1) continue;
-          const pos = label(Nm.constellation(c), eqj(c.label), COLORS.westernLabel, 11, { weight: 400 });
-          if (pos) hits.push({ x: pos.x, y: pos.y, r: 22, obj: { type: 'constellation', id: c.id }, prio: 0 });
+      // Constellation artwork, pinned by three anchor stars (affine fit of the local projection).
+      if (st.art && data.art.length) {
+        ctx.save();
+        ctx.globalCompositeOperation = 'lighter';
+        const artAlpha = (sc.ar ? 0.3 : 0.17) * (st.atmosphere && !sc.ar ? Math.max(0, Math.min(1, (-sc.sunAlt - 2) / 10)) : 1);
+        if (artAlpha > 0.01) for (const a of data.art) {
+          const P3 = [];
+          for (const an of a.anchors) {
+            const e = eqj(an.v);
+            const z = e[0] * f[0] + e[1] * f[1] + e[2] * f[2];
+            if (z < 0.05) break;
+            const p = proj(e); if (!p) break;
+            P3.push([p.x, p.y]);
+          }
+          if (P3.length !== 3) continue;
+          const minX = Math.min(P3[0][0], P3[1][0], P3[2][0]), maxX = Math.max(P3[0][0], P3[1][0], P3[2][0]);
+          const minY = Math.min(P3[0][1], P3[1][1], P3[2][1]), maxY = Math.max(P3[0][1], P3[1][1], P3[2][1]);
+          const pad = Math.max(maxX - minX, maxY - minY);
+          if (maxX < -pad || minX > W + pad || maxY < -pad || minY > H + pad) continue;
+          const T = affine(a.anchors, P3);
+          if (!T) continue;
+          const img = artImage(a);
+          if (!img.complete || !img.naturalWidth) continue;
+          ctx.globalAlpha = artAlpha;
+          ctx.setTransform(dpr * T[0], dpr * T[1], dpr * T[2], dpr * T[3], dpr * T[4], dpr * T[5]);
+          ctx.drawImage(img, 0, 0, a.size[0], a.size[1]);
         }
+        ctx.restore();
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      }
+
+      // Western / Indian-named constellations
+      if (st.constellations) {
+        ctx.strokeStyle = COLORS.western; ctx.lineWidth = 0.9;
+        ctx.beginPath();
+        for (const c of data.western) for (const pl of c.lines) for (let i = 1; i < pl.length; i++) segGap(eqj(pl[i - 1]), eqj(pl[i]), 4, 4);
+        ctx.stroke();
+      }
+      if ((st.constellations || st.art) && st.labels) for (const c of data.western) {
+        if (sc.fov > 120 && c.rank > 1) continue;
+        const p = proj(eqj(c.label)); if (!onScreen(p, 0)) continue;
+        const x = p.x, y = p.y;
+        tag(hairspace(Nm.constellation(c)), x, y, COLORS.westernLabel, 10.5, { weight: 500, prio: 3 - c.rank * 0.1 });
+        hits.push({ x, y, r: 24, obj: { type: 'constellation', id: c.id }, prio: 0 });
       }
 
       // Zodiac band: ecliptic, rashi and nakshatra divisions (sidereal, Lahiri)
       const ayan = sc.ayanamsa;
       if (st.rashi) {
-        ctx.strokeStyle = COLORS.zodiac; ctx.lineWidth = 1.2;
+        ctx.strokeStyle = COLORS.zodiac; ctx.lineWidth = 0.9;
         const ecl = []; for (let l = 0; l <= 360; l += 2) ecl.push(ect(l, 0));
         polyline(ecl);
-        ctx.setLineDash([4, 6]); ctx.lineWidth = 0.8;
+        ctx.setLineDash([2, 6]); ctx.lineWidth = 0.7;
         for (const b of [-9, 9]) { const pts = []; for (let l = 0; l <= 360; l += 3) pts.push(ect(l, b)); polyline(pts); }
         ctx.setLineDash([]);
-        // Rashi boundaries
-        ctx.lineWidth = 1;
+        ctx.lineWidth = 0.8;
         for (let k = 0; k < 12; k++) {
           const lon = ayan + k * 30, pts = [];
           for (let b = -12; b <= 12; b += 3) pts.push(ect(lon, b));
           polyline(pts);
           if (st.labels) {
-            const rs = V.rashis[k];
-            const pos = label(hiLang ? Nm.rashi(k) : Nm.rashi(k).toUpperCase(), ect(lon + 15, -11), COLORS.rashiLabel, 13, { weight: 600 });
-            if (pos) hits.push({ x: pos.x, y: pos.y, r: 28, obj: { type: 'rashi', id: k }, prio: 1 });
+            const p = proj(ect(lon + 15, -10.5));
+            if (onScreen(p, 0)) {
+              const x = p.x, y = p.y;
+              tag(hairspace(Nm.rashi(k)), x, y, COLORS.rashiLabel, 12, { weight: 600, prio: 6 });
+              hits.push({ x, y, r: 28, obj: { type: 'rashi', id: k }, prio: 1 });
+            }
           }
         }
-        // Nakshatra divisions
         ctx.strokeStyle = COLORS.nakTick;
         for (let k = 0; k < 27; k++) {
           const lon = ayan + k * Sky.NAK, pts = [];
-          for (let b = -6; b <= 6; b += 3) pts.push(ect(lon, b));
+          for (let b = -5; b <= 5; b += 2.5) pts.push(ect(lon, b));
           polyline(pts);
-          if (st.labels) label(I.num(k + 1), ect(lon + Sky.NAK / 2, 7.2), 'rgba(255,200,120,0.6)', 10, { weight: 600 });
+          if (st.labels) { const p = proj(ect(lon + Sky.NAK / 2, 6.8)); if (onScreen(p, 0)) tag(I.num(k + 1), p.x, p.y, 'rgba(255,200,130,0.5)', 9.5, { weight: 600, prio: 1 }); }
         }
       }
 
       // Nakshatra figures
       if (st.nakshatra) {
-        ctx.strokeStyle = COLORS.nakLine; ctx.lineWidth = 1.4;
-        ctx.shadowColor = 'rgba(255,170,60,0.6)'; ctx.shadowBlur = 6;
+        ctx.strokeStyle = COLORS.nakLine; ctx.lineWidth = 1;
         ctx.beginPath();
         const figs = [...data.nakFigs, data.abhFig, ...data.asterisms];
-        for (const fg of figs) for (const [a, b] of fg.segs) seg(starEnu(a), starEnu(b));
-        ctx.stroke(); ctx.shadowBlur = 0;
-        // ring around each yogatara
-        ctx.strokeStyle = 'rgba(255,200,120,0.55)'; ctx.lineWidth = 1;
+        for (const fg of figs) for (const [a, b] of fg.segs) segGap(starEnu(a), starEnu(b), 4.5, 4.5);
+        ctx.stroke();
+        ctx.strokeStyle = 'rgba(255,200,130,0.4)'; ctx.lineWidth = 0.8;
         for (const fg of [...data.nakFigs, data.abhFig]) {
           const p = proj(starEnu(fg.yt));
-          if (onScreen(p, 0)) { ctx.beginPath(); ctx.arc(p.x, p.y, 7, 0, Math.PI * 2); ctx.stroke(); }
+          if (onScreen(p, 0)) { ctx.beginPath(); ctx.arc(p.x, p.y, 6.5, 0, Math.PI * 2); ctx.stroke(); }
         }
         if (st.labels) {
           for (const fg of data.nakFigs) {
-            const nk = V.nakshatras[fg.k];
-            const pos = label(hiLang ? nk.hi : nk.en, eqj(fg.label), COLORS.nakLabel, 13, { weight: 600, dy: -16 });
-            if (pos) hits.push({ x: pos.x, y: pos.y - 16, r: 30, obj: { type: 'nakshatra', id: fg.k }, prio: 2 });
+            const p = proj(eqj(fg.label)); if (!onScreen(p, 0)) continue;
+            const x = p.x, y = p.y - 16;
+            tag(hairspace(Nm.nakshatra(fg.k)), x, y, COLORS.nakLabel, 11.5, { weight: 600, prio: 7 });
+            hits.push({ x, y, r: 30, obj: { type: 'nakshatra', id: fg.k }, prio: 2 });
           }
-          const ab = label(hiLang ? V.abhijit.hi : V.abhijit.en, eqj(data.abhFig.label), COLORS.nakLabel, 12, { weight: 600, dy: -16 });
-          if (ab) hits.push({ x: ab.x, y: ab.y - 16, r: 26, obj: { type: 'nakshatra', id: 'abhijit' }, prio: 2 });
+          const pa = proj(eqj(data.abhFig.label));
+          if (onScreen(pa, 0)) {
+            const x = pa.x, y = pa.y - 16;
+            tag(hairspace(hiLang ? V.abhijit.hi : V.abhijit.en), x, y, COLORS.nakLabel, 11, { weight: 600, prio: 6.5 });
+            hits.push({ x, y, r: 26, obj: { type: 'nakshatra', id: 'abhijit' }, prio: 2 });
+          }
           for (const a of data.asterisms) {
-            const as = V.asterisms[a.k];
-            const pos = label(hiLang ? as.hi : as.en, starEnu(a.labelStar), 'rgba(255,214,160,0.8)', 12, { weight: 500, dy: 18 });
-            if (pos) hits.push({ x: pos.x, y: pos.y + 18, r: 26, obj: { type: 'asterism', id: a.k }, prio: 1 });
+            const p = proj(starEnu(a.labelStar)); if (!onScreen(p, 0)) continue;
+            const x = p.x, y = p.y + 18;
+            tag(hairspace(hiLang ? V.asterisms[a.k].hi : V.asterisms[a.k].en), x, y, 'rgba(255,214,160,0.7)', 10.5, { weight: 500, prio: 5 });
+            hits.push({ x, y, r: 26, obj: { type: 'asterism', id: a.k }, prio: 1 });
           }
         }
       }
 
-      // Stars
-      const fovLimit = 6.2 - 1.6 * Math.min(1, Math.max(0, (sc.fov - 30) / 150));
-      const skyLimit = st.atmosphere && !sc.ar ? Sky.limitingMag(sc.sunAlt) : 6.2;
+      // Stars: crisp points with colour, a soft halo only for the brightest.
+      const fovLimit = 6.5 - 1.4 * Math.min(1, Math.max(0, (sc.fov - 30) / 150));
+      const skyLimit = st.atmosphere && !sc.ar ? Sky.limitingMag(sc.sunAlt) + 0.3 : 6.5;
       const limit = Math.min(fovLimit, skyLimit) + (st.starBrightness - 1) * 1.2;
-      const gain = st.starBrightness * (sc.ar ? 1.25 : 1);
-      const zoomBoost = Math.min(1.6, Math.max(0, Math.log10(90 / sc.fov)) * 0.6);
-      const labelLimit = sc.fov > 100 ? 1.6 : sc.fov > 50 ? 2.5 : sc.fov > 20 ? 3.6 : 5;
+      const gain = st.starBrightness * (sc.ar ? 1.2 : 1);
+      const zoom = Math.min(1.8, Math.max(0, Math.log10(60 / sc.fov)) * 0.55);
+      const labelLimit = sc.fov > 100 ? 1.6 : sc.fov > 50 ? 2.6 : sc.fov > 20 ? 3.8 : 5.2;
+      const groundDim = st.ground && !sc.ar ? 1 - st.groundOpacity * 0.85 : 1;
       ctx.globalCompositeOperation = 'lighter';
       const starLabels = [];
       for (let i = 0; i < data.n; i++) {
         const m = data.mag[i];
         if (m > limit) break;
         const e = starEnu(i);
-        if (st.ground && !sc.ar && st.groundOpacity > 0.9 && e[2] < -0.02) continue;
+        if (groundDim < 0.2 && e[2] < -0.01) continue;
         const p = proj(e);
-        if (!onScreen(p, 10)) continue;
+        if (!onScreen(p, 8)) continue;
         const d = limit - m;
-        const rad = Math.min(9, (0.7 + Math.pow(d, 0.95) * 0.55 + zoomBoost) * gain);
-        const a = Math.min(1, 0.25 + d / 1.4) * (e[2] < 0 && st.ground && !sc.ar ? 1 - st.groundOpacity * 0.8 : 1);
+        const rp = Math.min(4.6, (0.42 + 0.3 * Math.pow(d, 1.18) + zoom * 0.5) * gain);
+        const a = Math.min(1, 0.12 + d / 1.6) * (e[2] < 0 ? groundDim : 1);
+        const b = data.bucket[i];
         ctx.globalAlpha = a;
-        const R = rad * 3.2;
-        ctx.drawImage(sprites[data.bucket[i]], p.x - R, p.y - R, R * 2, R * 2);
-        if (m < 4.5 || data.vedicNames[i]) hits.push({ x: p.x, y: p.y, r: 16, obj: { type: 'star', id: i }, prio: data.vedicNames[i] ? 3 : 1 });
-        if (st.labels && st.starNames && (m < labelLimit || (data.vedicNames[i] && m < labelLimit + 1.5))) starLabels.push([i, p.x, p.y, rad]);
+        if (d > 3.4) {
+          const H = rp * 5.5;
+          ctx.globalAlpha = a * Math.min(0.55, (d - 3.4) * 0.22 + 0.15);
+          ctx.drawImage(halos[b], p.x - H, p.y - H, H * 2, H * 2);
+          ctx.globalAlpha = a;
+        }
+        ctx.fillStyle = CORE[b];
+        if (rp < 0.9) ctx.fillRect(p.x - rp, p.y - rp, rp * 2, rp * 2);
+        else { ctx.beginPath(); ctx.arc(p.x, p.y, rp, 0, 6.2832); ctx.fill(); }
+        if (m < 4.6 || data.vedicNames[i]) hits.push({ x: p.x, y: p.y, r: 16, obj: { type: 'star', id: i }, prio: data.vedicNames[i] ? 3 : 1 });
+        if (st.labels && st.starNames && (m < labelLimit || (data.vedicNames[i] && m < labelLimit + 1.5))) starLabels.push([i, p.x, p.y, rp]);
       }
       ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
-      for (const [i, x, y, rad] of starLabels) {
+      for (const [i, x, y, rp] of starLabels) {
         const vn = data.vedicNames[i];
-        let text = null, color = COLORS.starLabel;
+        let color = COLORS.starLabel;
         // Yogataras are already named by their nakshatra figure when that layer is on.
         if (vn && vn.kind === 'nakshatra' && st.nakshatra && (Nm.isVedic() || !data.names[i])) continue;
-        text = Nm.star(vn, data.names[i]);
+        const text = Nm.star(vn, data.names[i]);
         if (vn && (Nm.isVedic() || !data.names[i])) color = COLORS.vedicStar;
         if (!text) continue;
-        ctx.font = font(11, 400); ctx.fillStyle = color; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
-        ctx.shadowColor = 'rgba(0,0,0,0.9)'; ctx.shadowBlur = 3;
-        ctx.fillText(text, x + rad + 5, y - rad - 2);
-        ctx.shadowBlur = 0;
+        tag(text, x + rp + 5, y - rp - 4, color, 11.5, { weight: 400, align: 'left', prio: (vn ? 5 : 4) - data.mag[i] * 0.1 });
       }
 
       // Grahas
@@ -434,65 +525,54 @@ void main(){
           const x = p.x, y = p.y;
           let rad;
           if (id === 'surya' || id === 'chandra') {
-            rad = Math.max(id === 'surya' ? 11 : 10, 0.2665 * D2R * scale);
+            rad = Math.max(id === 'surya' ? 9 : 8, 0.2665 * D2R * scale);
             if (id === 'surya') {
-              const gr = ctx.createRadialGradient(x, y, rad * 0.4, x, y, rad * 5);
-              gr.addColorStop(0, 'rgba(255,230,160,0.75)'); gr.addColorStop(1, 'rgba(255,170,60,0)');
-              ctx.fillStyle = gr; ctx.beginPath(); ctx.arc(x, y, rad * 5, 0, Math.PI * 2); ctx.fill();
-              ctx.fillStyle = '#fff4d6'; ctx.beginPath(); ctx.arc(x, y, rad, 0, Math.PI * 2); ctx.fill();
+              const gr = ctx.createRadialGradient(x, y, rad * 0.5, x, y, rad * 6);
+              gr.addColorStop(0, 'rgba(255,236,190,0.7)'); gr.addColorStop(0.3, 'rgba(255,200,110,0.18)'); gr.addColorStop(1, 'rgba(255,170,60,0)');
+              ctx.fillStyle = gr; ctx.beginPath(); ctx.arc(x, y, rad * 6, 0, Math.PI * 2); ctx.fill();
+              ctx.fillStyle = '#fff8e6'; ctx.beginPath(); ctx.arc(x, y, rad, 0, Math.PI * 2); ctx.fill();
             } else {
               // Screen direction toward the Sun along the great circle from the Moon.
-              const m = e, d = m[0] * sunEnu[0] + m[1] * sunEnu[1] + m[2] * sunEnu[2];
-              const tg = [sunEnu[0] - d * m[0], sunEnu[1] - d * m[1], sunEnu[2] - d * m[2]];
+              const m = e, dd = m[0] * sunEnu[0] + m[1] * sunEnu[1] + m[2] * sunEnu[2];
+              const tg = [sunEnu[0] - dd * m[0], sunEnu[1] - dd * m[1], sunEnu[2] - dd * m[2]];
               const tl = Math.hypot(tg[0], tg[1], tg[2]) || 1, h = 0.002;
               const sp = proj([m[0] + tg[0] / tl * h, m[1] + tg[1] / tl * h, m[2] + tg[2] / tl * h]);
               const ang = sp ? Math.atan2(sp.y - y, sp.x - x) : 0;
               drawMoon(ctx, x, y, rad, moon.phase, ang);
             }
           } else if (id === 'rahu' || id === 'ketu') {
-            rad = 7;
-            ctx.strokeStyle = gv.color; ctx.lineWidth = 1.5;
+            rad = 6;
+            ctx.strokeStyle = gv.color; ctx.lineWidth = 1.1;
             ctx.beginPath(); ctx.arc(x, y, rad, 0, Math.PI * 2); ctx.stroke();
-            ctx.beginPath(); ctx.arc(x, y, 2, 0, Math.PI * 2); ctx.fillStyle = gv.color; ctx.fill();
+            ctx.beginPath(); ctx.arc(x, y, 1.6, 0, Math.PI * 2); ctx.fillStyle = gv.color; ctx.fill();
           } else {
-            rad = Math.max(2.5, Math.min(7, 4.2 - g.mag * 0.9));
-            const gr = ctx.createRadialGradient(x, y, 0, x, y, rad * 3.2);
-            gr.addColorStop(0, '#ffffff'); gr.addColorStop(0.3, gv.color); gr.addColorStop(1, 'rgba(0,0,0,0)');
-            ctx.fillStyle = gr; ctx.beginPath(); ctx.arc(x, y, rad * 3.2, 0, Math.PI * 2); ctx.fill();
+            rad = Math.max(1.8, Math.min(4.2, 3 - g.mag * 0.55));
+            const gr = ctx.createRadialGradient(x, y, 0, x, y, rad * 4);
+            gr.addColorStop(0, hexA(gv.color, 0.55)); gr.addColorStop(1, hexA(gv.color, 0));
+            ctx.fillStyle = gr; ctx.beginPath(); ctx.arc(x, y, rad * 4, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = '#fffaf0'; ctx.beginPath(); ctx.arc(x, y, rad, 0, Math.PI * 2); ctx.fill();
           }
           hits.push({ x, y, r: Math.max(22, rad + 10), obj: { type: 'graha', id }, prio: 5 });
           if (st.labels) {
-            ctx.font = font(13, 600); ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
-            ctx.shadowColor = 'rgba(0,0,0,0.9)'; ctx.shadowBlur = 4;
-            ctx.fillStyle = gv.color;
-            const txt = `${gv.glyph} ${Nm.graha(id)}${g.retro && id !== 'rahu' && id !== 'ketu' ? (hiLang ? ' (व)' : ' ℞') : ''}`;
-            ctx.fillText(txt, x + rad + 6, y + rad + 4);
-            ctx.shadowBlur = 0;
+            const txt = `${Nm.graha(id)}${g.retro && id !== 'rahu' && id !== 'ketu' ? (hiLang ? ' (व)' : ' ℞') : ''}`;
+            tag(txt, x + rad + 6, y + rad + 3, gv.color, 12.5, { weight: 600, align: 'left', prio: 8 });
           }
         }
       }
 
       // Horizon + eight directions
-      ctx.strokeStyle = COLORS.horizon; ctx.lineWidth = 1.4;
-      ctx.shadowColor = 'rgba(255,150,60,0.8)'; ctx.shadowBlur = 8;
+      ctx.strokeStyle = COLORS.horizon; ctx.lineWidth = 1;
       const hz = []; for (let az = 0; az <= 360; az += 2) hz.push([Math.sin(az * D2R), Math.cos(az * D2R), 0]);
-      polyline(hz); ctx.shadowBlur = 0;
+      polyline(hz);
       for (let k = 0; k < 8; k++) {
         const az = k * 45 * D2R, main = k % 2 === 0;
-        const e = [Math.sin(az), Math.cos(az), 0.012];
-        const p = proj(e); if (!onScreen(p, 0)) continue;
+        const p = proj([Math.sin(az), Math.cos(az), 0.012]); if (!onScreen(p, 0)) continue;
         const px = p.x, py = p.y;
-        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-        ctx.shadowColor = 'rgba(0,0,0,0.8)'; ctx.shadowBlur = 4;
-        ctx.font = font(main ? 18 : 12, 700);
-        ctx.fillStyle = k === 0 ? '#ff8a6a' : 'rgba(255,214,150,0.95)';
-        ctx.fillText(hiLang ? V.directions[k].hi : V.directionsShort[k], px, py - (main ? 16 : 12));
-        if (!hiLang && Nm.isVedic()) {
-          ctx.font = font(10, 500); ctx.fillStyle = 'rgba(255,214,150,0.7)';
-          ctx.fillText(V.directions[k].en, px, py + 2);
-        }
-        ctx.shadowBlur = 0;
+        tag(hiLang ? V.directions[k].hi : V.directionsShort[k], px, py - (main ? 15 : 11), k === 0 ? '#ff7a6a' : 'rgba(255,214,160,0.9)', main ? 17 : 11.5, { weight: 600, prio: 9 });
+        if (!hiLang && Nm.isVedic() && main) tag(hairspace(V.directions[k].en), px, py + 3, 'rgba(255,214,160,0.55)', 8.5, { weight: 600, prio: 9 });
       }
+
+      flushLabels();
 
       // Selection reticle
       if (sc.selectedEnu) {

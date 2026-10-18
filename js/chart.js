@@ -110,7 +110,8 @@ LS.ChartView = (function () {
       const [mx, my] = pt(rRashi, c.mc), [mx0, my0] = pt(rCore, c.mc);
       ctx.strokeStyle = 'rgba(126,232,250,0.55)'; ctx.setLineDash([3, 4]);
       ctx.beginPath(); ctx.moveTo(mx0, my0); ctx.lineTo(mx, my); ctx.stroke(); ctx.setLineDash([]);
-      label(I.lang === 'hi' ? 'मध्य' : 'MC', mx + (mx - cx) * 0.06, my + (my - cy) * 0.06, 10, 'rgba(170,236,255,0.85)');
+      const [lx, ly] = pt(rRashi - 14, c.mc);
+      label(I.lang === 'hi' ? 'मध्य' : 'MC', lx, ly, 10, 'rgba(170,236,255,0.85)');
 
       // Lagna marker
       ctx.save();

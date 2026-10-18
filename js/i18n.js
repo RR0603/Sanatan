@@ -5,7 +5,7 @@ LS.I18N = (function () {
   const S = {
     en: {
       // modes, names, jyotish
-      sensorLive: 'SENSOR LIVE', sensorWaiting: 'waiting for motion…', sensorRelative: '(no compass)',
+      art: 'Art', realTime: 'Real time', layers: 'Layers', addHome: 'Tip: tap Share → “Add to Home Screen” for full-screen.', artCredits: 'Constellation art: Johan Meuris / Stellarium, Free Art License.', sensorLive: 'SENSOR LIVE', sensorWaiting: 'waiting for motion…', sensorRelative: '(no compass)',
       introTitle: 'Point your phone at the sky', introText: 'Antariksha follows your phone. Tap below and choose “Allow” when your phone asks for motion access.',
       introSensor: 'Follow my phone', introCamera: 'Camera view (AR)', introLater: 'Not now', helpTitle: 'Motion access needed', ok: 'OK',
       helpBlocked: 'Your phone blocked motion access for this page, so the sky cannot follow it. On iPhone: fully close Safari (swipe it away from the app switcher), open the link again, tap “Follow my phone” and choose “Allow”. If it still fails, go to Settings → Apps → Safari → Advanced → Website Data, delete this site, and try again.',
@@ -31,7 +31,7 @@ LS.I18N = (function () {
       language: 'Language', settings: 'Settings', about: 'About', close: 'Close',
       // dock
       nakshatra: 'Nakshatra', rashi: 'Rashi', graha: 'Graha', constellations: 'Western', grid: 'Grid',
-      atmosphere: 'Sky', ground: 'Ground', milkyway: 'Milky Way', sensor: 'Sensor', camera: 'Camera', night: 'Night', hideUi: 'Hide UI',
+      atmosphere: 'Atmosphere', ground: 'Ground', milkyway: 'Milky Way', sensor: 'Sensor', camera: 'Camera', night: 'Night', hideUi: 'Hide UI',
       // settings
       eqGrid: 'Equatorial grid', labels: 'Labels', starNames: 'Star names', groundOpacity: 'Ground opacity',
       starBrightness: 'Star brightness', arFov: 'Camera field of view', compassOffset: 'Compass correction',
@@ -59,7 +59,7 @@ LS.I18N = (function () {
       visit: 'Visit livingsanatan.com',
     },
     hi: {
-      sensorLive: 'सेंसर सक्रिय', sensorWaiting: 'गति की प्रतीक्षा…', sensorRelative: '(कम्पास नहीं)',
+      art: 'चित्र', realTime: 'वास्तविक समय', layers: 'परतें', addHome: 'सुझाव: पूर्ण-स्क्रीन हेतु Share → “Add to Home Screen” छुएँ।', artCredits: 'तारामण्डल चित्र: Johan Meuris / Stellarium, Free Art License।', sensorLive: 'सेंसर सक्रिय', sensorWaiting: 'गति की प्रतीक्षा…', sensorRelative: '(कम्पास नहीं)',
       introTitle: 'फ़ोन को आकाश की ओर करें', introText: 'अन्तरिक्ष आपके फ़ोन के साथ घूमता है। नीचे छुएँ और फ़ोन द्वारा मोशन अनुमति माँगने पर “Allow” चुनें।',
       introSensor: 'फ़ोन के साथ घुमाएँ', introCamera: 'कैमरा दृश्य (AR)', introLater: 'अभी नहीं', helpTitle: 'मोशन अनुमति आवश्यक', ok: 'ठीक है',
       helpBlocked: 'फ़ोन ने इस पेज के लिए मोशन अनुमति रोक दी है, इसलिए आकाश फ़ोन के साथ नहीं घूम सकता। iPhone पर: Safari को पूरी तरह बन्द करें (ऐप स्विचर से हटाएँ), लिंक फिर खोलें, “फ़ोन के साथ घुमाएँ” छुएँ और “Allow” चुनें। फिर भी न हो तो Settings → Apps → Safari → Advanced → Website Data में इस साइट को हटाकर पुनः प्रयास करें।',
@@ -84,7 +84,7 @@ LS.I18N = (function () {
       latitude: 'अक्षांश', longitude: 'देशान्तर', apply: 'लागू करें', custom: 'अन्य',
       language: 'भाषा', settings: 'सेटिंग्स', about: 'परिचय', close: 'बन्द करें',
       nakshatra: 'नक्षत्र', rashi: 'राशि', graha: 'ग्रह', constellations: 'पाश्चात्य', grid: 'ग्रिड',
-      atmosphere: 'आकाश', ground: 'भूमि', milkyway: 'आकाशगंगा', sensor: 'सेंसर', camera: 'कैमरा', night: 'रात्रि', hideUi: 'UI छिपाएँ',
+      atmosphere: 'वायुमण्डल', ground: 'भूमि', milkyway: 'आकाशगंगा', sensor: 'सेंसर', camera: 'कैमरा', night: 'रात्रि', hideUi: 'UI छिपाएँ',
       eqGrid: 'विषुवत ग्रिड', labels: 'नाम', starNames: 'तारों के नाम', groundOpacity: 'भूमि की अपारदर्शिता',
       starBrightness: 'तारों की चमक', arFov: 'कैमरा दृष्टि-क्षेत्र', compassOffset: 'दिशा सुधार',
       resetView: 'दृश्य रीसेट',
