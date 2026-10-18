@@ -1,5 +1,5 @@
 // Offline cache for the app shell. Bump VERSION when shipping changes.
-const VERSION = 'antariksha-v2';
+const VERSION = 'antariksha-v3';
 const SHELL = [
   './', 'index.html', 'css/app.css', 'manifest.webmanifest',
   'js/vendor/astronomy.browser.min.js', 'js/data/stars.js', 'js/data/constellations.js',
@@ -17,15 +17,18 @@ self.addEventListener('activate', (e) => {
     .then(() => self.clients.claim()));
 });
 
-// Stale-while-revalidate: serve from cache instantly, refresh in the background.
+// Network first, so updates show up immediately; the cache is only the offline fallback.
 self.addEventListener('fetch', (e) => {
   if (e.request.method !== 'GET') return;
   e.respondWith(caches.open(VERSION).then(async (cache) => {
-    const hit = await cache.match(e.request, { ignoreSearch: true });
-    const net = fetch(e.request).then((res) => {
+    try {
+      const res = await fetch(e.request, { cache: 'no-cache' });
       if (res && res.ok && (res.type === 'basic' || res.type === 'cors')) cache.put(e.request, res.clone());
       return res;
-    }).catch(() => hit);
-    return hit || net;
+    } catch (err) {
+      const hit = await cache.match(e.request, { ignoreSearch: true });
+      if (hit) return hit;
+      throw err;
+    }
   }));
 });

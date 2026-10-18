@@ -230,6 +230,8 @@
     const dt = Math.min(0.1, (now - clock.lastReal) / 1000);
     clock.lastReal = now;
     if (clock.rate !== 0) clock.sim += dt * 1000 * clock.rate;
+    // In live mode stay locked to the real clock even if frames were dropped.
+    if (clock.rate === 1 && Math.abs(clock.sim - Date.now()) < 5000) clock.sim = Date.now();
 
     // inertia
     if (!view.sensor && !drag.active && (Math.abs(view.vaz) > 0.01 || Math.abs(view.valt) > 0.01)) {
@@ -351,15 +353,16 @@
   }
 
   // ---------- sensors / AR ----------
+  // Returns true once motion data is flowing (or at least permitted and listening).
   async function setSensor(on) {
-    if (on === view.sensor) return;
+    if (on === view.sensor) return view.sensor;
     if (on) {
-      if (!window.isSecureContext) toast(t('https'));
+      if (!window.isSecureContext) { toast(t('https'), 6000); return false; }
       const ok = await LS.Sensors.start((b) => { view.basis = b; invalidate(); }, (err) => {
-        toast(t(err === 'denied' ? 'sensorDenied' : 'sensorNone'));
+        if (err === 'denied') showHelp('sensorBlocked'); else toast(t('sensorNone'), 6000);
         setSensor(false); if (view.ar) setAR(false);
       }, () => S.compassOffset);
-      if (!ok) return;
+      if (!ok) { syncDock(); return false; }
       view.sensor = true; view.track = false; view.anim = null;
       toast(`${t('sensorHint')} · ${t('calibHint')}`);
     } else {
@@ -368,14 +371,16 @@
       view.sensor = false; view.basis = null;
     }
     syncDock(); invalidate();
+    return view.sensor;
   }
   async function setAR(on) {
     if (on === view.ar) return;
     const video = $('cam');
     if (on) {
-      const sensorPromise = setSensor(true); // must start inside the same user gesture on iOS
-      try { await LS.Sensors.startCamera(video); } catch (e) { toast(t('cameraDenied')); await sensorPromise; syncDock(); return; }
-      await sensorPromise;
+      // Motion permission first, alone: iOS refuses a second prompt that appears while one is open.
+      const sensing = await setSensor(true);
+      if (!sensing) { syncDock(); return; }
+      try { await LS.Sensors.startCamera(video); } catch (e) { toast(t('cameraDenied'), 6000); syncDock(); return; }
       view.ar = true; view.fovBeforeAr = view.fov; view.fov = S.arFov;
       document.body.classList.add('ar');
     } else {
@@ -529,7 +534,12 @@
     const aa = view.basis ? azAltOf(view.basis.f) : { az: view.az, alt: view.alt };
     const dir = V.directionsShort[Math.round(aa.az / 45) % 8];
     const az = Math.round(aa.az) % 360, alt = Math.round(aa.alt) || 0;
-    $('readout').textContent = `${t('fov')} ${I.num(view.fov.toFixed(view.fov < 10 ? 1 : 0))}°  ·  ${dir} ${I.num(az)}°  ·  ${I.num(alt)}°`;
+    let sensorTxt = '';
+    if (view.sensor) {
+      const st = LS.Sensors.status();
+      sensorTxt = st.receiving ? `  ·  ● ${t('sensorLive')}${st.absolute ? '' : ' ' + t('sensorRelative')}` : `  ·  ○ ${t('sensorWaiting')}`;
+    }
+    $('readout').textContent = `${t('fov')} ${I.num(view.fov.toFixed(view.fov < 10 ? 1 : 0))}°  ·  ${dir} ${I.num(az)}°  ·  ${I.num(alt)}°${sensorTxt}`;
     $('compassNeedle').style.transform = `rotate(${-aa.az}deg)`;
   }
 
@@ -1064,10 +1074,25 @@
 
   // ---------- misc controls ----------
   let toastTimer = null;
-  function toast(msg) {
+  function toast(msg, ms = 3800) {
     const el = $('toast'); el.textContent = msg; el.hidden = false;
-    clearTimeout(toastTimer); toastTimer = setTimeout(() => { el.hidden = true; }, 3800);
+    clearTimeout(toastTimer); toastTimer = setTimeout(() => { el.hidden = true; }, ms);
   }
+
+  // ---------- phone intro & sensor help ----------
+  const isTouch = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+  function showIntro() {
+    if (!isTouch || view.sensor) return;
+    $('intro').hidden = false;
+  }
+  function showHelp(kind) {
+    $('helpText').textContent = t(kind === 'sensorBlocked' ? 'helpBlocked' : 'helpNone');
+    $('help').hidden = false;
+  }
+  $('introSensor').addEventListener('click', () => { $('intro').hidden = true; setSensor(true); });
+  $('introCamera').addEventListener('click', () => { $('intro').hidden = true; setAR(true); });
+  $('introLater').addEventListener('click', () => { $('intro').hidden = true; });
+  $('helpClose').addEventListener('click', () => { $('help').hidden = true; });
   $('btnMenu').innerHTML = ICON.menu;
   $('searchIco').innerHTML = ICON.search;
   $('btnZoomIn').innerHTML = ICON.plus;
@@ -1117,6 +1142,13 @@
       navigator.permissions.query({ name: 'geolocation' }).then((p) => { if (p.state !== 'denied') geolocate(false); }).catch(() => geolocate(false));
     } else geolocate(false);
   }
-  if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => {});
+  if ('serviceWorker' in navigator && location.protocol === 'https:') {
+    // When an updated worker takes over, reload once so the new code runs.
+    const hadController = !!navigator.serviceWorker.controller;
+    let reloaded = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => { if (hadController && !reloaded) { reloaded = true; location.reload(); } });
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  }
+  setTimeout(showIntro, 600);
   window.__antariksha = { view, clock, S, select, goTo, setMode, setNames, jy };
 })();

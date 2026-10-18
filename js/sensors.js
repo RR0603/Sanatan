@@ -3,7 +3,8 @@ window.LS = window.LS || {};
 
 LS.Sensors = (function () {
   const D2R = Math.PI / 180;
-  let handler = null, eventName = null, smoothed = null, gotEvent = false;
+  let handlers = [], smoothed = null, gotEvent = false, sawAbsolute = false;
+  const stat = { events: 0, alpha: null, beta: null, gamma: null, absolute: false, permission: 'unknown' };
 
   function rotationMatrix(alpha, beta, gamma) {
     // W3C DeviceOrientation: R = Rz(alpha) * Rx(beta) * Ry(gamma), device frame -> Earth frame (E, N, Up).
@@ -27,7 +28,9 @@ LS.Sensors = (function () {
 
   function basisFromEvent(e) {
     let alpha = e.alpha;
-    if (typeof e.webkitCompassHeading === 'number' && !isNaN(e.webkitCompassHeading)) alpha = 360 - e.webkitCompassHeading;
+    // iOS: alpha is relative to the start pose; webkitCompassHeading (clockwise from north) is absolute. -1 = not yet calibrated.
+    const ios = typeof e.webkitCompassHeading === 'number' && !isNaN(e.webkitCompassHeading) && e.webkitCompassHeading >= 0;
+    if (ios) alpha = 360 - e.webkitCompassHeading;
     const R = rotationMatrix(alpha, e.beta, e.gamma);
     // Account for the screen being rotated relative to the device's natural orientation.
     const s = -screenAngle() * D2R, cs = Math.cos(s), ss = Math.sin(s);
@@ -36,7 +39,7 @@ LS.Sensors = (function () {
     const right = [x[0] * cs + y[0] * ss, x[1] * cs + y[1] * ss, x[2] * cs + y[2] * ss];
     const up = [-x[0] * ss + y[0] * cs, -x[1] * ss + y[1] * cs, -x[2] * ss + y[2] * cs];
     const fwd = [-z[0], -z[1], -z[2]]; // the rear camera looks out of the back of the phone
-    return { r: right, u: up, f: fwd, absolute: e.absolute === true || typeof e.webkitCompassHeading === 'number' };
+    return { r: right, u: up, f: fwd, absolute: e.absolute === true || ios };
   }
 
   function rotateAz(v, deg) {
@@ -44,20 +47,31 @@ LS.Sensors = (function () {
     return [v[0] * c + v[1] * s, -v[0] * s + v[1] * c, v[2]];
   }
 
+  // iOS 13+ only grants motion data from inside a tap, and shows one permission prompt at a time,
+  // so this must be the first thing a tap handler calls.
+  function needsPermission() {
+    return !!(window.DeviceOrientationEvent && typeof DeviceOrientationEvent.requestPermission === 'function');
+  }
+  async function requestPermission() {
+    if (!window.DeviceOrientationEvent) { stat.permission = 'unsupported'; return 'unsupported'; }
+    if (!needsPermission()) { stat.permission = 'granted'; return 'granted'; }
+    try { stat.permission = await DeviceOrientationEvent.requestPermission(); } catch (err) { stat.permission = 'denied'; }
+    return stat.permission;
+  }
+
   async function start(onBasis, onError, getOffset) {
     stop();
-    const DOE = window.DeviceOrientationEvent;
-    if (!DOE) { onError('none'); return false; }
-    if (typeof DOE.requestPermission === 'function') {
-      try {
-        const res = await DOE.requestPermission();
-        if (res !== 'granted') { onError('denied'); return false; }
-      } catch (err) { onError('denied'); return false; }
-    }
-    gotEvent = false; smoothed = null;
-    handler = (e) => {
+    const perm = await requestPermission();
+    if (perm === 'unsupported') { onError('none'); return false; }
+    if (perm !== 'granted') { onError('denied'); return false; }
+    gotEvent = false; sawAbsolute = false; smoothed = null; stat.events = 0;
+    const handler = (e) => {
       if (e.alpha == null || e.beta == null || e.gamma == null) return;
+      // Android fires both events: once absolute ones arrive, ignore the relative stream.
+      if (e.type === 'deviceorientationabsolute') sawAbsolute = true;
+      else if (sawAbsolute) return;
       gotEvent = true;
+      stat.events++; stat.alpha = e.alpha; stat.beta = e.beta; stat.gamma = e.gamma;
       const b = basisFromEvent(e);
       const off = getOffset ? getOffset() : 0;
       let f = rotateAz(b.f, off), u = rotateAz(b.u, off);
@@ -72,18 +86,21 @@ LS.Sensors = (function () {
       u = norm([u[0] - d * f[0], u[1] - d * f[1], u[2] - d * f[2]]);
       const r = cross(f, u);
       smoothed = { r, u, f };
+      stat.absolute = b.absolute;
       onBasis({ r, u, f }, b.absolute);
     };
-    eventName = 'ondeviceorientationabsolute' in window ? 'deviceorientationabsolute' : 'deviceorientation';
-    window.addEventListener(eventName, handler, true);
-    setTimeout(() => { if (handler && !gotEvent) onError('none'); }, 2500);
+    const names = ['deviceorientation'];
+    if ('ondeviceorientationabsolute' in window) names.push('deviceorientationabsolute');
+    for (const n of names) { window.addEventListener(n, handler, true); handlers.push([n, handler]); }
+    setTimeout(() => { if (handlers.length && !gotEvent) onError('none'); }, 4000);
     return true;
   }
 
   function stop() {
-    if (handler && eventName) window.removeEventListener(eventName, handler, true);
-    handler = null; eventName = null; smoothed = null;
+    for (const [n, h] of handlers) window.removeEventListener(n, h, true);
+    handlers = []; smoothed = null;
   }
+  const status = () => ({ ...stat, active: handlers.length > 0, receiving: gotEvent });
 
   let stream = null;
   async function startCamera(video) {
@@ -103,5 +120,5 @@ LS.Sensors = (function () {
     if (video) video.srcObject = null;
   }
 
-  return { start, stop, startCamera, stopCamera, rotationMatrix, basisFromEvent };
+  return { start, stop, startCamera, stopCamera, rotationMatrix, basisFromEvent, requestPermission, needsPermission, status };
 })();

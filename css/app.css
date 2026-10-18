@@ -429,3 +429,20 @@ html[lang="hi"] .gtable th { letter-spacing: 0; font-size: 11px; }
   .jy-head-actions .pill { height: 32px; padding: 0 12px; font-size: 12px; }
   .search { padding: 0 10px; }
 }
+
+/* ---------- phone intro / help ---------- */
+.intro {
+  position: absolute; left: 50%; bottom: calc(96px + var(--sab)); transform: translateX(-50%);
+  width: min(380px, calc(100% - 24px)); border-radius: 22px; padding: 20px 18px 14px; text-align: center; z-index: 30;
+  background: linear-gradient(160deg, rgba(255,255,255,.12), rgba(255,255,255,.02) 60%), rgba(10, 14, 32, 0.6);
+  animation: rise .35s ease-out;
+}
+.intro-orb {
+  width: 54px; height: 54px; margin: 0 auto 10px; border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #fff, #ffd27a 30%, #ff8a3d 60%, rgba(255,138,61,0) 72%);
+  box-shadow: 0 0 30px rgba(255, 170, 70, .6); animation: pulse 2.4s infinite;
+}
+.intro-title { font-size: 18px; font-weight: 700; }
+.intro p { font-size: 13.5px; line-height: 1.5; color: rgba(236, 240, 255, .85); margin: 8px 0 6px; text-align: left; }
+.pill.big { height: 46px; font-size: 15px; font-weight: 600; }
+.intro-later { margin-top: 10px; font-size: 13px; color: var(--muted); padding: 6px 12px; }

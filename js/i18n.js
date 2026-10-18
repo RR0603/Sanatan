@@ -5,6 +5,11 @@ LS.I18N = (function () {
   const S = {
     en: {
       // modes, names, jyotish
+      sensorLive: 'SENSOR LIVE', sensorWaiting: 'waiting for motion…', sensorRelative: '(no compass)',
+      introTitle: 'Point your phone at the sky', introText: 'Antariksha follows your phone. Tap below and choose “Allow” when your phone asks for motion access.',
+      introSensor: 'Follow my phone', introCamera: 'Camera view (AR)', introLater: 'Not now', helpTitle: 'Motion access needed', ok: 'OK',
+      helpBlocked: 'Your phone blocked motion access for this page, so the sky cannot follow it. On iPhone: fully close Safari (swipe it away from the app switcher), open the link again, tap “Follow my phone” and choose “Allow”. If it still fails, go to Settings → Apps → Safari → Advanced → Website Data, delete this site, and try again.',
+      helpNone: 'No motion data from this device.',
       modeSky: 'Sky', modeJyotish: 'Jyotish', names: 'Names', namesVedic: 'Jyotish names', namesWestern: 'Western names',
       vedicShort: 'Vedic', westernShort: 'Western',
       kundali: 'Kundali', grahas: 'Grahas', dasha: 'Dasha', janma: 'Birth', north: 'North Indian', south: 'South Indian',
@@ -54,6 +59,11 @@ LS.I18N = (function () {
       visit: 'Visit livingsanatan.com',
     },
     hi: {
+      sensorLive: 'सेंसर सक्रिय', sensorWaiting: 'गति की प्रतीक्षा…', sensorRelative: '(कम्पास नहीं)',
+      introTitle: 'फ़ोन को आकाश की ओर करें', introText: 'अन्तरिक्ष आपके फ़ोन के साथ घूमता है। नीचे छुएँ और फ़ोन द्वारा मोशन अनुमति माँगने पर “Allow” चुनें।',
+      introSensor: 'फ़ोन के साथ घुमाएँ', introCamera: 'कैमरा दृश्य (AR)', introLater: 'अभी नहीं', helpTitle: 'मोशन अनुमति आवश्यक', ok: 'ठीक है',
+      helpBlocked: 'फ़ोन ने इस पेज के लिए मोशन अनुमति रोक दी है, इसलिए आकाश फ़ोन के साथ नहीं घूम सकता। iPhone पर: Safari को पूरी तरह बन्द करें (ऐप स्विचर से हटाएँ), लिंक फिर खोलें, “फ़ोन के साथ घुमाएँ” छुएँ और “Allow” चुनें। फिर भी न हो तो Settings → Apps → Safari → Advanced → Website Data में इस साइट को हटाकर पुनः प्रयास करें।',
+      helpNone: 'इस उपकरण से मोशन डेटा नहीं मिला।',
       modeSky: 'आकाश', modeJyotish: 'ज्योतिष', names: 'नाम', namesVedic: 'ज्योतिष नाम', namesWestern: 'पाश्चात्य नाम',
       vedicShort: 'वैदिक', westernShort: 'पाश्चात्य',
       kundali: 'कुण्डली', grahas: 'ग्रह', dasha: 'दशा', janma: 'जन्म', north: 'उत्तर भारतीय', south: 'दक्षिण भारतीय',
