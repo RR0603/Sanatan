@@ -1,0 +1,861 @@
+// Antariksha app shell: view state, gestures, sensors, time, search, panels.
+(function () {
+  const A = window.Astronomy, Sky = LS.Sky, V = LS.VEDIC, I = LS.I18N;
+  const D2R = Math.PI / 180, R2D = 180 / Math.PI;
+  const $ = (id) => document.getElementById(id);
+  const t = (k) => I.t(k);
+  const nm = (o) => I.name(o);
+
+  // ---------- icons ----------
+  const svg = (p, extra = '') => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" ${extra}>${p}</svg>`;
+  const ICON = {
+    menu: svg('<path d="M4 7h16M4 12h10M4 17h16"/>'),
+    search: svg('<circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/>'),
+    close: svg('<path d="M6 6l12 12M18 6 6 18"/>'),
+    plus: svg('<path d="M12 5v14M5 12h14"/>'),
+    minus: svg('<path d="M5 12h14"/>'),
+    compass: svg('<path d="M12 3 15 12H9z" fill="#ff7a5c" stroke="#ff7a5c"/><path d="M12 21 9 12h6z" fill="currentColor" opacity=".55" stroke="none"/>'),
+    nakshatra: svg('<circle cx="5" cy="17" r="1.6"/><circle cx="11" cy="9" r="1.6"/><circle cx="18" cy="13" r="1.6"/><circle cx="16" cy="4.5" r="1.2"/><path d="m6.2 15.8 3.7-5.6M12.5 9.7l4 2.5M11.9 7.8l3.3-2.4"/>'),
+    rashi: svg('<circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4"/><path d="M12 3.5v4.5M12 16v4.5M3.5 12H8M16 12h4.5M6 6l3.2 3.2M14.8 14.8 18 18M18 6l-3.2 3.2M9.2 14.8 6 18"/>'),
+    graha: svg('<circle cx="12" cy="12" r="5"/><ellipse cx="12" cy="12" rx="10" ry="3.6" transform="rotate(-20 12 12)"/>'),
+    western: svg('<circle cx="4" cy="8" r="1.2"/><circle cx="10" cy="5" r="1.2"/><circle cx="14" cy="12" r="1.2"/><circle cx="20" cy="10" r="1.2"/><circle cx="12" cy="19" r="1.2"/><path d="m5 7.5 4-2M10.6 6l2.8 5M15.2 11.6l3.6-1.3M13.6 13l-1.2 4.8" stroke-dasharray="2 2"/>'),
+    grid: svg('<path d="M3 12h18M12 3v18"/><ellipse cx="12" cy="12" rx="9" ry="9"/><ellipse cx="12" cy="12" rx="4" ry="9"/><path d="M4.5 7.5h15M4.5 16.5h15"/>'),
+    atmosphere: svg('<circle cx="12" cy="13" r="3.5"/><path d="M12 5v2M5.6 7.6l1.4 1.4M18.4 7.6 17 9M3 18h18M6 21h12"/>'),
+    ground: svg('<path d="M2 19 8.5 10l4 5 3-3.5L22 19z"/><path d="M2 21h20"/>'),
+    milkyway: svg('<path d="M12 12c0-2 2.5-3 4-1.5s.5 5-3 5.5-6.5-2.5-6-6.5 5-6.5 9-5"/><path d="M12 12c0 2-2.5 3-4 1.5s-.5-5 3-5.5 6.5 2.5 6 6.5-5 6.5-9 5"/>'),
+    sensor: svg('<rect x="7" y="3" width="10" height="18" rx="2.5"/><path d="M11 18h2M3.5 9a8 8 0 0 0 0 6M20.5 9a8 8 0 0 1 0 6"/>'),
+    camera: svg('<path d="M4 8h3l1.8-2.5h6.4L17 8h3v11H4z"/><circle cx="12" cy="13.2" r="3.6"/>'),
+    night: svg('<path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/>'),
+    eye: svg('<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/><path d="M3 3l18 18"/>'),
+    eyeOpen: svg('<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>'),
+    time: svg('<circle cx="12" cy="12" r="8.5"/><path d="M12 7v5l3.5 2"/>'),
+    play: svg('<path d="M8 5.5v13l10.5-6.5z" fill="currentColor"/>'),
+    pause: svg('<path d="M8 5v14M16 5v14" stroke-width="2.6"/>'),
+    rev: svg('<path d="M11 6 4 12l7 6zM20 6l-7 6 7 6z" fill="currentColor" stroke="none"/>'),
+    fwd: svg('<path d="M13 6l7 6-7 6zM4 6l7 6-7 6z" fill="currentColor" stroke="none"/>'),
+  };
+
+  // ---------- persisted state ----------
+  const CITIES = [
+    { id: 'ujjain', en: 'Ujjain', hi: 'उज्जैन', lat: 23.1765, lon: 75.7885, tz: 'Asia/Kolkata' },
+    { id: 'varanasi', en: 'Varanasi (Kashi)', hi: 'वाराणसी (काशी)', lat: 25.3176, lon: 82.9739, tz: 'Asia/Kolkata' },
+    { id: 'ayodhya', en: 'Ayodhya', hi: 'अयोध्या', lat: 26.7922, lon: 82.1998, tz: 'Asia/Kolkata' },
+    { id: 'mathura', en: 'Mathura', hi: 'मथुरा', lat: 27.4924, lon: 77.6737, tz: 'Asia/Kolkata' },
+    { id: 'prayagraj', en: 'Prayagraj', hi: 'प्रयागराज', lat: 25.4358, lon: 81.8463, tz: 'Asia/Kolkata' },
+    { id: 'haridwar', en: 'Haridwar', hi: 'हरिद्वार', lat: 29.9457, lon: 78.1642, tz: 'Asia/Kolkata' },
+    { id: 'kedarnath', en: 'Kedarnath', hi: 'केदारनाथ', lat: 30.7346, lon: 79.0669, tz: 'Asia/Kolkata' },
+    { id: 'kurukshetra', en: 'Kurukshetra', hi: 'कुरुक्षेत्र', lat: 29.9695, lon: 76.8783, tz: 'Asia/Kolkata' },
+    { id: 'dwarka', en: 'Dwarka', hi: 'द्वारका', lat: 22.2394, lon: 68.9678, tz: 'Asia/Kolkata' },
+    { id: 'puri', en: 'Puri', hi: 'पुरी', lat: 19.8135, lon: 85.8312, tz: 'Asia/Kolkata' },
+    { id: 'rameswaram', en: 'Rameswaram', hi: 'रामेश्वरम्', lat: 9.2876, lon: 79.3129, tz: 'Asia/Kolkata' },
+    { id: 'delhi', en: 'New Delhi', hi: 'नई दिल्ली', lat: 28.6139, lon: 77.209, tz: 'Asia/Kolkata' },
+    { id: 'mumbai', en: 'Mumbai', hi: 'मुम्बई', lat: 19.076, lon: 72.8777, tz: 'Asia/Kolkata' },
+    { id: 'kolkata', en: 'Kolkata', hi: 'कोलकाता', lat: 22.5726, lon: 88.3639, tz: 'Asia/Kolkata' },
+    { id: 'chennai', en: 'Chennai', hi: 'चेन्नई', lat: 13.0827, lon: 80.2707, tz: 'Asia/Kolkata' },
+    { id: 'bengaluru', en: 'Bengaluru', hi: 'बेंगलुरु', lat: 12.9716, lon: 77.5946, tz: 'Asia/Kolkata' },
+    { id: 'kathmandu', en: 'Kathmandu', hi: 'काठमाण्डू', lat: 27.7172, lon: 85.324, tz: 'Asia/Kathmandu' },
+    { id: 'london', en: 'London', hi: 'लंदन', lat: 51.5074, lon: -0.1278, tz: 'Europe/London' },
+    { id: 'newyork', en: 'New York', hi: 'न्यूयॉर्क', lat: 40.7128, lon: -74.006, tz: 'America/New_York' },
+    { id: 'toronto', en: 'Toronto', hi: 'टोरंटो', lat: 43.6532, lon: -79.3832, tz: 'America/Toronto' },
+    { id: 'sanfrancisco', en: 'San Francisco', hi: 'सैन फ़्रांसिस्को', lat: 37.7749, lon: -122.4194, tz: 'America/Los_Angeles' },
+    { id: 'dubai', en: 'Dubai', hi: 'दुबई', lat: 25.2048, lon: 55.2708, tz: 'Asia/Dubai' },
+    { id: 'singapore', en: 'Singapore', hi: 'सिंगापुर', lat: 1.3521, lon: 103.8198, tz: 'Asia/Singapore' },
+    { id: 'sydney', en: 'Sydney', hi: 'सिडनी', lat: -33.8688, lon: 151.2093, tz: 'Australia/Sydney' },
+  ];
+  const DEVICE_TZ = (() => { try { return Intl.DateTimeFormat().resolvedOptions().timeZone; } catch (e) { return 'UTC'; } })();
+
+  const DEFAULTS = {
+    lang: (navigator.language || '').toLowerCase().startsWith('hi') ? 'hi' : 'en',
+    loc: { ...CITIES[0] },
+    nakshatra: true, rashi: true, graha: true, constellations: false, grid: false, eqGrid: false,
+    atmosphere: true, ground: true, milkyway: true, labels: true, starNames: true, night: false,
+    groundOpacity: 0.82, starBrightness: 1, arFov: 62, compassOffset: 0,
+    view: null,
+  };
+  const KEY = 'antariksha.v1';
+  let saved = {};
+  try { saved = JSON.parse(localStorage.getItem(KEY) || '{}'); } catch (e) { saved = {}; }
+  const S = { ...DEFAULTS, ...saved, loc: { ...DEFAULTS.loc, ...(saved.loc || {}) } };
+  let saveTimer = null;
+  function persist() {
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(() => {
+      try { localStorage.setItem(KEY, JSON.stringify({ ...S, view: { az: view.az, alt: view.alt, fov: view.fov } })); } catch (e) { /* private mode */ }
+    }, 300);
+  }
+
+  // ---------- view & time ----------
+  const view = {
+    az: S.view ? S.view.az : (S.loc.lat >= 0 ? 160 : 20), alt: S.view ? S.view.alt : 32, fov: S.view ? S.view.fov : 90,
+    sensor: false, ar: false, basis: null, vaz: 0, valt: 0, anim: null, track: false,
+  };
+  const clock = { sim: Date.now(), rate: 1, lastReal: performance.now() };
+  let selected = null;
+  let dirty = true;
+  const invalidate = () => { dirty = true; };
+
+  function basisFromAzAlt(azDeg, altDeg) {
+    const az = azDeg * D2R, alt = altDeg * D2R;
+    const f = [Math.sin(az) * Math.cos(alt), Math.cos(az) * Math.cos(alt), Math.sin(alt)];
+    const r = [Math.cos(az), -Math.sin(az), 0];
+    const u = [r[1] * f[2] - r[2] * f[1], r[2] * f[0] - r[0] * f[2], r[0] * f[1] - r[1] * f[0]];
+    return { r, u, f };
+  }
+  const azAltOf = (e) => ({ az: (Math.atan2(e[0], e[1]) * R2D + 360) % 360, alt: Math.asin(Math.max(-1, Math.min(1, e[2]))) * R2D });
+
+  // ---------- renderer ----------
+  const mw = new Image();
+  mw.src = 'img/milkyway.png';
+  const R = LS.Renderer.create($('gl'), $('sky'), mw);
+  R.onTextureReady = invalidate;
+  function resize() { R.resize(window.innerWidth, window.innerHeight, Math.min(window.devicePixelRatio || 1, 2)); invalidate(); }
+  window.addEventListener('resize', resize);
+  window.addEventListener('orientationchange', () => setTimeout(resize, 200));
+  resize();
+
+  // ---------- astronomy cache ----------
+  let astro = null, panch = null, panchAt = 0, panchSim = 0, sunDay = null;
+  function observer() { return new A.Observer(S.loc.lat, S.loc.lon, 0); }
+  function computeAstro() {
+    const time = A.MakeTime(new Date(clock.sim));
+    const obs = observer();
+    const fr = Sky.frames(time, obs);
+    // Graha positions change slowly; reuse them for a few seconds of simulated time.
+    const reuse = astro && Math.abs(astro.sim - clock.sim) < 5000 && astro.locKey === locKey();
+    const grahas = reuse ? astro.grahas : Sky.grahas(time, obs, fr);
+    const sim = reuse ? astro.sim : clock.sim;
+    for (const id of Sky.GRAHA_ORDER) {
+      const g = grahas[id];
+      if (g.eqj) g.enu = Sky.apply(fr.eqj2enu, g.eqj[0], g.eqj[1], g.eqj[2]);
+    }
+    // Lunar nodes are ecliptic points: refresh them against the current frame.
+    for (const id of ['rahu', 'ketu']) {
+      const v = Sky.eclVec(grahas[id].tropLon, 0);
+      grahas[id].enu = Sky.apply(fr.ect2enu, v[0], v[1], v[2]);
+    }
+    const sunAlt = Math.asin(grahas.surya.enu[2]) * R2D;
+    astro = { sim, time, obs, fr, grahas, sunAlt, ayanamsa: Sky.ayanamsa(time), locKey: locKey() };
+    return astro;
+  }
+  const locKey = () => `${S.loc.lat.toFixed(4)},${S.loc.lon.toFixed(4)}`;
+
+  function refreshPanchang(force) {
+    const nowReal = performance.now();
+    if (!force && nowReal - panchAt < 1000 && Math.abs(clock.sim - panchSim) < 60e3) return;
+    if (!force && Math.abs(clock.sim - panchSim) < 20e3 && nowReal - panchAt < 15000) return;
+    panchAt = nowReal; panchSim = clock.sim;
+    try {
+      const time = A.MakeTime(new Date(clock.sim));
+      panch = Sky.panchang(time, observer());
+      const mid = localMidnight(clock.sim, S.loc.tz);
+      sunDay = Sky.sunEvents(observer(), new Date(mid));
+    } catch (e) { console.warn('panchang failed', e); }
+    renderHud(); if (!$('panchang').hidden) renderPanchang();
+  }
+
+  // ---------- time zone helpers ----------
+  function tzOffsetMin(tz, ms) {
+    try {
+      const p = {};
+      new Intl.DateTimeFormat('en-US', { timeZone: tz, hourCycle: 'h23', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' })
+        .formatToParts(new Date(ms)).forEach((x) => { p[x.type] = x.value; });
+      return Math.round((Date.UTC(+p.year, +p.month - 1, +p.day, +p.hour % 24, +p.minute, +p.second) - ms) / 60000);
+    } catch (e) { return -new Date(ms).getTimezoneOffset(); }
+  }
+  function localMidnight(ms, tz) {
+    const off = tzOffsetMin(tz, ms) * 60000;
+    return Math.floor((ms + off) / 86400000) * 86400000 - off;
+  }
+  const locale = () => (I.lang === 'hi' ? 'hi-IN' : 'en-IN');
+  function fmt(ms, opts) {
+    try { return new Intl.DateTimeFormat(locale(), { timeZone: S.loc.tz, ...opts }).format(new Date(ms)); } catch (e) { return new Date(ms).toLocaleString(); }
+  }
+  const fmtTime = (ms, sec) => fmt(ms, { hour: '2-digit', minute: '2-digit', ...(sec ? { second: '2-digit' } : {}), hour12: false });
+  const fmtDate = (ms) => fmt(ms, { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+  const fmtShort = (ms) => fmt(ms, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', hour12: false });
+  const dms = (deg) => { const d = Math.floor(deg), m = Math.floor((deg - d) * 60); return `${I.num(d)}°${I.num(String(m).padStart(2, '0'))}′`; };
+  const hms = (h) => { h = ((h % 24) + 24) % 24; const H = Math.floor(h), M = Math.floor((h - H) * 60), Sx = Math.round(((h - H) * 60 - M) * 60); return `${H}h${String(M).padStart(2, '0')}m${String(Math.min(Sx, 59)).padStart(2, '0')}s`; };
+  const sgnDms = (d) => (d < 0 ? '−' : '+') + dms(Math.abs(d));
+
+  // ---------- names ----------
+  function tithiName(idx) {
+    const n = idx % 15;
+    const tn = n < 14 ? V.tithis[n] : (idx < 15 ? V.tithis[14] : V.tithis[15]);
+    return `${nm(V.pakshas[idx < 15 ? 0 : 1])} ${nm(tn)}`;
+  }
+  const GREEK = { Alp: 'α', Bet: 'β', Gam: 'γ', Del: 'δ', Eps: 'ε', Zet: 'ζ', Eta: 'η', The: 'θ', Iot: 'ι', Kap: 'κ', Lam: 'λ', Mu: 'μ', Nu: 'ν', Xi: 'ξ', Omi: 'ο', Pi: 'π', Rho: 'ρ', Sig: 'σ', Tau: 'τ', Ups: 'υ', Phi: 'φ', Chi: 'χ', Psi: 'ψ', Ome: 'ω' };
+  const starDesig = {};
+  for (const [k, i] of Object.entries(LS_DATA.stars.keys)) {
+    if (k.startsWith('HIP')) { if (!starDesig[i]) starDesig[i] = k; continue; }
+    const [b, con] = k.split(' ');
+    const base = b.split('-');
+    const pretty = GREEK[base[0]] ? `${GREEK[base[0]]}${base[1] ? superscript(base[1]) : ''} ${con}` : `${b} ${con}`;
+    if (!starDesig[i] || starDesig[i].startsWith('HIP') || (GREEK[base[0]] && !/[α-ω]/.test(starDesig[i]))) starDesig[i] = pretty;
+  }
+  function superscript(s) { return s.replace(/[0-9]/g, (d) => '⁰¹²³⁴⁵⁶⁷⁸⁹'[d]); }
+  function starTitle(i) {
+    const vn = R.data.vedicNames[i];
+    if (vn) return { title: I.lang === 'hi' ? vn.hi : vn.en, sub: [I.lang === 'hi' ? vn.en : vn.hi, LS_DATA.stars.names[i], starDesig[i]].filter(Boolean).join(' · ') };
+    return { title: LS_DATA.stars.names[i] || starDesig[i] || `#${i}`, sub: LS_DATA.stars.names[i] ? starDesig[i] || '' : '' };
+  }
+
+  // ---------- objects ----------
+  function starVec(i) { const v = R.data.vec; return [v[i * 3], v[i * 3 + 1], v[i * 3 + 2]]; }
+  function objEnu(obj, as) {
+    const fr = as.fr;
+    switch (obj.type) {
+      case 'graha': return as.grahas[obj.id].enu;
+      case 'star': { const v = starVec(obj.id); return Sky.apply(fr.eqj2enu, v[0], v[1], v[2]); }
+      case 'nakshatra': {
+        const i = obj.id === 'abhijit' ? R.data.abhFig.yt : R.data.nakFigs[obj.id].yt;
+        const v = starVec(i); return Sky.apply(fr.eqj2enu, v[0], v[1], v[2]);
+      }
+      case 'rashi': { const v = Sky.eclVec(as.ayanamsa + obj.id * 30 + 15, 0); return Sky.apply(fr.ect2enu, v[0], v[1], v[2]); }
+      case 'constellation': { const c = R.data.western.find((x) => x.id === obj.id); return Sky.apply(fr.eqj2enu, c.label[0], c.label[1], c.label[2]); }
+      case 'asterism': { const v = starVec(R.data.asterisms[obj.id].labelStar); return Sky.apply(fr.eqj2enu, v[0], v[1], v[2]); }
+    }
+    return null;
+  }
+
+  // ---------- main loop ----------
+  let lastFrame = 0, lastHud = 0;
+  function frame(now) {
+    requestAnimationFrame(frame);
+    const dt = Math.min(0.1, (now - clock.lastReal) / 1000);
+    clock.lastReal = now;
+    if (clock.rate !== 0) clock.sim += dt * 1000 * clock.rate;
+
+    // inertia
+    if (!view.sensor && !drag.active && (Math.abs(view.vaz) > 0.01 || Math.abs(view.valt) > 0.01)) {
+      view.az = (view.az + view.vaz * dt * 60 + 360) % 360;
+      view.alt = clamp(view.alt + view.valt * dt * 60, -90, 90);
+      const decay = Math.pow(0.9, dt * 60);
+      view.vaz *= decay; view.valt *= decay;
+      invalidate();
+    }
+    if (view.anim) {
+      const a = view.anim, k = Math.min(1, (now - a.t0) / a.dur), e = 1 - Math.pow(1 - k, 3);
+      view.az = (a.az0 + a.daz * e + 360) % 360;
+      view.alt = a.alt0 + (a.alt1 - a.alt0) * e;
+      view.fov = a.fov0 + (a.fov1 - a.fov0) * e;
+      if (k >= 1) view.anim = null;
+      invalidate();
+    }
+
+    const realtime = clock.rate === 1;
+    const interval = view.fov < 5 ? 100 : view.fov < 30 ? 400 : 1000;
+    const timeDue = clock.rate !== 0 && (!realtime || now - lastFrame > interval);
+    if (!(dirty || timeDue || view.sensor || selected)) return;
+    if (selected && !dirty && !timeDue && !view.sensor && now - lastFrame < 33) return;
+
+    const as = computeAstro();
+    if (selected && view.track && !view.sensor && !view.anim && !drag.active) {
+      const e = objEnu(selected, as);
+      if (e) { const aa = azAltOf(e); view.az = aa.az; view.alt = clamp(aa.alt - sheetOffset(view.fov), -90, 90); }
+    }
+    if (!view.sensor || !view.basis) view.basis = basisFromAzAlt(view.az, view.alt);
+    R.render({
+      basis: view.basis, fov: view.fov, fr: as.fr, grahas: as.grahas, sunAlt: as.sunAlt, ayanamsa: as.ayanamsa,
+      settings: S, ar: view.ar, time: now, selectedEnu: selected ? objEnu(selected, as) : null,
+    });
+    dirty = false; lastFrame = now;
+    if (now - lastHud > 250) { lastHud = now; renderClock(); renderReadout(); refreshPanchang(false); if (selected && !$('sheet').hidden) updateSheetLive(); }
+  }
+
+  // ---------- gestures ----------
+  const sky = $('sky');
+  const drag = { active: false, pts: new Map(), sx: 0, sy: 0, moved: false, pinch0: 0, fov0: 0, lastT: 0 };
+  const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
+  function pxToRad() { return (2 * Math.tan(view.fov * D2R / 4)) / (window.innerHeight / 2); }
+
+  sky.addEventListener('pointerdown', (e) => {
+    sky.setPointerCapture(e.pointerId);
+    drag.pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    view.anim = null; view.vaz = 0; view.valt = 0;
+    if (drag.pts.size === 1) { drag.active = true; drag.sx = e.clientX; drag.sy = e.clientY; drag.moved = false; drag.lastT = performance.now(); }
+    if (drag.pts.size === 2) { const [a, b] = [...drag.pts.values()]; drag.pinch0 = Math.hypot(a.x - b.x, a.y - b.y); drag.fov0 = view.fov; drag.moved = true; }
+  });
+  sky.addEventListener('pointermove', (e) => {
+    const p = drag.pts.get(e.pointerId); if (!p) return;
+    const dx = e.clientX - p.x, dy = e.clientY - p.y;
+    p.x = e.clientX; p.y = e.clientY;
+    if (Math.hypot(e.clientX - drag.sx, e.clientY - drag.sy) > 6) drag.moved = true;
+    if (drag.pts.size >= 2) {
+      const [a, b] = [...drag.pts.values()];
+      const d = Math.hypot(a.x - b.x, a.y - b.y);
+      if (drag.pinch0 > 0) setFov(drag.fov0 * drag.pinch0 / d);
+      return;
+    }
+    if (!drag.moved) return;
+    const k = pxToRad() * R2D;
+    if (view.sensor) {
+      S.compassOffset = clamp(S.compassOffset - dx * k * 0.5, -45, 45);
+      $('rngCompass').value = S.compassOffset; persist();
+      return;
+    }
+    view.track = false;
+    const cosAlt = Math.max(0.25, Math.cos(view.alt * D2R));
+    const daz = -dx * k / cosAlt, dalt = dy * k;
+    view.az = (view.az + daz + 360) % 360;
+    view.alt = clamp(view.alt + dalt, -90, 90);
+    const now = performance.now(), dtf = Math.max(1, (now - drag.lastT) / 16.7);
+    view.vaz = daz / dtf; view.valt = dalt / dtf; drag.lastT = now;
+    invalidate();
+  });
+  function endPointer(e) {
+    drag.pts.delete(e.pointerId);
+    if (drag.pts.size === 0) {
+      drag.active = false;
+      if (performance.now() - drag.lastT > 80) { view.vaz = 0; view.valt = 0; }
+      if (!drag.moved && e.type === 'pointerup') tap(e.clientX, e.clientY);
+      persist();
+    }
+    if (drag.pts.size === 1) { const [p] = [...drag.pts.values()]; drag.sx = p.x; drag.sy = p.y; drag.pinch0 = 0; }
+  }
+  sky.addEventListener('pointerup', endPointer);
+  sky.addEventListener('pointercancel', endPointer);
+  sky.addEventListener('wheel', (e) => { e.preventDefault(); setFov(view.fov * Math.exp(e.deltaY * 0.0012)); }, { passive: false });
+  sky.addEventListener('dblclick', (e) => { const o = R.hitTest(e.clientX, e.clientY); if (o) { select(o); goTo(o, true); } });
+
+  function setFov(f) {
+    view.fov = clamp(f, 1, 180);
+    if (view.ar) { S.arFov = clamp(view.fov, 30, 100); $('rngArFov').value = S.arFov; }
+    invalidate(); persist();
+  }
+  function tap(x, y) {
+    const o = R.hitTest(x, y);
+    if (o) select(o); else { selected = null; view.track = false; hideSheet(); invalidate(); }
+  }
+  // On phones the info sheet covers the lower half, so aim a little lower to keep the target above it.
+  function sheetOffset(fov) {
+    if (window.innerWidth > 720 || $('sheet').hidden) return 0;
+    return fov * 0.24;
+  }
+  function goTo(obj, zoom) {
+    if (view.sensor) return;
+    const as = astro || computeAstro();
+    const e = objEnu(obj, as); if (!e) return;
+    const aa = azAltOf(e);
+    let daz = aa.az - view.az; daz = ((daz + 540) % 360) - 180;
+    const fov1 = zoom ? Math.min(view.fov, obj.type === 'rashi' ? 50 : obj.type === 'nakshatra' ? 40 : 30) : view.fov;
+    const alt1 = clamp(aa.alt - sheetOffset(fov1), -90, 90);
+    view.anim = { t0: performance.now(), dur: 900, az0: view.az, daz, alt0: view.alt, alt1, fov0: view.fov, fov1 };
+    view.vaz = view.valt = 0;
+  }
+
+  // ---------- sensors / AR ----------
+  async function setSensor(on) {
+    if (on === view.sensor) return;
+    if (on) {
+      if (!window.isSecureContext) toast(t('https'));
+      const ok = await LS.Sensors.start((b) => { view.basis = b; invalidate(); }, (err) => {
+        toast(t(err === 'denied' ? 'sensorDenied' : 'sensorNone'));
+        setSensor(false); if (view.ar) setAR(false);
+      }, () => S.compassOffset);
+      if (!ok) return;
+      view.sensor = true; view.track = false; view.anim = null;
+      toast(`${t('sensorHint')} · ${t('calibHint')}`);
+    } else {
+      LS.Sensors.stop();
+      if (view.basis) { const aa = azAltOf(view.basis.f); view.az = aa.az; view.alt = aa.alt; }
+      view.sensor = false; view.basis = null;
+    }
+    syncDock(); invalidate();
+  }
+  async function setAR(on) {
+    if (on === view.ar) return;
+    const video = $('cam');
+    if (on) {
+      const sensorPromise = setSensor(true); // must start inside the same user gesture on iOS
+      try { await LS.Sensors.startCamera(video); } catch (e) { toast(t('cameraDenied')); await sensorPromise; syncDock(); return; }
+      await sensorPromise;
+      view.ar = true; view.fovBeforeAr = view.fov; view.fov = S.arFov;
+      document.body.classList.add('ar');
+    } else {
+      LS.Sensors.stopCamera(video);
+      view.ar = false; document.body.classList.remove('ar');
+      if (view.fovBeforeAr) view.fov = view.fovBeforeAr;
+      setSensor(false);
+    }
+    syncDock(); invalidate();
+  }
+
+  // ---------- dock ----------
+  const DOCK = [
+    { key: 'nakshatra', icon: 'nakshatra' }, { key: 'rashi', icon: 'rashi' }, { key: 'graha', icon: 'graha' },
+    { key: 'constellations', icon: 'western' }, { key: 'grid', icon: 'grid' }, { sep: true },
+    { key: 'atmosphere', icon: 'atmosphere' }, { key: 'ground', icon: 'ground' }, { key: 'milkyway', icon: 'milkyway' }, { sep: true },
+    { key: 'sensor', icon: 'sensor', cyan: true, action: () => setSensor(!view.sensor), state: () => view.sensor },
+    { key: 'camera', icon: 'camera', cyan: true, action: () => setAR(!view.ar), state: () => view.ar },
+    { key: 'time', icon: 'time', cyan: true, action: () => toggle('timebar'), state: () => !$('timebar').hidden, label: 'time' },
+    { key: 'night', icon: 'night', action: () => { S.night = !S.night; applyNight(); }, state: () => S.night },
+    { key: 'hideUi', icon: 'eye', action: () => setZen(true), state: () => false },
+  ];
+  function buildDock() {
+    const dock = $('dock');
+    dock.innerHTML = '';
+    for (const d of DOCK) {
+      if (d.sep) { const s = document.createElement('i'); s.className = 'dock-sep'; dock.appendChild(s); continue; }
+      const b = document.createElement('button');
+      b.className = 'dock-btn' + (d.cyan ? ' cyan' : '');
+      b.dataset.key = d.key;
+      b.innerHTML = `${ICON[d.icon]}<span></span>`;
+      b.addEventListener('click', () => {
+        if (d.action) d.action(); else { S[d.key] = !S[d.key]; invalidate(); persist(); }
+        syncDock();
+      });
+      dock.appendChild(b);
+    }
+  }
+  function syncDock() {
+    for (const b of $('dock').querySelectorAll('.dock-btn')) {
+      const d = DOCK.find((x) => x.key === b.dataset.key);
+      b.classList.toggle('on', d.state ? d.state() : !!S[d.key]);
+      b.querySelector('span').textContent = t(d.label || d.key);
+      b.title = t(d.label || d.key);
+    }
+    for (const b of $('settingToggles').querySelectorAll('.toggle')) b.classList.toggle('on', !!S[b.dataset.key]);
+  }
+  function applyNight() { document.body.classList.toggle('night', !!S.night); persist(); }
+  function setZen(on) { document.body.classList.toggle('zen', on); $('btnShowUi').hidden = !on; }
+
+  // ---------- settings drawer ----------
+  const SETTING_TOGGLES = ['nakshatra', 'rashi', 'graha', 'constellations', 'grid', 'eqGrid', 'atmosphere', 'ground', 'milkyway', 'labels', 'starNames'];
+  function buildSettings() {
+    const box = $('settingToggles'); box.innerHTML = '';
+    for (const k of SETTING_TOGGLES) {
+      const b = document.createElement('button');
+      b.className = 'toggle'; b.dataset.key = k;
+      b.innerHTML = `<span></span><i></i>`;
+      b.addEventListener('click', () => { S[k] = !S[k]; syncDock(); invalidate(); persist(); });
+      box.appendChild(b);
+    }
+    const sel = $('citySelect');
+    sel.addEventListener('change', () => {
+      const c = CITIES.find((x) => x.id === sel.value); if (!c) return;
+      setLocation({ ...c });
+    });
+    $('btnApplyLoc').addEventListener('click', () => {
+      const lat = parseFloat($('latInput').value), lon = parseFloat($('lonInput').value);
+      if (isNaN(lat) || isNaN(lon) || Math.abs(lat) > 90 || Math.abs(lon) > 180) return;
+      setLocation({ id: 'custom', en: `${lat.toFixed(3)}°, ${lon.toFixed(3)}°`, hi: `${lat.toFixed(3)}°, ${lon.toFixed(3)}°`, lat, lon, tz: DEVICE_TZ });
+    });
+    $('btnGeo').addEventListener('click', () => geolocate(true));
+    const rng = (id, key, after) => {
+      const el = $(id); el.value = S[key];
+      el.addEventListener('input', () => { S[key] = parseFloat(el.value); after && after(); invalidate(); persist(); });
+    };
+    rng('rngGround', 'groundOpacity');
+    rng('rngStars', 'starBrightness');
+    rng('rngArFov', 'arFov', () => { if (view.ar) view.fov = S.arFov; });
+    rng('rngCompass', 'compassOffset');
+    $('btnResetView').addEventListener('click', () => {
+      S.compassOffset = 0; $('rngCompass').value = 0;
+      view.anim = { t0: performance.now(), dur: 900, az0: view.az, daz: (((S.loc.lat >= 0 ? 160 : 20) - view.az + 540) % 360) - 180, alt0: view.alt, alt1: 32, fov0: view.fov, fov1: 90 };
+      close('drawer');
+    });
+  }
+  function renderSettingsText() {
+    for (const b of $('settingToggles').querySelectorAll('.toggle')) b.querySelector('span').textContent = t(b.dataset.key);
+    const sel = $('citySelect');
+    sel.innerHTML = `<option value="" disabled>${t('location')}</option>` + CITIES.map((c) => `<option value="${c.id}">${nm(c)}</option>`).join('');
+    sel.value = CITIES.some((c) => c.id === S.loc.id) ? S.loc.id : '';
+    $('latInput').value = S.loc.lat.toFixed(4); $('lonInput').value = S.loc.lon.toFixed(4);
+  }
+
+  function setLocation(loc) {
+    S.loc = loc; persist();
+    renderSettingsText();
+    astro = null; refreshPanchang(true); invalidate();
+    if (selected) showSheet(selected);
+  }
+  function geolocate(userAsked) {
+    if (!navigator.geolocation) { if (userAsked) toast(t('locFailed')); return; }
+    if (userAsked) toast(t('locating'));
+    navigator.geolocation.getCurrentPosition((pos) => {
+      const lat = pos.coords.latitude, lon = pos.coords.longitude;
+      setLocation({ id: 'gps', en: `My location · ${lat.toFixed(2)}°, ${lon.toFixed(2)}°`, hi: `मेरा स्थान · ${lat.toFixed(2)}°, ${lon.toFixed(2)}°`, lat, lon, tz: DEVICE_TZ });
+      if (userAsked) close('drawer');
+    }, () => { if (userAsked) toast(t('locFailed')); }, { enableHighAccuracy: false, timeout: 12000, maximumAge: 10 * 60e3 });
+  }
+
+  // ---------- panels ----------
+  const PANELS = ['panchang', 'drawer', 'timebar'];
+  function toggle(id) { if ($(id).hidden) open(id); else close(id); }
+  function open(id) {
+    if (id === 'drawer') { $('scrim').hidden = false; }
+    if (id === 'panchang' && window.innerWidth <= 720) hideSheet();
+    $(id).hidden = false;
+    if (id === 'panchang') renderPanchang();
+    if (id === 'timebar') syncTimebar();
+    syncDock();
+  }
+  function close(id) {
+    $(id).hidden = true;
+    if (id === 'drawer') $('scrim').hidden = true;
+    if (id === 'sheet') { selected = null; view.track = false; invalidate(); }
+    syncDock();
+  }
+  document.querySelectorAll('[data-close]').forEach((b) => b.addEventListener('click', () => close(b.dataset.close)));
+  $('scrim').addEventListener('click', () => close('drawer'));
+
+  function renderHud() {
+    $('hudLoc').textContent = nm(S.loc);
+    if (panch) {
+      const nk = V.nakshatras[panch.nakshatra];
+      $('hudTithi').textContent = `${tithiName(panch.tithi)} · ☾ ${nm(nk)}`;
+    }
+  }
+  function renderClock() {
+    $('hudTime').textContent = fmtTime(clock.sim, true);
+    $('hudDate').textContent = fmtDate(clock.sim);
+    const live = clock.rate === 1 && Math.abs(clock.sim - Date.now()) < 5000;
+    const b = $('liveBadge');
+    b.textContent = live ? t('live') : (clock.rate === 0 ? t('paused') : `×${rateText()}`);
+    b.classList.toggle('off', !live);
+    if (!$('timebar').hidden) syncTimebar(true);
+  }
+  function renderReadout() {
+    const aa = view.basis ? azAltOf(view.basis.f) : { az: view.az, alt: view.alt };
+    const dir = V.directionsShort[Math.round(aa.az / 45) % 8];
+    const az = Math.round(aa.az) % 360, alt = Math.round(aa.alt) || 0;
+    $('readout').textContent = `${t('fov')} ${I.num(view.fov.toFixed(view.fov < 10 ? 1 : 0))}°  ·  ${dir} ${I.num(az)}°  ·  ${I.num(alt)}°`;
+    $('compassNeedle').style.transform = `rotate(${-aa.az}deg)`;
+  }
+
+  function renderPanchang() {
+    if (!panch) return;
+    const p = panch;
+    $('pTitle').textContent = `${fmtDate(clock.sim)} · ${nm(S.loc)}`;
+    const nk = V.nakshatras[p.nakshatra];
+    const cells = [
+      [t('vara'), nm(V.varas[p.vara]), '', false],
+      [t('tithi'), tithiName(p.tithi), p.tithiEnd ? `${t('until')} ${fmtShort(p.tithiEnd.date.getTime())}` : '', false],
+      [t('nakshatra'), `${nm(nk)} · ${t('pada')} ${I.num(p.pada)}`, p.nakshatraEnd ? `${t('until')} ${fmtShort(p.nakshatraEnd.date.getTime())}` : '', true],
+      [t('yoga'), nm(V.yogas[p.yoga]), '', false],
+      [t('karana'), nm(p.karana), '', false],
+      [t('masa'), `${p.adhika ? t('adhika') + ' ' : ''}${nm(V.months[p.month])}`, I.lang === 'hi' ? 'अमान्त' : 'Amanta', false],
+      [t('samvat'), `${t('vikram')} ${I.num(p.vikram)}`, `${t('shaka')} ${I.num(p.shaka)}`, false],
+      [t('ritu'), nm(V.ritus[p.ritu]), nm(V.ayanas[p.ayana]), false],
+      [t('lagna'), nm(V.rashis[Math.floor(p.lagna / 30)]), dms(p.lagna % 30), false],
+      [t('sunRashi'), nm(V.rashis[p.sunRashi]), dms(p.sunSid % 30), false],
+      [t('moonRashi'), nm(V.rashis[p.moonRashi]), dms(p.moonSid % 30), false],
+      [t('sunrise'), sunDay && sunDay.rise ? fmtTime(sunDay.rise.date.getTime()) : '—', `${t('sunset')} ${sunDay && sunDay.set ? fmtTime(sunDay.set.date.getTime()) : '—'}`, false],
+      [t('ayanamsa'), dms(p.ayanamsa), '', true],
+    ];
+    $('pGrid').innerHTML = cells.map(([k, v, s, wide]) => `<div class="pcell${wide ? ' wide' : ''}"><div class="k">${k}</div><div class="v">${v}</div>${s ? `<div class="s">${s}</div>` : ''}</div>`).join('');
+  }
+
+  // ---------- time bar ----------
+  const RATES = [1, 10, 60, 600, 3600, 86400];
+  function rateText() {
+    const r = Math.abs(clock.rate);
+    const s = r >= 86400 ? `${r / 86400}d/s` : r >= 3600 ? `${r / 3600}h/s` : r >= 60 ? `${r / 60}m/s` : `${r}`;
+    return (clock.rate < 0 ? '−' : '') + s;
+  }
+  function syncTimebar(onlyValue) {
+    const input = $('dtInput');
+    if (document.activeElement !== input) {
+      const off = tzOffsetMin(S.loc.tz, clock.sim) * 60000;
+      input.value = new Date(clock.sim + off).toISOString().slice(0, 16);
+    }
+    $('rateLabel').textContent = clock.rate === 0 ? '⏸' : `×${rateText()}`;
+    if (onlyValue) return;
+    const play = $('timebar').querySelector('[data-rate="toggle"]');
+    play.innerHTML = clock.rate === 0 ? ICON.play : ICON.pause;
+  }
+  function buildTimebar() {
+    const tb = $('timebar');
+    tb.querySelector('[data-rate="rev"]').innerHTML = ICON.rev;
+    tb.querySelector('[data-rate="fwd"]').innerHTML = ICON.fwd;
+    tb.querySelectorAll('[data-step]').forEach((b) => b.addEventListener('click', () => { clock.sim += +b.dataset.step * 1000; afterTimeJump(); }));
+    tb.querySelector('[data-rate="toggle"]').addEventListener('click', () => { clock.rate = clock.rate === 0 ? 1 : 0; afterTimeJump(); });
+    const shift = (dir) => {
+      const cur = clock.rate === 0 ? 0 : clock.rate;
+      if (cur === 0 || Math.sign(cur) !== dir) clock.rate = dir * RATES[1];
+      else { const i = RATES.indexOf(Math.abs(cur)); clock.rate = dir * RATES[Math.min(RATES.length - 1, i + 1)]; }
+      afterTimeJump();
+    };
+    tb.querySelector('[data-rate="rev"]').addEventListener('click', () => shift(-1));
+    tb.querySelector('[data-rate="fwd"]').addEventListener('click', () => shift(1));
+    $('btnNow').addEventListener('click', () => { clock.sim = Date.now(); clock.rate = 1; afterTimeJump(); });
+    $('dtInput').addEventListener('change', () => {
+      const v = $('dtInput').value; if (!v) return;
+      const [d, tm] = v.split('T'); const [y, mo, da] = d.split('-').map(Number); const [h, mi] = tm.split(':').map(Number);
+      const guess = Date.UTC(y, mo - 1, da, h, mi);
+      clock.sim = guess - tzOffsetMin(S.loc.tz, guess) * 60000;
+      afterTimeJump();
+    });
+  }
+  function afterTimeJump() { astro = null; syncTimebar(); refreshPanchang(true); renderClock(); invalidate(); }
+
+  // ---------- info sheet ----------
+  function select(obj) {
+    selected = obj; view.track = false;
+    showSheet(obj); invalidate();
+  }
+  function hideSheet() { $('sheet').hidden = true; }
+  function rowsHtml(rows) { return rows.filter(Boolean).map(([k, v]) => `<div class="k">${k}</div><div class="v">${v}</div>`).join(''); }
+
+  function zodiacRows(sidLon) {
+    const z = Sky.zodiacInfo(sidLon);
+    return [
+      [t('siderealLon'), dms(sidLon)],
+      [t('inRashi'), `${nm(V.rashis[z.rashi])} ${dms(z.degInRashi)}`],
+      [t('inNakshatra'), `${nm(V.nakshatras[z.nakshatra])} · ${t('pada')} ${I.num(z.pada)}`],
+    ];
+  }
+  function posRows(enu, as) {
+    const aa = azAltOf(enu);
+    const eqd = Sky.apply(as.fr.enu2eqd, enu[0], enu[1], enu[2]);
+    const ra = ((Math.atan2(eqd[1], eqd[0]) * R2D + 360) % 360) / 15, dec = Math.asin(eqd[2]) * R2D;
+    return [
+      [t('altAz'), `${sgnDms(aa.alt)} / ${dms(aa.az)}`],
+      [t('raDec'), `${hms(ra)} / ${sgnDms(dec)}`],
+    ];
+  }
+  function riseSetRows(body, as) {
+    try {
+      const rs = Sky.riseSet(body, as.obs, as.time);
+      if (!rs.rise && !rs.set) {
+        const alt = Math.asin(Math.max(-1, Math.min(1, objEnu(selected, as)[2]))) * R2D;
+        return [[t('rises'), t(alt > 0 ? 'transitAlways' : 'transitNever')]];
+      }
+      return [[t('rises'), rs.rise ? fmtShort(rs.rise.date.getTime()) : '—'], [t('sets'), rs.set ? fmtShort(rs.set.date.getTime()) : '—']];
+    } catch (e) { return []; }
+  }
+
+  let sheetStatic = null;
+  function showSheet(obj) {
+    const as = astro || computeAstro();
+    const hi = I.lang === 'hi';
+    let type = '', title = '', sub = '', glyph = '✦', desc = '', rows = [];
+    if (obj.type === 'graha') {
+      const g = V.grahas[obj.id], gp = as.grahas[obj.id];
+      type = `${t('grahaType')}${g.modern ? ' · ' + t('modern') : ''}`; title = nm(g); glyph = g.glyph;
+      sub = [hi ? g.en : g.hi, g.west].join(' · ');
+      desc = nm(g.desc);
+      rows = [...zodiacRows(gp.sidLon)];
+      if (gp.retro && obj.id !== 'rahu' && obj.id !== 'ketu') rows.push([t('retrograde'), '℞']);
+      if (g.rules) rows.push([t('rules'), g.rules.map((k) => nm(V.rashis[k])).join(', ')]);
+      if (g.exalt != null) rows.push([t('exalted'), nm(V.rashis[g.exalt])], [t('debilitated'), nm(V.rashis[g.debil])]);
+      if (g.day != null) rows.push([t('vara'), nm(V.varas[g.day])]);
+      if (g.body && gp.mag < 50 && obj.id !== 'surya') rows.push([t('magnitude'), I.num(gp.mag.toFixed(1))]);
+      if (obj.id === 'chandra') rows.push([t('illumination'), `${I.num((gp.illum * 100).toFixed(0))}%`]);
+      if (g.body) rows.push([t('distance'), obj.id === 'chandra' ? `${I.num(Math.round(gp.dist * 149597870.7).toLocaleString('en-IN'))} ${t('km')}` : `${I.num(gp.dist.toFixed(3))} ${t('au')}`]);
+      sheetStatic = { body: g.body ? A.Body[g.body] : null };
+    } else if (obj.type === 'star') {
+      const i = obj.id, st = starTitle(i), vn = R.data.vedicNames[i];
+      type = t('starType'); title = st.title; sub = st.sub;
+      if (vn && vn.kind === 'star') desc = nm(V.stars[vn.ref].desc);
+      if (vn && vn.kind === 'nakshatra') { const nk = V.nakshatras[vn.ref]; desc = `${t('yogatara')} — ${nm(nk)} · ${nm(nk.deity)}`; }
+      const v = starVec(i);
+      const sid = Sky.norm360(A.Ecliptic(new A.Vector(v[0], v[1], v[2], as.time)).elon - as.ayanamsa);
+      rows = [[t('magnitude'), I.num(R.data.mag[i].toFixed(2))], ...zodiacRows(sid)];
+      const ra = Math.atan2(v[1], v[0]) * R2D / 15, dec = Math.asin(v[2]) * R2D;
+      sheetStatic = { star: [((ra % 24) + 24) % 24, dec] };
+    } else if (obj.type === 'nakshatra') {
+      if (obj.id === 'abhijit') {
+        const ab = V.abhijit;
+        type = t('nakType'); title = nm(ab); sub = `${hi ? ab.en : ab.hi} · ${ab.iast}`; glyph = '★';
+        rows = [[t('deity'), nm(ab.deity)], [t('symbol'), nm(ab.symbol)], [t('yogatara'), starTitle(R.data.abhFig.yt).title]];
+        desc = I.lang === 'hi' ? 'अट्ठाईसवाँ नक्षत्र, उत्तराषाढा और श्रवण के मध्य; मुहूर्त-गणना में प्रयुक्त।' : 'The 28th nakshatra, between Uttara Ashadha and Shravana, used in muhurta reckoning.';
+        sheetStatic = { star: null };
+      } else {
+        const nk = V.nakshatras[obj.id];
+        type = `${t('nakType')} ${I.num(obj.id + 1)} / ${I.num(27)}`; title = nm(nk); sub = `${hi ? nk.en : nk.hi} · ${nk.iast}`; glyph = I.num(obj.id + 1);
+        const start = obj.id * Sky.NAK, end = start + Sky.NAK;
+        const span = (x) => `${nm(V.rashis[Math.floor(x / 30) % 12])} ${dms(x % 30)}`;
+        desc = `${nm(nk.deity)}.`;
+        const moonHere = Math.floor(as.grahas.chandra.sidLon / Sky.NAK) === obj.id;
+        const inHere = Sky.GRAHA_ORDER.filter((id) => Math.floor(as.grahas[id].sidLon / Sky.NAK) === obj.id).map((id) => nm(V.grahas[id]));
+        rows = [
+          [t('span'), `${span(start)} – ${span(end - 1e-9).replace(/29°59′/, '30°00′')}`],
+          [t('deity'), nm(nk.deity)], [t('symbol'), nm(nk.symbol)],
+          [t('lord'), nm(V.grahas[nk.lord])], [t('gana'), nm(V.ganas[nk.gana])],
+          [t('yogatara'), starTitle(R.data.nakFigs[obj.id].yt).sub.split(' · ').slice(-1)[0] || '—'],
+          inHere.length ? [t('graha'), inHere.join(', ')] : null,
+        ];
+        if (moonHere) desc += I.lang === 'hi' ? ' आज चन्द्रमा इसी नक्षत्र में है।' : ' The Moon is in this nakshatra now.';
+        sheetStatic = { star: null };
+      }
+    } else if (obj.type === 'rashi') {
+      const rs = V.rashis[obj.id];
+      type = `${t('rashiType')} ${I.num(obj.id + 1)} / ${I.num(12)}`; title = nm(rs); sub = `${hi ? rs.en : rs.hi} · ${rs.west}`; glyph = '♈♉♊♋♌♍♎♏♐♑♒♓'[obj.id];
+      const inHere = Sky.GRAHA_ORDER.filter((id) => Math.floor(as.grahas[id].sidLon / 30) === obj.id).map((id) => nm(V.grahas[id]));
+      const firstNak = Math.floor(obj.id * 30 / Sky.NAK), lastNak = Math.floor((obj.id * 30 + 29.999) / Sky.NAK);
+      const naks = []; for (let k = firstNak; k <= lastNak; k++) naks.push(nm(V.nakshatras[k]));
+      rows = [[t('symbol'), nm(rs.symbol)], [t('lord'), nm(V.grahas[rs.lord])], [t('element'), nm(V.elements[rs.el])],
+        [t('nakshatra'), naks.join(', ')], inHere.length ? [t('graha'), inHere.join(', ')] : null];
+      sheetStatic = { star: null };
+    } else if (obj.type === 'constellation') {
+      const c = R.data.western.find((x) => x.id === obj.id);
+      const meta = LS_DATA.constellations.find((x) => x.id === obj.id);
+      type = t('consType'); title = hi ? c.hi : c.en; sub = meta ? meta.la : ''; glyph = '✧';
+      sheetStatic = { star: null };
+    } else if (obj.type === 'asterism') {
+      const a = V.asterisms[obj.id];
+      type = t('asterismType'); title = nm(a); sub = hi ? a.en : a.hi; desc = nm(a.desc); glyph = '✶';
+      sheetStatic = { star: null };
+    }
+    $('sType').textContent = type; $('sTitle').textContent = title; $('sSub').textContent = sub;
+    $('sGlyph').textContent = glyph; $('sDesc').textContent = desc;
+    sheetStatic.rows = rows; sheetStatic.obj = obj;
+    if (window.innerWidth <= 720) $('panchang').hidden = true;
+    $('sheet').hidden = false;
+    $('btnTrack').classList.toggle('on', view.track);
+    updateSheetLive(true);
+  }
+  let lastRiseSet = 0, riseSetCache = [];
+  function updateSheetLive(force) {
+    if (!sheetStatic || !selected) return;
+    const as = astro || computeAstro();
+    const enu = objEnu(selected, as);
+    const now = performance.now();
+    if (force || now - lastRiseSet > 5000) {
+      lastRiseSet = now;
+      if (sheetStatic.body) riseSetCache = riseSetRows(sheetStatic.body, as);
+      else if (sheetStatic.star) { A.DefineStar(A.Body.Star1, sheetStatic.star[0], sheetStatic.star[1], 1000); riseSetCache = riseSetRows(A.Body.Star1, as); }
+      else riseSetCache = [];
+    }
+    const live = enu ? posRows(enu, as) : [];
+    if (enu && enu[2] < 0) live[0][1] += ` · ${t('below')}`;
+    $('sRows').innerHTML = rowsHtml([...live, ...riseSetCache, ...sheetStatic.rows]);
+  }
+  $('btnCenter').addEventListener('click', () => { if (selected) goTo(selected, true); });
+  $('btnTrack').addEventListener('click', () => {
+    if (!selected) return;
+    view.track = !view.track; if (view.track) goTo(selected, false);
+    $('btnTrack').classList.toggle('on', view.track);
+    $('btnTrack').textContent = t(view.track ? 'tracking' : 'track');
+  });
+
+  // ---------- search ----------
+  const fold = (s) => (s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+  let searchIndex = [];
+  function buildSearchIndex() {
+    const idx = [];
+    for (const id of Sky.GRAHA_ORDER) { const g = V.grahas[id]; idx.push({ obj: { type: 'graha', id }, glyph: g.glyph, names: [g.en, g.hi, g.iast, g.west], label: () => nm(g), sub: () => `${t('grahaType')} · ${g.west}` }); }
+    V.nakshatras.forEach((nk, k) => idx.push({ obj: { type: 'nakshatra', id: k }, glyph: I.num(k + 1), names: [nk.en, nk.hi, nk.iast], label: () => nm(nk), sub: () => `${t('nakType')} · ${nm(nk.deity)}` }));
+    idx.push({ obj: { type: 'nakshatra', id: 'abhijit' }, glyph: '★', names: [V.abhijit.en, V.abhijit.hi], label: () => nm(V.abhijit), sub: () => t('nakType') });
+    V.rashis.forEach((rs, k) => idx.push({ obj: { type: 'rashi', id: k }, glyph: '♈♉♊♋♌♍♎♏♐♑♒♓'[k], names: [rs.en, rs.hi, rs.iast, rs.west], label: () => nm(rs), sub: () => `${t('rashiType')} · ${rs.west}` }));
+    V.asterisms.forEach((a, k) => idx.push({ obj: { type: 'asterism', id: k }, glyph: '✶', names: [a.en, a.hi], label: () => nm(a), sub: () => t('asterismType') }));
+    for (const [i, vn] of Object.entries(R.data.vedicNames)) {
+      if (vn.kind !== 'star') continue;
+      idx.push({ obj: { type: 'star', id: +i }, glyph: '✦', names: [vn.en, vn.hi, LS_DATA.stars.names[i]], label: () => (I.lang === 'hi' ? vn.hi : vn.en), sub: () => `${t('starType')} · ${LS_DATA.stars.names[i] || starDesig[i] || ''}` });
+    }
+    for (const [i, name] of Object.entries(LS_DATA.stars.names)) {
+      if (R.data.vedicNames[i] && R.data.vedicNames[i].kind === 'star') continue;
+      idx.push({ obj: { type: 'star', id: +i }, glyph: '·', names: [name, starDesig[i]], label: () => name, sub: () => `${t('starType')} · ${starDesig[i] || ''}`, minor: true });
+    }
+    for (const c of R.data.western) idx.push({ obj: { type: 'constellation', id: c.id }, glyph: '✧', names: [c.en, c.hi, c.id], label: () => (I.lang === 'hi' ? c.hi : c.en), sub: () => t('consType'), minor: true });
+    searchIndex = idx.map((e) => ({ ...e, keys: e.names.filter(Boolean).map(fold) }));
+  }
+  let activeResult = -1, currentResults = [];
+  function runSearch(q) {
+    const box = $('searchResults');
+    const f = fold(q.trim());
+    if (!f) { box.hidden = true; currentResults = []; return; }
+    const scored = [];
+    for (const e of searchIndex) {
+      let best = -1;
+      for (const k of e.keys) { const p = k.indexOf(f); if (p === 0) best = Math.max(best, 3); else if (p > 0) best = Math.max(best, 1); }
+      if (best >= 0) scored.push([best - (e.minor ? 1 : 0), e]);
+    }
+    scored.sort((a, b) => b[0] - a[0]);
+    currentResults = scored.slice(0, 12).map((x) => x[1]);
+    activeResult = currentResults.length ? 0 : -1;
+    box.innerHTML = currentResults.length ? currentResults.map((e, k) =>
+      `<button class="result${k === 0 ? ' active' : ''}" data-k="${k}"><span class="g">${e.glyph}</span><span><div class="n">${e.label()}</div><div class="s">${e.sub()}</div></span></button>`).join('')
+      : `<div class="empty">${t('noResults')}</div>`;
+    box.hidden = false;
+    box.querySelectorAll('.result').forEach((b) => b.addEventListener('click', () => chooseResult(+b.dataset.k)));
+  }
+  function chooseResult(k) {
+    const e = currentResults[k]; if (!e) return;
+    $('searchInput').value = ''; $('searchResults').hidden = true; $('searchInput').blur();
+    select(e.obj); goTo(e.obj, true);
+  }
+  $('searchInput').addEventListener('input', (e) => runSearch(e.target.value));
+  $('searchInput').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { chooseResult(Math.max(0, activeResult)); e.preventDefault(); }
+    if (e.key === 'Escape') { $('searchInput').value = ''; runSearch(''); $('searchInput').blur(); }
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      activeResult = clamp(activeResult + (e.key === 'ArrowDown' ? 1 : -1), 0, currentResults.length - 1);
+      $('searchResults').querySelectorAll('.result').forEach((b, k) => b.classList.toggle('active', k === activeResult));
+    }
+  });
+  document.addEventListener('pointerdown', (e) => { if (!$('searchBox').contains(e.target)) $('searchResults').hidden = true; });
+
+  // ---------- language ----------
+  function applyLang() {
+    document.querySelectorAll('[data-t]').forEach((el) => { el.textContent = t(el.dataset.t); });
+    $('searchInput').placeholder = t('search');
+    $('btnLang').querySelectorAll('span').forEach((s) => s.classList.toggle('on', s.dataset.l === I.lang));
+    $('btnTrack').textContent = t(view.track ? 'tracking' : 'track');
+    renderSettingsText(); syncDock(); renderHud(); renderClock(); renderReadout();
+    if (!$('panchang').hidden) renderPanchang();
+    if (selected && !$('sheet').hidden) showSheet(selected);
+    if ($('searchInput').value) runSearch($('searchInput').value);
+    invalidate();
+  }
+  $('btnLang').addEventListener('click', () => { S.lang = I.lang === 'en' ? 'hi' : 'en'; I.set(S.lang); persist(); });
+  I.onChange(applyLang);
+
+  // ---------- misc controls ----------
+  let toastTimer = null;
+  function toast(msg) {
+    const el = $('toast'); el.textContent = msg; el.hidden = false;
+    clearTimeout(toastTimer); toastTimer = setTimeout(() => { el.hidden = true; }, 3800);
+  }
+  $('btnMenu').innerHTML = ICON.menu;
+  $('searchIco').innerHTML = ICON.search;
+  $('btnZoomIn').innerHTML = ICON.plus;
+  $('btnZoomOut').innerHTML = ICON.minus;
+  $('compassNeedle').innerHTML = ICON.compass;
+  $('btnShowUi').innerHTML = ICON.eyeOpen;
+  document.querySelectorAll('[data-close]').forEach((b) => { b.innerHTML = ICON.close; });
+  $('btnMenu').addEventListener('click', () => toggle('drawer'));
+  $('hudMain').addEventListener('click', () => toggle('panchang'));
+  $('hudClock').addEventListener('click', () => toggle('timebar'));
+  const zoomBy = (k) => { view.anim = { t0: performance.now(), dur: 300, az0: view.az, daz: 0, alt0: view.alt, alt1: view.alt, fov0: view.fov, fov1: clamp(view.fov * k, 1, 180) }; };
+  $('btnZoomIn').addEventListener('click', () => zoomBy(1 / 1.6));
+  $('btnZoomOut').addEventListener('click', () => zoomBy(1.6));
+  $('btnCompass').addEventListener('click', () => {
+    if (view.sensor) return;
+    view.anim = { t0: performance.now(), dur: 700, az0: view.az, daz: ((0 - view.az + 540) % 360) - 180, alt0: view.alt, alt1: view.alt, fov0: view.fov, fov1: view.fov };
+  });
+  $('btnShowUi').addEventListener('click', () => setZen(false));
+  document.addEventListener('keydown', (e) => {
+    if (e.target.tagName === 'INPUT') return;
+    if (e.key === '/') { e.preventDefault(); $('searchInput').focus(); }
+    if (e.key === 'Escape') { PANELS.forEach((p) => { if (!$(p).hidden) close(p); }); if (!$('sheet').hidden) close('sheet'); setZen(false); }
+    const step = 4 * view.fov / 60;
+    if (e.key === 'ArrowLeft') { view.az = (view.az - step + 360) % 360; invalidate(); }
+    if (e.key === 'ArrowRight') { view.az = (view.az + step) % 360; invalidate(); }
+    if (e.key === 'ArrowUp') { view.alt = clamp(view.alt + step, -90, 90); invalidate(); }
+    if (e.key === 'ArrowDown') { view.alt = clamp(view.alt - step, -90, 90); invalidate(); }
+    if (e.key === '+' || e.key === '=') zoomBy(1 / 1.25);
+    if (e.key === '-') zoomBy(1.25);
+  });
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden && clock.rate === 1 && Math.abs(clock.sim - Date.now()) < 120e3) clock.sim = Date.now();
+    invalidate();
+  });
+
+  // ---------- boot ----------
+  buildDock(); buildSettings(); buildTimebar(); buildSearchIndex();
+  I.set(S.lang);
+  applyNight();
+  refreshPanchang(true);
+  requestAnimationFrame(frame);
+  if (!saved.loc) {
+    // First run: try the device's location (falls back to Ujjain, the prime meridian of Jyotisha).
+    if (navigator.permissions && navigator.permissions.query) {
+      navigator.permissions.query({ name: 'geolocation' }).then((p) => { if (p.state !== 'denied') geolocate(false); }).catch(() => geolocate(false));
+    } else geolocate(false);
+  }
+  if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => {});
+  window.__antariksha = { view, clock, S, select, goTo };
+})();
