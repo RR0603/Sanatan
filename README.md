@@ -18,6 +18,15 @@ Switch between them with the switch at the top. Settings → Design → **Bottom
   - **Birth**: enter a birth date, time and place to cast a Janma Kundali. "See this sky" then shows the actual sky at that moment.
   - **Milan**: Ashtakoota (36 guna) matching of two birth charts, with each koota explained and a Mangal dosha check.
 
+**Options menu** (the layers button, bottom left) also holds four experiences:
+
+- **Ratri** (रात्रि): a night mode that re-dresses the whole app in midnight and gold. It brings serif titles, gilded hairlines, panels that bloom into view, drifting star-dust, shooting stars and glowing ripples where you touch. It is switched on through a golden veil from where you tapped. It works over either design (also in Settings → Design).
+- **Nada** (नाद): a generative tanpura drone (Pa · Sa · Sa · low Sa) tuned to Sa = 136.1 Hz, with temple bells when you select or find a graha. It is pure Web Audio and pauses with the app.
+- **Ulka** (उल्का): the ten major annual meteor showers. While one is active, its radiant is marked in the sky and meteors streak away from it, faster at the peak. The Tonight list shows the active or next shower.
+- **Yatra** (यात्रा): a 45-second cinematic time-lapse of tonight, from sunset to sunrise. It shows letterbox captions for darkness, each graha rising and setting, Brahma Muhurta and dawn.
+
+The Time panel has a close button.
+
 **Design**: Settings → Design switches between **Nova** (the default) and **Classic**:
 
 - **Nova**: liquid glass and aurora accents.
@@ -162,6 +171,11 @@ js/calendar.js       festivals, Ekadashis, vrats, Sankranti and eclipses
 js/milan.js          Ashtakoota (36 guna) matching and Mangal dosha
 js/pages.js          Today, Calendar, Tonight + finder, Milan, reminders, share
 css/nova.css         Nova design (default); css/app.css is the base and the Classic look
+css/ratri.css        Ratri night mode
+js/fx.js             star-dust, shooting stars, ripples and meteors (effects layer)
+js/nada.js           Nada: generative tanpura drone and bells (Web Audio)
+js/ulka.js           meteor showers: dates, radiants, ZHR
+js/yatra.js          Yatra: the sunset-to-sunrise night journey
 js/vedic.js          nakshatra / rashi / graha / Panchang vocabulary (EN + HI)
 js/i18n.js           interface strings (EN + HI)
 js/data/*.js         generated star and constellation data
@@ -181,5 +195,6 @@ tests/               accuracy tests (npm test)
 - Constellation illustrations: Johan Meuris for [Stellarium](https://github.com/Stellarium/stellarium-skycultures), [Free Art License](https://artlibre.org/licence/lal/en/)
 - Magnetic declination: World Magnetic Model 2025 (NOAA / BGS, public domain), coefficients via [geomagnetism](https://github.com/naturalatlas/geomagnetism) (Apache-2.0)
 - Ephemeris: [Astronomy Engine](https://github.com/cosinekitty/astronomy), MIT
-- Fonts: Space Grotesk, Noto Sans Devanagari and JetBrains Mono, SIL Open Font License 1.1
+- Fonts: Space Grotesk, Noto Sans Devanagari, JetBrains Mono and Cormorant Garamond, SIL Open Font License 1.1
+- Meteor shower data: International Meteor Organization working list
 - Native shell: [Capacitor](https://capacitorjs.com), MIT. Purchases: [RevenueCat](https://github.com/RevenueCat/purchases-capacitor), MIT

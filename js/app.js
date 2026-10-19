@@ -50,6 +50,10 @@
     prev: svg('<path d="M15 5l-7 7 7 7"/>', 'stroke-width="2"'),
     next: svg('<path d="M9 5l7 7-7 7"/>', 'stroke-width="2"'),
     tonight: svg('<path d="M14.5 3.5a7.5 7.5 0 1 0 6 11.3A6 6 0 0 1 14.5 3.5z"/><path d="M5 4.5l.5 1.4 1.4.5-1.4.5L5 8.3l-.5-1.4-1.4-.5 1.4-.5z"/>'),
+    ratri: svg('<path d="M19.5 14.5A8 8 0 1 1 9.5 4.5a6.2 6.2 0 0 0 10 10z"/><path d="M17 3.5l.6 1.6 1.6.6-1.6.6L17 7.9l-.6-1.6-1.6-.6 1.6-.6zM21 8.5l.4 1 1 .4-1 .4-.4 1-.4-1-1-.4 1-.4z" fill="currentColor"/><path d="M4 20.5c2.5-1.2 5-1.2 8 0s5.5 1.2 8 0"/>'),
+    nada: svg('<path d="M4 10v4M8 7v10M12 4v16M16 8v8M20 11v2"/>'),
+    meteor: svg('<path d="M4 20 15 9"/><path d="M8 20 17 11M4 16l9-9"/><circle cx="18.5" cy="5.5" r="2.5" fill="currentColor"/>'),
+    yatra: svg('<circle cx="12" cy="12" r="9"/><path d="M10 8.5v7l6-3.5z" fill="currentColor"/>'),
     finder: '<svg viewBox="0 0 56 56"><defs><linearGradient id="fg" x1="0" x2="1"><stop offset="0" stop-color="#7ee8fa"/><stop offset="1" stop-color="#ffd27a"/></linearGradient></defs><circle cx="28" cy="28" r="26" fill="rgba(10,14,32,.55)" stroke="rgba(255,255,255,.25)"/><path d="M44 28 22 16v24z" fill="url(#fg)"/></svg>',
   };
 
@@ -89,7 +93,7 @@
     atmosphere: true, ground: true, milkyway: true, labels: true, starNames: true, night: false,
     groundOpacity: 0.82, starBrightness: 1, arFov: 62, compassOffset: 0,
     mode: 'sky', names: 'vedic', jyTab: 'kundali', kStyle: 'north', kVarga: 'D1', birth: null, profiles: [],
-    theme: 'nova', tabbar: false, reminders: null, milan: null,
+    theme: 'nova', tabbar: false, reminders: null, milan: null, ratri: false, nada: false, meteors: false,
     view: null,
   };
   const KEY = 'antariksha.v1';
@@ -420,6 +424,10 @@
 
   // ---------- dock ----------
   const DOCK = [
+    { key: 'ratri', icon: 'ratri', action: () => setRatri(!S.ratri), state: () => !!S.ratri },
+    { key: 'yatra', icon: 'yatra', cyan: true, action: () => { $('dock').hidden = true; LS.Yatra.start(); }, state: () => LS.Yatra.running },
+    { key: 'meteors', icon: 'meteor', cyan: true, action: () => setMeteors(!S.meteors), state: () => !!S.meteors },
+    { key: 'nada', icon: 'nada', action: () => setNada(!LS.Nada.on), state: () => LS.Nada.on }, { sep: true },
     { key: 'nakshatra', icon: 'nakshatra' }, { key: 'rashi', icon: 'rashi' }, { key: 'graha', icon: 'graha' },
     { key: 'constellations', icon: 'western', label: 'mandala' }, { key: 'grid', icon: 'grid' },
     { key: 'names', icon: 'names', action: () => setNames(Nm.isVedic() ? 'western' : 'vedic'), state: () => Nm.isVedic(), dyn: () => (Nm.isVedic() ? 'vedicShort' : 'westernShort') }, { sep: true },
@@ -467,6 +475,43 @@
     $('namesSeg').querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.names === Nm.culture));
     $('themeSeg').querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.theme === S.theme));
     $('tabbarToggle').classList.toggle('on', !!S.tabbar);
+    $('ratriToggle').classList.toggle('on', !!S.ratri);
+  }
+  // Ratri: the immersive night mode. The switch dissolves through a golden veil from where you tapped.
+  let lastTap = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
+  window.addEventListener('pointerdown', (e) => { lastTap = { x: e.clientX, y: e.clientY }; }, { capture: true, passive: true });
+  function setRatri(on) {
+    const veil = $('veil');
+    const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const swap = () => { S.ratri = on; applyTheme(); LS.FX.wake(); placeGlider(); };
+    if (reduce) { swap(); } else {
+      veil.style.setProperty('--vx', `${lastTap.x}px`); veil.style.setProperty('--vy', `${lastTap.y}px`);
+      veil.classList.remove('go', 'out'); void veil.offsetWidth; veil.classList.add('go');
+      setTimeout(() => { swap(); veil.classList.add('out'); }, 560);
+      setTimeout(() => veil.classList.remove('go', 'out'), 1500);
+    }
+    if (on) toast(t('ratriOn'), 3200);
+  }
+  function setNada(on) {
+    if (on) {
+      if (!LS.Nada.supported || !LS.Nada.start()) { toast(t('nadaUnsupported')); return; }
+      toast(t('nadaOn'), 3200);
+    } else LS.Nada.stop();
+    S.nada = on; persist(); syncDock();
+  }
+  function setMeteors(on) {
+    S.meteors = on; persist(); syncDock(); LS.FX.wake();
+    if (!on) return;
+    const act = LS.Ulka.active(clock.sim)[0];
+    if (act) toast(t('meteorsOn').replace('{name}', nm(act.name)).replace('{c}', LS.VEDIC.constellations[act.con] ? (I.lang === 'hi' ? LS.VEDIC.constellations[act.con][1] : LS.VEDIC.constellations[act.con][0]) : act.con), 5000);
+    else { const nx = LS.Ulka.next(clock.sim); toast(t('meteorsNone').replace('{name}', nm(nx.name)).replace('{date}', fmt(nx.peakMs, { day: 'numeric', month: 'short' })), 5000); }
+  }
+  // Close panels and stop the sensor/camera before Yatra takes over the view.
+  function prepare() {
+    for (const id of ['panchang', 'tonight', 'timebar', 'dock', 'intro', 'help']) $(id).hidden = true;
+    close('sheet'); if (!$('drawer').hidden) close('drawer');
+    if (view.ar) setAR(false); else if (view.sensor) setSensor(false);
+    setZen(false);
   }
   function applyTheme() {
     S.theme = S.theme === 'classic' ? 'classic' : 'nova';
@@ -474,6 +519,7 @@
     document.body.classList.toggle('theme-classic', S.theme === 'classic');
     // The bottom tab bar is optional (off unless turned on in Settings → Design).
     document.body.classList.toggle('has-tabbar', !!S.tabbar);
+    document.body.classList.toggle('ratri', !!S.ratri);
     const meta = document.querySelector('meta[name="theme-color"]');
     if (meta) meta.content = S.theme === 'nova' ? '#050714' : '#04060f';
     requestAnimationFrame(placeGlider);
@@ -682,6 +728,7 @@
 
   // ---------- info sheet ----------
   function select(obj) {
+    if (!selected || selected.type !== obj.type || selected.id !== obj.id) LS.Nada.chime('tap');
     selected = obj; view.track = false;
     showSheet(obj); invalidate();
   }
@@ -926,10 +973,20 @@
     }
     if (PAGE_MODES.includes(S.mode)) { $('sheet').hidden = true; selected = null; view.track = false; }
     if (S.mode === 'jyotish') requestAnimationFrame(() => { jy.wheel.resize(); jyRefresh(true); });
-    renderPage();
+    renderPage(); LS.FX.wake(); bloom();
     if (!initial && selected && !$('sheet').hidden) showSheet(selected);
     requestAnimationFrame(placeGlider);
     persist(); invalidate();
+  }
+  // Ratri: let the new section's panels bloom in once (not on every refresh).
+  let bloomTimer = null;
+  function bloom() {
+    const el = S.mode === 'today' ? $('today') : S.mode === 'calendar' ? $('calendar') : null;
+    document.querySelectorAll('.page.bloom').forEach((p) => p.classList.remove('bloom'));
+    document.body.classList.toggle('bloom', S.mode === 'jyotish');
+    if (el) el.classList.add('bloom');
+    clearTimeout(bloomTimer);
+    bloomTimer = setTimeout(() => { document.querySelectorAll('.page.bloom').forEach((p) => p.classList.remove('bloom')); document.body.classList.remove('bloom'); }, 1600);
   }
   function renderPage() {
     try {
@@ -1238,6 +1295,8 @@
   $('langSeg').querySelectorAll('button').forEach((b) => b.addEventListener('click', () => { S.lang = b.dataset.lang; I.set(S.lang); persist(); }));
   $('themeSeg').querySelectorAll('button').forEach((b) => b.addEventListener('click', () => { S.theme = b.dataset.theme; applyTheme(); }));
   $('tabbarToggle').addEventListener('click', () => { S.tabbar = !S.tabbar; applyTheme(); invalidate(); });
+  $('ratriToggle').addEventListener('click', () => setRatri(!S.ratri));
+  $('tbClose').addEventListener('click', () => close('timebar'));
   $('btnRemDrawer').addEventListener('click', () => { close('drawer'); $('btnReminders').click(); });
   I.onChange(applyLang);
 
@@ -1294,7 +1353,7 @@
   $('btnTodayPrev').innerHTML = ICON.prev; $('btnCalPrev').innerHTML = ICON.prev;
   $('btnTodayNext').innerHTML = ICON.next; $('btnCalNext').innerHTML = ICON.next;
   $('btnShare').innerHTML = ICON.share; $('btnReminders').innerHTML = ICON.bell;
-  $('remClose').innerHTML = ICON.close;
+  $('remClose').innerHTML = ICON.close; $('tbClose').innerHTML = ICON.close; $('yStop').innerHTML = ICON.close;
   $('finder').querySelector('.fa').innerHTML = ICON.finder;
   $('btnZoomIn').innerHTML = ICON.plus;
   $('btnZoomOut').innerHTML = ICON.minus;
@@ -1337,8 +1396,19 @@
   buildDock(); buildSettings(); buildTimebar(); buildSearchIndex(); initJyotish();
   LS.Pages.init({
     S, view, clock, Nm, CITIES, observer, setMode, select, goTo, toast, persist, invalidate, afterTimeJump,
-    fmt, fmtTime, fmtShort, tithiName, panchangCells, isNative: LS.Pro.isNative,
+    fmt, fmtTime, fmtShort, tithiName, panchangCells, isNative: LS.Pro.isNative, setMeteors,
   });
+  const reducedMotion = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  LS.FX.init($('fx'), () => ({
+    ratri: !!S.ratri, meteors: !!S.meteors && LS.Ulka.active(clock.sim).length > 0, mode: S.mode,
+    basis: view.basis, fov: view.fov, fr: astro && astro.fr, sunAlt: astro ? astro.sunAlt : 0, simMs: clock.sim, reduced: reducedMotion,
+  }));
+  LS.Yatra.init({
+    S, view, clock, Nm, observer, setMode, invalidate, afterTimeJump, toast, fmt, fmtTime, prepare,
+    tithiLine: () => (panch ? tithiName(panch.tithi) : ''),
+  });
+  // Browsers only allow sound after a tap: resume Nada on the first touch if it was left on.
+  if (S.nada) window.addEventListener('pointerdown', () => { if (S.nada && !LS.Nada.on) { LS.Nada.start(); syncDock(); } }, { once: true, capture: true });
   applyTheme();
   I.set(S.lang);
   setMode(S.mode, true);
@@ -1362,5 +1432,5 @@
   }
   showLocToast();
   setTimeout(showIntro, 3300);
-  window.__antariksha = { view, clock, S, select, goTo, setMode, setNames, jy, invalidate, showPaywall, applyTheme };
+  window.__antariksha = { view, clock, S, select, goTo, setMode, setNames, jy, invalidate, showPaywall, applyTheme, setRatri, setMeteors };
 })();

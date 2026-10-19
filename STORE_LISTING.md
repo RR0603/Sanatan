@@ -64,6 +64,12 @@ FESTIVALS & VRATS CALENDAR
 TONIGHT'S SKY
 • See which grahas are up tonight, when and where to look
 • Tap one and an arrow on the screen guides your phone to it
+• Ulka: meteor showers (Perseids, Geminids, Orionids…) with their radiant in the sky and live meteors
+
+RATRI, NADA AND YATRA
+• Ratri: a night mode in midnight and gold, with drifting star-dust, shooting stars and touches that glow
+• Nada: a soft tanpura drone tuned to Sa = 136.1 Hz (Om), with temple bells when you find a graha
+• Yatra: a 45-second cinematic journey through tonight, from sunset to sunrise, as each graha rises and sets
 
 BHACHAKRA AND JYOTISH
 • The living sky drawn as a chart, with the lagna on the eastern horizon. Drag the wheel to travel through time.
@@ -105,6 +111,7 @@ The biggest update yet:
 • Tonight — see what's up and let the arrow guide your phone to it
 • Kundali Milan — 36-guna matching
 • Share the day's Panchang in one tap
+• Ratri night mode, Nada tanpura sound, Ulka meteor showers and the Yatra night journey
 ```
 
 ## हिन्दी (Hindi localisation)
@@ -162,6 +169,7 @@ The biggest update yet:
 5. Kundali, Dasha & Milan.
 6. Bhachakra: the living sky as a chart.
 7. हिन्दी · English, with Jyotish & Western names
+8. Ratri: the night, dressed in gold.
 
 ## In-app product
 

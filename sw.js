@@ -1,10 +1,11 @@
 // Offline cache for the app shell. Bump VERSION when shipping changes.
-const VERSION = 'antariksha-v7';
+const VERSION = 'antariksha-v8';
 const SHELL = [
   './', 'index.html', 'css/app.css', 'manifest.webmanifest',
   'js/vendor/astronomy.browser.min.js', 'js/data/stars.js', 'js/data/constellations.js', 'js/data/art.js',
   'js/vedic.js', 'js/i18n.js', 'js/names.js', 'js/sky.js', 'js/jyotish.js', 'js/render.js', 'js/chart.js', 'js/magnetic.js', 'js/sensors.js', 'js/app.js',
-  'css/fonts.css', 'css/nova.css', 'js/config.js', 'js/pro.js', 'js/tz.js', 'js/muhurta.js', 'js/calendar.js', 'js/milan.js', 'js/pages.js',
+  'css/fonts.css', 'css/nova.css', 'css/ratri.css', 'js/ulka.js', 'js/fx.js', 'js/nada.js', 'js/yatra.js',
+  'fonts/cormorant-latin-500.woff2', 'fonts/cormorant-latin-ext-500.woff2', 'fonts/cormorant-latin-500i.woff2', 'fonts/cormorant-latin-ext-500i.woff2', 'js/config.js', 'js/pro.js', 'js/tz.js', 'js/muhurta.js', 'js/calendar.js', 'js/milan.js', 'js/pages.js',
   'fonts/space-grotesk-latin.woff2', 'fonts/space-grotesk-latin-ext.woff2', 'fonts/noto-sans-devanagari-devanagari.woff2',
   'fonts/noto-sans-devanagari-latin.woff2', 'fonts/noto-sans-devanagari-latin-ext.woff2', 'fonts/jetbrains-mono-latin.woff2', 'fonts/jetbrains-mono-latin-ext.woff2',
   'img/milkyway.png', 'img/icon.svg', 'img/icon-192.png', 'img/icon-512.png',

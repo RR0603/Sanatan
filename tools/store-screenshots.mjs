@@ -45,6 +45,11 @@ const SCENES = [
     } },
   { id: '6-bhachakra', cap: ['Bhachakra —', 'the living sky as a chart.'], sub: 'Drag the wheel to travel through time',
     run: async (p) => { await sky(p, 98, 36, 82); await mode(p, 'jyotish'); } },
+  { id: '8-ratri', cap: ['Ratri —', 'the night, dressed in gold.'], sub: 'Night mode, tanpura Nada, meteor showers and a journey through tonight',
+    run: async (p) => {
+      await p.evaluate(() => { const a = window.__antariksha; a.S.ratri = true; a.applyTheme(); });
+      await sky(p, 98, 36, 82); await p.waitForTimeout(1500);
+    } },
   { id: '7-hindi', cap: ['हिन्दी · English', 'Jyotish & Western names'], sub: 'वैदिक आकाश — आपकी भाषा में',
     run: async (p) => {
       await p.click('#btnMenu'); await p.click('#langSeg [data-lang="hi"]');

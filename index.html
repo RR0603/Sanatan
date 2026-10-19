@@ -16,11 +16,13 @@
 <link rel="stylesheet" href="css/fonts.css">
 <link rel="stylesheet" href="css/app.css">
 <link rel="stylesheet" href="css/nova.css">
+<link rel="stylesheet" href="css/ratri.css">
 </head>
 <body class="theme-nova">
 <video id="cam" playsinline muted autoplay></video>
 <canvas id="gl"></canvas>
 <canvas id="sky"></canvas>
+<canvas id="fx" aria-hidden="true"></canvas>
 <div id="night"></div>
 
 <div id="ui">
@@ -114,6 +116,7 @@
     <div class="tb-row">
       <span class="tb-date" id="hudDate"></span>
       <button class="pill" id="btnPanchang" data-t="panchang"></button>
+      <button class="icon-btn ghost tb-close" id="tbClose" aria-label="Close"></button>
     </div>
   </section>
 
@@ -227,6 +230,7 @@
         <button data-theme="nova" data-t="themeNova"></button>
         <button data-theme="classic" data-t="themeClassic"></button>
       </div>
+      <button class="toggle tabbar-opt" id="ratriToggle"><span><b data-t="ratriOpt"></b><small data-t="ratriOptSub"></small></span><i></i></button>
       <button class="toggle tabbar-opt" id="tabbarToggle"><span><b data-t="tabbarOpt"></b><small data-t="tabbarOptSub"></small></span><i></i></button>
 
       <h3 data-t="language"></h3>
@@ -330,6 +334,20 @@
 </div>
 <button class="glass icon-btn show-ui" id="btnShowUi" aria-label="Show interface" hidden></button>
 
+<section class="yatra" id="yatra" hidden aria-live="polite">
+  <div class="lb top"></div>
+  <div class="lb bot"></div>
+  <div class="y-cap">
+    <div class="y-eyebrow" data-t="yatraTitle"></div>
+    <div class="y-time" id="yTime"></div>
+    <div class="y-date" id="yDate"></div>
+    <div class="y-ev" id="yEvent"></div>
+    <div class="y-prog"><i id="yBar"></i></div>
+  </div>
+  <button class="y-stop" id="yStop" aria-label="Stop"></button>
+</section>
+<div class="veil" id="veil" aria-hidden="true"></div>
+
 <script src="js/vendor/astronomy.browser.min.js"></script>
 <script src="js/data/stars.js"></script>
 <script src="js/data/constellations.js"></script>
@@ -350,6 +368,10 @@
 <script src="js/sensors.js"></script>
 <script src="js/pro.js"></script>
 <script src="js/pages.js"></script>
+<script src="js/ulka.js"></script>
+<script src="js/fx.js"></script>
+<script src="js/nada.js"></script>
+<script src="js/yatra.js"></script>
 <script src="js/app.js"></script>
 </body>
 </html>

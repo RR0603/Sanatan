@@ -1,0 +1,151 @@
+/* ======================================================================
+   Ratri (रात्रि) — the immersive night mode. Midnight ink and temple gold:
+   serif titles, gilded hairlines, breathing light, blooming panels and star-dust
+   (drawn by js/fx.js). It layers over either design (Nova or Classic).
+   ====================================================================== */
+body.ratri {
+  --rt-gold: #f3d9a4;
+  --rt-gold-2: #d3a15a;
+  --rt-gold-grad: linear-gradient(135deg, #fbecc8 0%, #f0cf8d 38%, #c98f45 100%);
+  --rt-moon: #cdd8ff;
+  --rt-ink: rgba(6, 6, 16, .6);
+  --rt-ink-2: rgba(4, 4, 12, .78);
+  --rt-edge: rgba(243, 217, 164, .24);
+  --rt-edge-hi: rgba(243, 217, 164, .5);
+  --rt-text: #f6efe2;
+  --rt-serif: 'Cormorant Garamond', 'Noto Sans Devanagari', Georgia, serif;
+  --muted: rgba(246, 239, 226, .64);
+  --dim: rgba(246, 239, 226, .42);
+  --stroke: var(--rt-edge);
+  --stroke-hi: var(--rt-edge-hi);
+  --saffron: #f0cf8d;
+  --saffron-2: #c98f45;
+  --cyan: #cdd8ff;
+  --glow-s: 0 0 18px rgba(240, 200, 130, .45);
+  --glow-c: 0 0 18px rgba(205, 216, 255, .4);
+  --nv-aurora: var(--rt-gold-grad);
+  --nv-ice: linear-gradient(135deg, #eef2ff, #b9c6f5);
+  color: var(--rt-text);
+  background: #020208;
+}
+
+/* The sky itself: a touch deeper, with a soft vignette and a slow breathing glow at the horizon. */
+body.ratri #gl, body.ratri #sky { filter: saturate(1.12) brightness(.94); }
+body.ratri::after {
+  content: ''; position: fixed; inset: 0; z-index: 4; pointer-events: none;
+  background: radial-gradient(120% 90% at 50% 45%, transparent 55%, rgba(0, 0, 0, .55) 100%);
+}
+body.ratri::before {
+  content: ''; position: fixed; inset: 0; z-index: 5; pointer-events: none; opacity: 1;
+  background:
+    radial-gradient(60% 22% at 50% 102%, rgba(240, 190, 110, .22), transparent 70%),
+    radial-gradient(50% 30% at 85% -5%, rgba(120, 100, 220, .16), transparent 70%),
+    radial-gradient(40% 25% at 10% -5%, rgba(240, 200, 130, .10), transparent 70%);
+  animation: rtBreathe 9s ease-in-out infinite;
+}
+body.ratri.page-mode::before {
+  background:
+    radial-gradient(70% 40% at 50% -10%, rgba(240, 200, 130, .16), transparent 70%),
+    radial-gradient(60% 40% at 100% 100%, rgba(110, 90, 210, .16), transparent 70%),
+    linear-gradient(180deg, rgba(2, 2, 8, .55), rgba(2, 2, 8, .75));
+}
+body.ratri.mode-today #gl, body.ratri.mode-today #sky, body.ratri.mode-calendar #gl, body.ratri.mode-calendar #sky,
+body.ratri.mode-jyotish #gl, body.ratri.mode-jyotish #sky { filter: brightness(.5) saturate(1.2); }
+@keyframes rtBreathe { 50% { opacity: .55; } }
+
+/* ---------- surfaces ---------- */
+body.ratri .glass, body.ratri .card, body.ratri .panel, body.ratri .sheet, body.ratri .jy-stage, body.ratri .jy-panel,
+body.ratri .timebar, body.ratri .dock, body.ratri .results, body.ratri .intro, body.ratri .drawer, body.ratri .modal-card, body.ratri .pw-card {
+  background: linear-gradient(170deg, rgba(243, 217, 164, .075), rgba(243, 217, 164, 0) 42%), var(--rt-ink);
+  -webkit-backdrop-filter: blur(22px) saturate(140%); backdrop-filter: blur(22px) saturate(140%);
+  border: 1px solid var(--rt-edge);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, .6), inset 0 1px 0 rgba(243, 217, 164, .16), inset 0 0 40px rgba(243, 217, 164, .03);
+}
+body.ratri .drawer { background: linear-gradient(170deg, rgba(243, 217, 164, .07), transparent 40%), var(--rt-ink-2); }
+body.ratri .card, body.ratri .panel, body.ratri .sheet, body.ratri .dock, body.ratri .timebar, body.ratri .jy-stage, body.ratri .jy-panel { border-radius: 22px; }
+
+/* Panels bloom into view: out of a soft blur, rising gently, one after another. */
+body.ratri .page.bloom .page-body > *, body.ratri .panel, body.ratri.bloom .jy-stage, body.ratri.bloom .jy-panel {
+  animation: rtBloom .9s cubic-bezier(.2, .8, .2, 1) both;
+}
+/* Centred panels keep their translateX(-50%) while blooming. */
+body.ratri .dock, body.ratri .timebar, body.ratri .intro { animation: rtBloomX .8s cubic-bezier(.2, .8, .2, 1) both; }
+body.ratri .sheet { animation: rtBloom .9s cubic-bezier(.2, .8, .2, 1) both; }
+body.ratri .page.bloom .page-body > :nth-child(2) { animation-delay: .08s; }
+body.ratri .page.bloom .page-body > :nth-child(3) { animation-delay: .16s; }
+body.ratri .page.bloom .page-body > :nth-child(4) { animation-delay: .24s; }
+body.ratri .page.bloom .page-body > :nth-child(5) { animation-delay: .32s; }
+body.ratri .page.bloom .page-body > :nth-child(n+6) { animation-delay: .4s; }
+body.ratri .jy-panel { animation-delay: .12s; }
+@keyframes rtBloom { from { opacity: 0; transform: translateY(14px) scale(.985); filter: blur(8px); } to { opacity: 1; transform: none; filter: none; } }
+@keyframes rtBloomX { from { opacity: 0; transform: translate(-50%, 14px) scale(.985); filter: blur(8px); } to { opacity: 1; transform: translateX(-50%); filter: none; } }
+
+/* ---------- typography: serif titles, gilded small caps ---------- */
+body.ratri .eyebrow, body.ratri .drawer h3, body.ratri .y-eyebrow {
+  background: none; -webkit-background-clip: border-box; background-clip: border-box;
+  color: var(--rt-gold); letter-spacing: .3em; font-weight: 600; text-shadow: 0 0 12px rgba(240, 200, 130, .35);
+}
+html[lang="hi"] body.ratri .eyebrow, html[lang="hi"] body.ratri .drawer h3, html[lang="hi"] body.ratri .y-eyebrow { letter-spacing: .04em; }
+body.ratri .page-title, body.ratri .t-tithi, body.ratri .sheet-title, body.ratri .panel-title, body.ratri .jy-title,
+body.ratri .brand-name, body.ratri .day-title, body.ratri .pw-title, body.ratri .intro-title, body.ratri .mi-verdict, body.ratri .clk-time {
+  font-family: var(--rt-serif); font-weight: 600; letter-spacing: .01em;
+}
+body.ratri .page-title { font-size: 36px; font-weight: 500; }
+body.ratri .t-tithi { font-size: 34px; font-weight: 500; color: #fff6e6; }
+body.ratri .sheet-title { font-size: 28px; }
+body.ratri .panel-title, body.ratri .jy-title { font-size: 19px; }
+body.ratri .clk-time { font-size: 34px; font-weight: 500; text-shadow: 0 0 20px rgba(240, 200, 130, .35), 0 1px 3px #000; }
+body.ratri .clk-sub.tithi { color: var(--rt-gold); }
+body.ratri .mi-score b { font-family: var(--rt-serif); font-size: 42px; font-weight: 500; }
+html[lang="hi"] body.ratri .page-title, html[lang="hi"] body.ratri .t-tithi { font-family: var(--deva); font-weight: 600; }
+
+/* ---------- controls ---------- */
+body.ratri .pill { border-color: var(--rt-edge); background: rgba(243, 217, 164, .05); }
+body.ratri .pill.accent, body.ratri .pill.on, body.ratri .tb-now, body.ratri .pw-buy {
+  background: var(--rt-gold-grad); color: #1d1206; border-color: transparent;
+  box-shadow: 0 8px 26px rgba(220, 160, 80, .35), inset 0 1px 0 rgba(255, 255, 255, .6);
+}
+body.ratri .seg { background: rgba(0, 0, 0, .3); border-color: var(--rt-edge); }
+body.ratri .seg button.on { color: var(--rt-gold); background: rgba(243, 217, 164, .1); box-shadow: inset 0 0 0 1px rgba(243, 217, 164, .55), 0 0 16px rgba(240, 200, 130, .18); }
+body.ratri .toggle.on i { background: var(--rt-gold-grad); box-shadow: 0 0 14px rgba(240, 200, 130, .6); }
+body.ratri .field { border-color: var(--rt-edge); background: rgba(0, 0, 0, .35); }
+body.ratri .topbar .bare { border: 1px solid var(--rt-edge); background: rgba(6, 6, 16, .45); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); color: var(--rt-gold); filter: none; }
+body.ratri .modes { background: rgba(6, 6, 16, .5); border-color: var(--rt-edge); }
+body.ratri .mode-glider { background: linear-gradient(110deg, #c98f45 0%, #f3d9a4 30%, #fff6dc 45%, #f3d9a4 60%, #c98f45 100%); background-size: 250% 100%; animation: rtShimmer 5s linear infinite; box-shadow: 0 0 20px rgba(240, 200, 130, .5); }
+body.ratri .mode.on { color: #1d1206; }
+@keyframes rtShimmer { to { background-position: -250% 0; } }
+body.ratri .compass-btn { border: 1px solid var(--rt-edge); border-radius: 50%; background: radial-gradient(circle at 50% 35%, rgba(243, 217, 164, .14), rgba(0, 0, 0, .2) 70%); }
+body.ratri .compass-btn.on { box-shadow: 0 0 0 1px var(--rt-edge-hi), 0 0 30px rgba(240, 200, 130, .5); }
+body.ratri .compass-btn.on .aperture { color: var(--rt-gold); filter: drop-shadow(0 0 8px rgba(240, 200, 130, .9)); }
+body.ratri .dock-btn svg { background: rgba(243, 217, 164, .05); border-color: var(--rt-edge); color: var(--rt-gold); }
+body.ratri .dock-btn.on svg, body.ratri .dock-btn.cyan.on svg { background: var(--rt-gold-grad); color: #1d1206; box-shadow: 0 6px 22px rgba(220, 160, 80, .5); }
+body.ratri .dock-btn span { color: rgba(246, 239, 226, .8); }
+body.ratri .dock-btn[data-key="ratri"].on svg { animation: rtHalo 3s ease-in-out infinite; }
+@keyframes rtHalo { 50% { box-shadow: 0 0 0 6px rgba(243, 217, 164, .12), 0 0 30px rgba(240, 200, 130, .65); } }
+
+/* ---------- details ---------- */
+body.ratri .sheet-glyph, body.ratri .pw-list i { border-color: var(--rt-edge-hi); color: var(--rt-gold); background: rgba(243, 217, 164, .06); box-shadow: 0 0 18px rgba(240, 200, 130, .25); }
+body.ratri .pcell::after { background: linear-gradient(var(--rt-gold), transparent); }
+body.ratri .daybar { background: linear-gradient(90deg, rgba(240, 190, 120, .2), rgba(205, 216, 255, .16) 50%, rgba(240, 160, 110, .2)); border-color: var(--rt-edge); }
+body.ratri .cd { border-color: rgba(243, 217, 164, .08); background: rgba(243, 217, 164, .02); }
+body.ratri .cd.sel { background: rgba(243, 217, 164, .12); border-color: var(--rt-edge-hi); box-shadow: 0 0 22px rgba(240, 200, 130, .25), inset 0 0 0 1px rgba(243, 217, 164, .4); }
+body.ratri .cd.today { border-color: rgba(205, 216, 255, .7); }
+body.ratri .cd.today b { color: var(--rt-moon); }
+body.ratri .kbar i, body.ratri .drow .bar i { background: var(--rt-gold-grad); }
+body.ratri .mi-score .val { stroke: #f0cf8d; filter: drop-shadow(0 0 8px rgba(240, 200, 130, .6)); }
+body.ratri .moon-ic { filter: drop-shadow(0 0 22px rgba(255, 240, 210, .55)); }
+body.ratri .t-hero::after { background: radial-gradient(circle, rgba(240, 200, 130, .2), transparent 70%); }
+body.ratri .tn-row .g { border-color: var(--rt-edge); background: rgba(243, 217, 164, .05); }
+body.ratri .finder .fa { filter: drop-shadow(0 0 14px rgba(240, 200, 130, .8)); }
+body.ratri .toast { border-color: var(--rt-edge); background: rgba(6, 6, 16, .75); font-family: var(--rt-serif); font-size: 16px; font-style: italic; letter-spacing: .01em; }
+html[lang="hi"] body.ratri .toast { font-family: var(--deva); font-style: normal; font-size: 14px; }
+body.ratri .loc-toast { background: rgba(6, 6, 16, .7); border-color: var(--rt-edge); }
+body.ratri .lt-text b { font-family: var(--rt-serif); font-size: 21px; font-weight: 600; }
+body.ratri .scrim { background: rgba(0, 0, 0, .45); }
+body.ratri.has-tabbar .tabbar { background: rgba(6, 6, 16, .6); border-color: var(--rt-edge); }
+body.ratri.has-tabbar .tabbar button.on .ti svg { color: var(--rt-gold); filter: drop-shadow(0 0 8px rgba(240, 200, 130, .8)); }
+body.ratri.has-tabbar .tabbar button::before { background: radial-gradient(120% 120% at 50% 0%, rgba(243, 217, 164, .28), transparent 75%); box-shadow: inset 0 0 0 1px rgba(243, 217, 164, .4); }
+
+@media (prefers-reduced-motion: reduce) {
+  body.ratri *, body.ratri::before { animation: none !important; }
+}

@@ -203,18 +203,29 @@ LS.Pages = (function () {
       <span class="tn-main"><b>${C.Nm.graha(r.id)}</b><small>${status}</small></span>
       <span class="tn-x">${extra}<i>${t('find')} ›</i></span></button>`;
   }
+  // Meteor showers (Ulka): the active one, or the next peak.
+  function meteorRow() {
+    const now = nowMs(), act = LS.Ulka.active(now)[0];
+    const con = (s) => { const c = V.constellations[s.con]; return c ? (I.lang === 'hi' ? c[1] : c[0]) : s.con; };
+    if (act) {
+      const peak = Math.abs(act.days) < 1.5 ? t('atPeak') : `${t('peak')} ${C.fmt(now - act.days * DAY, { day: 'numeric', month: 'short' })}`;
+      return `<button class="tn-row meteor" data-meteors="1"><span class="g">☄</span><span class="tn-main"><b>${nm(act.name)}</b><small>${peak} · ${t('upTo')} ${I.num(act.zhr)}/${t('hShort')} · ${t('radiantIn')} ${con(act)}</small></span><span class="tn-x"><i>${t('show')} ›</i></span></button>`;
+    }
+    const nx = LS.Ulka.next(now);
+    return nx ? `<div class="tn-row meteor dim"><span class="g">☄</span><span class="tn-main"><b>${t('nextShower')}: ${nm(nx.name)}</b><small>${t('peak')} ${C.fmt(nx.peakMs, { day: 'numeric', month: 'short' })} · ${t('upTo')} ${I.num(nx.zhr)}/${t('hShort')}</small></span></div>` : '';
+  }
   function tonightCard() {
     let tn; try { tn = tonight(); } catch (e) { console.warn(e); return ''; }
     const moonNak = V.nakshatras[Math.floor(Sky.sidLonOf(A.Body.Moon, A.MakeTime(new Date(nowMs()))) / (360 / 27))];
     return `<div class="card"><div class="card-head"><div class="eyebrow">${t('tonightSky')}</div><span class="muted">${tn.noDark ? t('brightNight') : span(tn.start, tn.end)}</span></div>
-      ${tn.rows.map(tonightRowHtml).join('')}
+      ${tn.rows.map(tonightRowHtml).join('')}${meteorRow()}
       <p class="note">${t('moonIn')} <b>${nm(moonNak)}</b> — ${t('findHint')}</p></div>`;
   }
   function renderTonightPanel() {
     const el = $('tonightBody'); if (!el || $('tonight').hidden) return;
     let tn; try { tn = tonight(); } catch (e) { return; }
     $('tnTitle').textContent = `${tn.noDark ? t('brightNight') : span(tn.start, tn.end)} · ${nm(C.S.loc)}`;
-    el.innerHTML = tn.rows.map(tonightRowHtml).join('') + `<p class="note">${t('findHint')}</p>`;
+    el.innerHTML = tn.rows.map(tonightRowHtml).join('') + meteorRow() + `<p class="note">${t('findHint')}</p>`;
   }
   // Show the object in the sky: select it and either fly there or (with the sensor on) guide the phone.
   function find(id) {
@@ -245,7 +256,7 @@ LS.Pages = (function () {
     const ang = Math.acos(Math.max(-1, Math.min(1, z))) * R2D;
     if (onScreen) {
       el.hidden = true;
-      if (C.view.sensor && ang < 4 && foundBuzz !== sel.id) { foundBuzz = sel.id; haptic(); C.toast(`${t('found')} ✦`, 1800); }
+      if (C.view.sensor && ang < 4 && foundBuzz !== sel.id) { foundBuzz = sel.id; haptic(); LS.Nada.chime('found'); C.toast(`${t('found')} ✦`, 1800); }
       return;
     }
     if (foundBuzz === sel.id && ang > 10) foundBuzz = null;
@@ -529,6 +540,7 @@ LS.Pages = (function () {
       const fl = tgt.closest('[data-filter]'); if (fl) { cal.filter = fl.dataset.filter; renderCalendar(); return; }
       const gt = tgt.closest('[data-goto]'); if (gt) { C.setMode(gt.dataset.goto); return; }
       const fd = tgt.closest('[data-find]'); if (fd) { find(fd.dataset.find); return; }
+      const mt = tgt.closest('[data-meteors]'); if (mt) { $('tonight').hidden = true; C.setMode('sky'); C.setMeteors(true); return; }
       const ch = tgt.closest('[data-chogh]'); if (ch) { choghNight = ch.dataset.chogh === 'night'; renderToday(); return; }
       const rm = tgt.closest('[data-rem]'); if (rm) { setReminder(rm.dataset.rem, !prefs()[rm.dataset.rem]); }
     });

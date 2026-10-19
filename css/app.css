@@ -791,3 +791,43 @@ html[lang="hi"] .cal-wk span { text-transform: none; letter-spacing: 0; }
 .toggle.tabbar-opt span { display: flex; flex-direction: column; gap: 2px; }
 .toggle.tabbar-opt b { font-size: 13px; font-weight: 600; }
 .toggle.tabbar-opt small { font-size: 11px; color: var(--muted); }
+
+/* ---------- effects layer, Time close, Yatra, veil ---------- */
+#fx { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 3; }
+.tb-close { width: 34px; height: 34px; flex: none; color: var(--muted); }
+.tb-close svg { width: 18px; height: 18px; }
+.tb-row .tb-date { flex: 1; }
+
+.yatra { position: fixed; inset: 0; z-index: 45; pointer-events: none; }
+body.yatra #ui { opacity: 0; pointer-events: none; }
+body.yatra #ui > * { pointer-events: none; }
+body.yatra #btnShowUi { display: none !important; }
+.yatra .lb { position: absolute; left: 0; right: 0; height: 11vh; background: #000; animation: lbIn 1.1s cubic-bezier(.7, 0, .2, 1) both; }
+.yatra .lb.top { top: 0; transform-origin: top; }
+.yatra .lb.bot { bottom: 0; transform-origin: bottom; }
+@keyframes lbIn { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+.y-cap { position: absolute; left: 0; right: 0; bottom: calc(11vh + 22px + var(--sab)); text-align: center; color: #fff; text-shadow: 0 2px 18px rgba(0, 0, 0, .9); animation: fadeIn 1.6s ease-out .6s both; }
+.y-eyebrow { font-size: 10.5px; letter-spacing: .32em; text-transform: uppercase; color: #ffd8a0; opacity: .85; }
+html[lang="hi"] .y-eyebrow { letter-spacing: .06em; font-size: 12px; }
+.y-time { font-family: 'Cormorant Garamond', var(--font); font-size: 64px; font-weight: 500; line-height: 1.05; letter-spacing: .02em; font-variant-numeric: tabular-nums; margin-top: 6px; }
+.y-date { font-size: 14px; color: rgba(255, 240, 220, .85); margin-top: 2px; }
+.y-ev { min-height: 30px; margin-top: 14px; font-family: 'Cormorant Garamond', var(--font); font-style: italic; font-size: 24px; color: #fff3dc; opacity: 0; }
+html[lang="hi"] .y-ev { font-family: var(--deva); font-style: normal; font-size: 19px; }
+.y-ev i { font-style: normal; margin-right: 10px; }
+.y-ev.show { animation: evIn 3.2s ease-out both; }
+@keyframes evIn { 0% { opacity: 0; transform: translateY(8px); filter: blur(6px); } 15% { opacity: 1; transform: none; filter: none; } 80% { opacity: 1; } 100% { opacity: .0; } }
+.y-prog { width: min(320px, 60vw); height: 2px; margin: 16px auto 0; background: rgba(255, 255, 255, .15); border-radius: 2px; overflow: hidden; }
+.y-prog i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, #ffb067, #fff3dc); box-shadow: 0 0 8px #ffb067; }
+.y-stop { position: absolute; top: calc(11vh + 10px + var(--sat)); right: calc(14px + var(--sar)); width: 40px; height: 40px; border-radius: 50%; pointer-events: auto;
+  color: #fff; background: rgba(0, 0, 0, .35); border: 1px solid rgba(255, 255, 255, .25); display: grid; place-items: center; -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
+.y-stop svg { width: 18px; height: 18px; }
+
+.veil { position: fixed; inset: 0; z-index: 70; pointer-events: none; visibility: hidden;
+  background: radial-gradient(circle at var(--vx, 50%) var(--vy, 50%), rgba(255, 238, 200, .95) 0, rgba(240, 190, 110, .75) 12%, rgba(40, 24, 60, .92) 38%, rgba(3, 3, 12, .98) 70%);
+  clip-path: circle(0 at var(--vx, 50%) var(--vy, 50%)); }
+.veil.go { visibility: visible; animation: veilOpen .58s cubic-bezier(.6, 0, .3, 1) forwards; }
+.veil.go.out { animation: veilOpen .58s cubic-bezier(.6, 0, .3, 1) forwards, veilFade .9s ease-out .05s forwards; }
+@keyframes veilOpen { to { clip-path: circle(150% at var(--vx, 50%) var(--vy, 50%)); } }
+@keyframes veilFade { to { opacity: 0; } }
+.tn-row.meteor .g { color: #ffd8a0; }
+@media (prefers-reduced-motion: reduce) { .yatra .lb, .y-cap, .y-ev.show { animation: none; opacity: 1; } }

@@ -4,6 +4,15 @@ window.LS = window.LS || {};
 LS.I18N = (function () {
   const S = {
     en: {
+      // Ratri, Nada, Ulka, Yatra
+      ratri: 'Ratri', nada: 'Nada', meteors: 'Ulka', yatra: 'Yatra',
+      ratriOpt: 'Ratri night mode', ratriOptSub: 'Midnight & gold, star-dust and shooting stars',
+      ratriOn: 'Ratri — the night sky, dressed in gold', nadaOn: 'Nada — a tanpura drone tuned to 136.1 Hz (Om)', nadaUnsupported: 'Sound is not available on this device',
+      meteorsOn: '{name} are active — watch the radiant in {c}', meteorsNone: 'No meteor shower right now. Next: {name}, peak {date}',
+      atPeak: 'At peak now', upTo: 'up to', radiantIn: 'radiant in', show: 'Show', nextShower: 'Next meteor shower',
+      yatraTitle: 'Ratri Yatra · a journey through tonight', yatraDone: 'Shubh prabhat — the night is complete', yatraPolar: 'The Sun does not set here today',
+      ev_sunset: 'Surya sets', ev_dark: 'True darkness — the Akash Ganga appears', ev_rise: '{x} rises', ev_set: '{x} sets', ev_brahma: 'Brahma Muhurta begins', ev_sunrise: 'Surya rises — Shubh prabhat',
+
       // update: Today, Calendar, Tonight, Milan, reminders, design
       moonrise: 'Moonrise', moonset: 'Moonset', brightNight: 'The sky stays bright tonight', modeToday: 'Today', modeCalendar: 'Calendar', todayTitle: 'Today · Dainik Panchang', calendarTitle: 'Festivals & Vrats',
       today: 'Today', tomorrow: 'Tomorrow', inDays: 'in {n} days', tonight: 'Tonight', tonightSky: "Tonight's sky", milan: 'Milan',
@@ -105,6 +114,15 @@ LS.I18N = (function () {
       visit: 'Visit livingsanatan.com',
     },
     hi: {
+      // Ratri, Nada, Ulka, Yatra
+      ratri: 'रात्रि', nada: 'नाद', meteors: 'उल्का', yatra: 'यात्रा',
+      ratriOpt: 'रात्रि मोड', ratriOptSub: 'आधी रात और स्वर्ण, तारों की धूल और टूटते तारे',
+      ratriOn: 'रात्रि — स्वर्ण में सजा रात का आकाश', nadaOn: 'नाद — १३६.१ हर्ट्ज़ (ॐ) पर तानपुरा', nadaUnsupported: 'इस उपकरण पर ध्वनि उपलब्ध नहीं',
+      meteorsOn: '{name} सक्रिय — {c} में उद्गम बिन्दु देखें', meteorsNone: 'अभी कोई उल्का वर्षा नहीं। अगली: {name}, चरम {date}',
+      atPeak: 'अभी चरम पर', upTo: 'अधिकतम', radiantIn: 'उद्गम', show: 'दिखाएँ', nextShower: 'अगली उल्का वर्षा',
+      yatraTitle: 'रात्रि यात्रा · आज रात की यात्रा', yatraDone: 'शुभ प्रभात — रात्रि पूर्ण हुई', yatraPolar: 'आज यहाँ सूर्यास्त नहीं होता',
+      ev_sunset: 'सूर्यास्त', ev_dark: 'पूर्ण अन्धकार — आकाशगंगा प्रकट', ev_rise: '{x} उदय', ev_set: '{x} अस्त', ev_brahma: 'ब्रह्म मुहूर्त आरम्भ', ev_sunrise: 'सूर्योदय — शुभ प्रभात',
+
       // update: Today, Calendar, Tonight, Milan, reminders, design
       moonrise: 'चन्द्रोदय', moonset: 'चन्द्रास्त', brightNight: 'आज रात आकाश उजला रहेगा', modeToday: 'आज', modeCalendar: 'पंचांग', todayTitle: 'आज · दैनिक पंचांग', calendarTitle: 'व्रत और त्योहार',
       today: 'आज', tomorrow: 'कल', inDays: '{n} दिन में', tonight: 'आज रात', tonightSky: 'आज रात का आकाश', milan: 'मिलान',
