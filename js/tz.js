@@ -19,26 +19,25 @@ LS.TZ = (function () {
     } catch (e) { return -new Date(ms).getTimezoneOffset(); }
   }
   // Instant of local midnight (start of the civil day containing ms).
-  function midnight(ms, tz) {
-    const off = offsetMin(tz, ms) * 60000;
-    let m = Math.floor((ms + off) / DAY) * DAY - off;
-    // Correct for a DST change between midnight and ms.
-    const off2 = offsetMin(tz, m) * 60000;
-    if (off2 !== off) m = Math.floor((ms + off) / DAY) * DAY - off2;
-    return m;
-  }
+  function midnight(ms, tz) { const p = parts(ms, tz); return fromCivil(p.y, p.m, p.d, tz); }
   // Local civil date parts {y, m (0-11), d, wd} for instant ms.
   function parts(ms, tz) {
     const d = new Date(ms + offsetMin(tz, ms) * 60000);
     return { y: d.getUTCFullYear(), m: d.getUTCMonth(), d: d.getUTCDate(), wd: d.getUTCDay() };
   }
-  // Instant of local midnight on civil date y-m-d.
-  function fromCivil(y, m, d, tz) {
-    const guess = Date.UTC(y, m, d);
+  // Instant of local wall-clock time y-m-d hh:mm (default midnight). Where clocks change at that time, the first
+  // instant of the civil day is returned (e.g. 01:00 when midnight is skipped, the first 00:00 when it repeats).
+  function fromCivil(y, m, d, tz, hh = 0, mm = 0) {
+    const guess = Date.UTC(y, m, d, hh, mm);
     let ms = guess - offsetMin(tz, guess) * 60000;
     ms = guess - offsetMin(tz, ms) * 60000;
+    if (hh || mm) return ms;
+    const want = new Date(Date.UTC(y, m, d)).toISOString().slice(0, 10);
+    if (key(ms, tz) !== want) ms += 3600e3;
+    else if (key(ms - 3600e3, tz) === want && parts(ms - 3600e3, tz).d === parts(ms, tz).d && wall(ms - 3600e3, tz) === 0) ms -= 3600e3;
     return ms;
   }
+  const wall = (ms, tz) => { const off = offsetMin(tz, ms) * 60000; return ((ms + off) % DAY + DAY) % DAY; };
   // Same local clock time `days` later (DST safe).
   function addDays(ms, days, tz) {
     const p = parts(ms, tz), off = offsetMin(tz, ms) * 60000;

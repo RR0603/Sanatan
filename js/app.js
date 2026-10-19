@@ -1225,6 +1225,7 @@
     if (!$('panchang').hidden) renderPanchang();
     if (selected && !$('sheet').hidden) showSheet(selected);
     if ($('searchInput').value) runSearch($('searchInput').value);
+    LS.Pages.onLanguage(); jy.tabChanged = true;
     placeGlider(); jyRefresh(true); renderProRow(); renderPage(); renderPlaceChip();
     if (!$('tonight').hidden) LS.Pages.renderTonightPanel();
     $('appVersion').textContent = `${t('versionLabel')} ${LS.CONFIG.version}`;

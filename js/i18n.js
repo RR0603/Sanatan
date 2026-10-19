@@ -5,7 +5,7 @@ LS.I18N = (function () {
   const S = {
     en: {
       // update: Today, Calendar, Tonight, Milan, reminders, design
-      moonrise: 'Moonrise', moonset: 'Moonset', modeToday: 'Today', modeCalendar: 'Calendar', todayTitle: 'Today · Dainik Panchang', calendarTitle: 'Festivals & Vrats',
+      moonrise: 'Moonrise', moonset: 'Moonset', brightNight: 'The sky stays bright tonight', modeToday: 'Today', modeCalendar: 'Calendar', todayTitle: 'Today · Dainik Panchang', calendarTitle: 'Festivals & Vrats',
       today: 'Today', tomorrow: 'Tomorrow', inDays: 'in {n} days', tonight: 'Tonight', tonightSky: "Tonight's sky", milan: 'Milan',
       design: 'Design', themeNova: 'Nova (new)', themeClassic: 'Classic', share: 'Share', copied: 'Copied — paste it anywhere', shareFailed: 'Could not share',
       hShort: 'h', mShort: 'm', polarDay: 'The Sun does not rise or set here today, so day timings do not apply.',
@@ -106,7 +106,7 @@ LS.I18N = (function () {
     },
     hi: {
       // update: Today, Calendar, Tonight, Milan, reminders, design
-      moonrise: 'चन्द्रोदय', moonset: 'चन्द्रास्त', modeToday: 'आज', modeCalendar: 'पंचांग', todayTitle: 'आज · दैनिक पंचांग', calendarTitle: 'व्रत और त्योहार',
+      moonrise: 'चन्द्रोदय', moonset: 'चन्द्रास्त', brightNight: 'आज रात आकाश उजला रहेगा', modeToday: 'आज', modeCalendar: 'पंचांग', todayTitle: 'आज · दैनिक पंचांग', calendarTitle: 'व्रत और त्योहार',
       today: 'आज', tomorrow: 'कल', inDays: '{n} दिन में', tonight: 'आज रात', tonightSky: 'आज रात का आकाश', milan: 'मिलान',
       design: 'डिज़ाइन', themeNova: 'नोवा (नया)', themeClassic: 'क्लासिक', share: 'साझा करें', copied: 'कॉपी हो गया — कहीं भी पेस्ट करें', shareFailed: 'साझा नहीं हो सका',
       hShort: 'घं', mShort: 'मि', polarDay: 'आज यहाँ सूर्योदय या सूर्यास्त नहीं होता, अतः दिन के मुहूर्त लागू नहीं।',

@@ -114,11 +114,14 @@ LS.Calendar = (function () {
       const sunset = sunrise ? search(A.Body.Sun, observer, -1, sunrise, 1) : null;
       days.push({ ms: m0, key: TZ.key(m0 + 3600e3, tz), y: p.y, m: p.m, d: p.d, wd: p.wd, sunrise, sunset, events: [] });
     }
+    // Polar day/night: fall back to fixed clock times so the calendar still works (first pass, so `next` below
+    // always has a value).
+    for (const d of days) {
+      if (!d.sunrise || !d.sunset || d.sunset < d.sunrise) { d.sunrise = d.ms + 6 * 3600e3; d.sunset = d.ms + 18 * 3600e3; d.polar = true; }
+    }
     for (let i = 0; i < days.length; i++) {
       const d = days[i];
-      d.next = days[i + 1] ? days[i + 1].sunrise : (d.sunrise ? d.sunrise + DAY : null);
-      // Polar day/night: fall back to fixed clock times so the calendar still works.
-      if (!d.sunrise || !d.sunset || d.sunset < d.sunrise) { d.sunrise = d.ms + 6 * 3600e3; d.sunset = d.ms + 18 * 3600e3; d.next = d.ms + 30 * 3600e3; d.polar = true; }
+      d.next = days[i + 1] ? days[i + 1].sunrise : d.sunrise + DAY;
       d.tithi = tithiAt(d.sunrise);
       d.nak = Math.floor(Sky.sidLonOf(A.Body.Moon, A.MakeTime(new Date(d.sunrise))) / (360 / 27));
     }
@@ -223,11 +226,12 @@ LS.Calendar = (function () {
 
     // Sankranti: the Sun entering each sidereal rashi. Observed the next day when it happens after sunset.
     {
-      const t0 = A.MakeTime(new Date(days[2].ms));
+      // From the day before the range: a transit after sunset that evening is observed on the first day.
+      const t0 = A.MakeTime(new Date(days[1].ms));
       let lon = Sky.sidLonOf(A.Body.Sun, t0);
       let r = (Math.floor(lon / 30) + 1) % 12;
       let from = t0;
-      for (let guard = 0; guard < 3; guard++) {
+      for (let guard = 0; guard < Math.ceil(n / 29) + 2; guard++) {
         let tt = A.SearchSunLongitude(Sky.norm360(r * 30 + Sky.ayanamsa(from)), from, 40);
         if (!tt) break;
         tt = A.SearchSunLongitude(Sky.norm360(r * 30 + Sky.ayanamsa(tt)), tt.AddDays(-1), 2) || tt;

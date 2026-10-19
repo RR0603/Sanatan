@@ -61,4 +61,20 @@ const near = (ms, ref, sec = 90) => Math.abs(Date.parse(`${new Date(ms + 330 * 6
     check(`Milan ${total}/36`, r.total === total && got === parts, `${r.total} · ${got}`);
   }
 }
+// Edge cases found in review: Sankranti just before a range, polar days, DST days, midnight clock changes
+{
+  const delhi = new A.Observer(28.6139, 77.209, 0);
+  const r = LS.Calendar.range(delhi, IST, TZ.fromCivil(2027, 0, 15, IST), 5);
+  check('Makar Sankranti 2027 (Sun enters after sunset on the 14th) is on 15 Jan', r.events.some((e) => e.id === 'sankranti-9' && e.key === '2027-01-15'));
+  const tromso = new A.Observer(69.65, 18.96, 0);
+  const m = LS.Calendar.month(tromso, 'Europe/Oslo', 2026, 10);
+  const lo = TZ.fromCivil(2026, 9, 25, 'Europe/Oslo'), hi = TZ.fromCivil(2026, 11, 5, 'Europe/Oslo');
+  check('Tromsø before the polar night: every observance time is inside the month', m.events.every((e) => e.at > lo && e.at < hi), m.events.filter((e) => !(e.at > lo && e.at < hi)).map((e) => e.id).join(','));
+  const NY = 'America/New_York', ny = new A.Observer(40.7128, -74.006, 0);
+  const d0 = TZ.fromCivil(2026, 2, 8, NY), d1 = TZ.fromCivil(2026, 2, 9, NY);
+  const mu = LS.Muhurta.day(ny, d0, { dayEnd: d1, weekday: 0 });
+  check('New York, 8 Mar 2026 (23-hour day): moonrise belongs to that day', mu.moonrise == null || (mu.moonrise >= d0 && mu.moonrise < d1));
+  check('6:00 on the DST day is 6:00 local', new Date(TZ.fromCivil(2026, 2, 8, NY, 6, 0)).toISOString() === '2026-03-08T10:00:00.000Z' && new Date(TZ.fromCivil(2026, 10, 1, NY, 6, 0)).toISOString() === '2026-11-01T11:00:00.000Z');
+  check('Santiago: the day the clocks skip midnight starts at 01:00', new Date(TZ.fromCivil(2026, 8, 6, 'America/Santiago')).toISOString() === '2026-09-06T04:00:00.000Z');
+}
 done();

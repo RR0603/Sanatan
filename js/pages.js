@@ -15,6 +15,8 @@ LS.Pages = (function () {
   const tz = () => C.S.loc.tz;
   const obs = () => C.observer();
   const dayStart = (ms) => TZ.midnight(ms, tz());
+  // Civil day length (23/25 h when clocks change) and weekday for the timings.
+  const dayOpts = (day0) => ({ dayEnd: TZ.addDays(day0, 1, tz()), weekday: TZ.parts(day0 + 12 * 3600e3, tz()).wd });
   const tm = (ms) => (ms == null ? '—' : C.fmtTime(ms));
   const span = (a, b) => `${tm(a)} – ${tm(b)}`;
   const isLive = () => C.clock.rate === 1 && Math.abs(C.clock.sim - Date.now()) < 5000;
@@ -29,7 +31,7 @@ LS.Pages = (function () {
     const lit = waxing ? 1 : 0;
     // Lit half + terminator ellipse.
     const half = `M ${c} ${c - r} A ${r} ${r} 0 0 ${lit} ${c} ${c + r}`;
-    const term = `A ${rx} ${r} 0 0 ${k > 0 ? lit : 1 - lit} ${c} ${c - r}`;
+    const term = `A ${rx} ${r} 0 0 ${k > 0 ? 1 - lit : lit} ${c} ${c - r}`;
     return `<svg class="moon-ic" viewBox="0 0 ${size} ${size}" width="${size}" height="${size}" aria-hidden="true">
       <defs><radialGradient id="mg${size}" cx="40%" cy="35%" r="70%"><stop offset="0" stop-color="#fffaf0"/><stop offset="1" stop-color="#d9d3c2"/></radialGradient></defs>
       <circle cx="${c}" cy="${c}" r="${r}" fill="rgba(120,130,160,.22)" stroke="rgba(255,255,255,.18)"/>
@@ -43,9 +45,11 @@ LS.Pages = (function () {
     const key = `${day0}|${C.S.loc.lat},${C.S.loc.lon}`;
     if (today && today.key === key) return today;
     const o = obs();
-    const mu = LS.Muhurta.day(o, day0);
-    const ref = mu.sunrise || day0 + 6 * 3600e3;
+    const mu = LS.Muhurta.day(o, day0, dayOpts(day0));
+    // Just after sunrise, so the Panchang's sunrise-to-sunrise vara is today's.
+    const ref = mu.sunrise ? mu.sunrise + 60e3 : day0 + 6 * 3600e3;
     const p = Sky.panchang(A.MakeTime(new Date(ref)), o);
+    p.vara = mu.vara;
     today = { key, day0, mu, p, upcoming: [], todays: [] };
     // The 45-day festival scan is the slow part: paint the page first, then fill it in.
     const fill = () => {
@@ -128,11 +132,12 @@ LS.Pages = (function () {
   }
   let choghNight = null;
   function choghadiyaCard(mu, now) {
-    const night = choghNight == null ? (now != null && now >= mu.sunset) : choghNight;
+    const hasNight = mu.choghadiya.some((c) => c.night);
+    const night = hasNight && (choghNight == null ? (now != null && now >= mu.sunset) : choghNight);
     const list = mu.choghadiya.filter((c) => c.night === night);
     return `<div class="card">
       <div class="card-head"><div class="eyebrow">${t('choghadiya')}</div>
-        <div class="seg mini"><button data-chogh="day" class="${night ? '' : 'on'}">${t('chDay')}</button><button data-chogh="night" class="${night ? 'on' : ''}">${t('chNight')}</button></div></div>
+        ${hasNight ? `<div class="seg mini"><button data-chogh="day" class="${night ? '' : 'on'}">${t('chDay')}</button><button data-chogh="night" class="${night ? 'on' : ''}">${t('chNight')}</button></div>` : ''}</div>
       <div class="chogh">${list.map((c) => `<div class="ch q-${c.q}${now != null && now >= c.s && now < c.e ? ' cur' : ''}"><b>${t('ch_' + c.id)}</b><span>${span(c.s, c.e)}</span><em>${t('q_' + c.q)}</em></div>`).join('')}</div>
     </div>`;
   }
@@ -158,19 +163,20 @@ LS.Pages = (function () {
     const key = `${Math.floor(now / 600000)}|${C.S.loc.lat},${C.S.loc.lon}`;
     if (tonightCache && tonightCache.key === key) return tonightCache;
     const sunNow = equAlt(A.Body.Sun, o, now).alt;
-    let start = now;
+    let start = now, noDark = false;
     if (sunNow > -6) {
       const ss = A.SearchAltitude(A.Body.Sun, o, -1, A.MakeTime(new Date(now)), 1, -6);
-      start = ss ? ss.date.getTime() : now + 6 * 3600e3;
+      // White nights: the Sun never gets 6° below the horizon, so there is no dark sky tonight.
+      if (ss) start = ss.date.getTime(); else noDark = true;
     }
-    const endT = A.SearchAltitude(A.Body.Sun, o, +1, A.MakeTime(new Date(start)), 1, -6);
+    const endT = noDark ? null : A.SearchAltitude(A.Body.Sun, o, +1, A.MakeTime(new Date(start)), 1, -6);
     const end = endT ? endT.date.getTime() : start + 10 * 3600e3;
     const rows = [];
     const sunTime = A.MakeTime(new Date(now));
     for (const id of TONIGHT) {
       const g = V.grahas[id], body = A.Body[g.body];
       let best = null, first = null, last = null;
-      for (let s = start; s <= end; s += 15 * 60000) {
+      for (let s = start; !noDark && s <= end; s += 15 * 60000) {
         const h = equAlt(body, o, s);
         if (h.alt > 8) { if (!first) first = s; last = s; if (!best || h.alt > best.alt) best = { ...h, at: s }; }
       }
@@ -180,7 +186,7 @@ LS.Pages = (function () {
       rows.push({ id, best, first, last, nowAlt: nowH.alt, nowAz: nowH.az, elong, mag, glare: id !== 'chandra' && elong < 12 });
     }
     rows.sort((a, b) => (!!b.best - !!a.best) || (a.mag - b.mag));
-    tonightCache = { key, start, end, rows, dark: sunNow < -6 };
+    tonightCache = { key, start, end, rows, dark: sunNow < -6, noDark };
     return tonightCache;
   }
   const dirName = (az) => V.directionsShort[Math.round(az / 45) % 8];
@@ -200,14 +206,14 @@ LS.Pages = (function () {
   function tonightCard() {
     let tn; try { tn = tonight(); } catch (e) { console.warn(e); return ''; }
     const moonNak = V.nakshatras[Math.floor(Sky.sidLonOf(A.Body.Moon, A.MakeTime(new Date(nowMs()))) / (360 / 27))];
-    return `<div class="card"><div class="card-head"><div class="eyebrow">${t('tonightSky')}</div><span class="muted">${span(tn.start, tn.end)}</span></div>
+    return `<div class="card"><div class="card-head"><div class="eyebrow">${t('tonightSky')}</div><span class="muted">${tn.noDark ? t('brightNight') : span(tn.start, tn.end)}</span></div>
       ${tn.rows.map(tonightRowHtml).join('')}
       <p class="note">${t('moonIn')} <b>${nm(moonNak)}</b> — ${t('findHint')}</p></div>`;
   }
   function renderTonightPanel() {
     const el = $('tonightBody'); if (!el || $('tonight').hidden) return;
     let tn; try { tn = tonight(); } catch (e) { return; }
-    $('tnTitle').textContent = `${span(tn.start, tn.end)} · ${nm(C.S.loc)}`;
+    $('tnTitle').textContent = `${tn.noDark ? t('brightNight') : span(tn.start, tn.end)} · ${nm(C.S.loc)}`;
     el.innerHTML = tn.rows.map(tonightRowHtml).join('') + `<p class="note">${t('findHint')}</p>`;
   }
   // Show the object in the sky: select it and either fly there or (with the sensor on) guide the phone.
@@ -273,7 +279,8 @@ LS.Pages = (function () {
     void lun;
     const todayKey = TZ.key(Date.now(), tz());
     const first = res.days[0].wd;
-    const wk = [0, 1, 2, 3, 4, 5, 6].map((w) => `<span>${nm(V.varas[w]).slice(0, I.lang === 'hi' ? 3 : 3)}</span>`).join('');
+    const SHORT_HI = ['रवि', 'सोम', 'मंगल', 'बुध', 'गुरु', 'शुक्र', 'शनि'];
+    const wk = [0, 1, 2, 3, 4, 5, 6].map((w) => `<span>${I.lang === 'hi' ? SHORT_HI[w] : nm(V.varas[w]).slice(0, 3)}</span>`).join('');
     let cells = '';
     for (let i = 0; i < first; i++) cells += '<span class="cd empty"></span>';
     for (const d of res.days) {
@@ -338,13 +345,15 @@ LS.Pages = (function () {
   function personForm(role, p) {
     const pro = LS.Pro.isPro();
     const profiles = pro ? (C.S.profiles || []) : [];
+    const dr = milan.draft && milan.draft[role];
     const ms = p ? p.ms : null;
-    const val = ms ? new Date(ms + TZ.offsetMin(p.tz, ms) * 60000).toISOString().slice(0, 16) : '';
-    const opts = C.CITIES.map((c) => `<option value="${c.id}"${p && p.id === c.id ? ' selected' : ''}>${nm(c)}</option>`).join('');
+    const val = dr ? dr.date : ms ? new Date(ms + TZ.offsetMin(p.tz, ms) * 60000).toISOString().slice(0, 16) : '';
+    const place = dr ? dr.place : p ? p.id : '';
+    const opts = C.CITIES.map((c) => `<option value="${c.id}"${place === c.id ? ' selected' : ''}>${nm(c)}</option>`).join('');
     return `<div class="mi-person" data-role="${role}">
       <div class="eyebrow">${t(role === 'g' ? 'groom' : 'bride')}</div>
       ${profiles.length ? `<select class="field" data-mi="profile"><option value="">${t('pickProfile')}</option>${profiles.map((x) => `<option value="${x.pid}">${esc(x.name || t('birthChart'))}</option>`).join('')}</select>` : ''}
-      <input class="field" data-mi="name" placeholder="${t('birthName')}" value="${esc(p ? p.name : '')}" maxlength="40">
+      <input class="field" data-mi="name" placeholder="${t('birthName')}" value="${esc(dr ? dr.name : p ? p.name : '')}" maxlength="40">
       <input class="field" data-mi="date" type="datetime-local" value="${val}">
       <select class="field" data-mi="place"><option value="">${t('birthPlace')}</option>${opts}</select>
     </div>`;
@@ -375,13 +384,19 @@ LS.Pages = (function () {
     const where = [m.lagna ? t('fromLagna') : '', m.moon ? t('fromMoon') : ''].filter(Boolean).join(', ');
     return `<div class="md ${m.present && !m.strong ? 'bad' : 'good'}"><b>${who}</b><span>${m.present ? `${t('mangalYes')} (${where})${m.strong ? ' · ' + t('mangalStrong') : ''}` : t('mangalNo')}</span></div>`;
   }
+  // Keep what was typed when the form is redrawn (e.g. after a language switch).
+  function captureMilan() {
+    const boxes = document.querySelectorAll('.mi-person'); if (!boxes.length) return;
+    milan.draft = {};
+    boxes.forEach((box) => { const q = (k) => box.querySelector(`[data-mi="${k}"]`).value; milan.draft[box.dataset.role] = { name: q('name'), date: q('date'), place: q('place') }; });
+  }
   function readPerson(role) {
     const box = document.querySelector(`.mi-person[data-role="${role}"]`); if (!box) return null;
     const q = (k) => box.querySelector(`[data-mi="${k}"]`);
     const v = q('date').value, city = C.CITIES.find((c) => c.id === q('place').value);
     if (!v || !city) return null;
     const [d, tmv] = v.split('T'); const [yy, mm, dd] = d.split('-').map(Number); const [hh, mi] = tmv.split(':').map(Number);
-    const ms = TZ.fromCivil(yy, mm - 1, dd, city.tz) + (hh * 60 + mi) * 60000;
+    const ms = TZ.fromCivil(yy, mm - 1, dd, city.tz, hh, mi);
     return { name: q('name').value.trim(), ms, lat: city.lat, lon: city.lon, tz: city.tz, id: city.id };
   }
   function milanAction(act, target) {
@@ -389,7 +404,7 @@ LS.Pages = (function () {
       const g = readPerson('g'), b = readPerson('b');
       if (!g || !b) { C.toast(t('milanMissing')); return true; }
       const chart = (p) => LS.Jyotish.chart(A.MakeTime(new Date(p.ms)), new A.Observer(p.lat, p.lon, 0));
-      milan.g = g; milan.b = b; milan.res = LS.Milan.match(chart(g), chart(b));
+      milan.g = g; milan.b = b; milan.draft = null; milan.res = LS.Milan.match(chart(g), chart(b));
       C.S.milan = { g, b }; C.persist();
       $('jyBody').innerHTML = milanHtml();
       const res = $('jyBody').querySelector('.mi-result'); if (res) res.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -460,7 +475,7 @@ LS.Pages = (function () {
       try {
         const st = await LN().requestPermissions();
         if (st.display !== 'granted') { p.on = false; C.persist(); C.toast(t('remDenied'), 5000); }
-      } catch (e) { p.on = false; }
+      } catch (e) { p.on = false; C.persist(); }
     }
     renderReminders();
     schedule();
@@ -481,13 +496,13 @@ LS.Pages = (function () {
       const [hh, mm] = (p.time || '06:00').split(':').map(Number);
       const list = [];
       res.days.forEach((d, i) => {
-        const at = d.ms + (hh * 60 + mm) * 60000;
+        const at = TZ.fromCivil(d.y, d.m, d.d, z, hh, mm);
         if (at < Date.now() + 60000) return;
         const evs = d.events.filter((e) => p[KIND_TO_PREF[e.kind]] && e.kind !== 'eclipse');
         if (!p.daily && !evs.length) return;
         let body = `${C.tithiName(d.tithi)} · ${nm(V.nakshatras[d.nak])}`;
         if (p.daily) {
-          try { const mu = LS.Muhurta.day(o, d.ms); if (!mu.polar) body += ` · ☀️ ${tm(mu.sunrise)} · ${t('mu_rahu')} ${span(mu.rahu[0], mu.rahu[1])}`; } catch (e) { /* ignore */ }
+          try { const mu = LS.Muhurta.day(o, d.ms, { dayEnd: TZ.addDays(d.ms, 1, z), weekday: d.wd }); if (!mu.polar) body += ` · ☀️ ${tm(mu.sunrise)} · ${t('mu_rahu')} ${span(mu.rahu[0], mu.rahu[1])}`; } catch (e) { /* ignore */ }
         }
         const title = evs.length ? evs.map((e) => nm(e.name)).join(' · ') : `${nm(V.varas[d.wd])} · ${t('panchang')}`;
         list.push({ id: 1000 + i, title, body, schedule: { at: new Date(at), allowWhileIdle: true }, extra: { day: d.key } });
@@ -544,11 +559,12 @@ LS.Pages = (function () {
     C.afterTimeJump(); renderToday();
   }
   // Called by app.js when the place or language changes.
-  function invalidateAll() { today = null; tonightCache = null; cal.y = cal.y; }
   function onLocation() { today = null; tonightCache = null; if (prefs().on) schedule(); }
+  // Language change: reschedule reminders in the new language and keep the Milan form's input.
+  function onLanguage() { captureMilan(); if (prefs().on) schedule(); }
 
   return {
-    init, renderToday, renderCalendar, renderTonightPanel, updateFinder, milanHtml, milanAction, invalidateAll, onLocation,
+    init, renderToday, renderCalendar, renderTonightPanel, updateFinder, milanHtml, milanAction, onLocation, onLanguage,
     resetCalendar() { cal.y = null; },
     get milanReady() { return !!milan.res; },
   };

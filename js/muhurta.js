@@ -21,21 +21,23 @@ LS.Muhurta = (function () {
   const weekdayAt = (t, lon) => new Date(t + lon / 15 * 3600e3).getUTCDay();
   const part = (start, len, k) => [start + (k - 1) * len, start + k * len];
 
-  // dayStartMs: local midnight of the civil date.
-  function day(observer, dayStartMs) {
+  // dayStartMs: local midnight of the civil date. opts.dayEnd: the next local midnight (days are 23 or 25 h
+  // long when clocks change); opts.weekday: the civil weekday (0 = Sunday) of that date.
+  function day(observer, dayStartMs, opts = {}) {
     const D = 86400000;
+    const dayEnd = opts.dayEnd || dayStartMs + D;
     const sunrise = rise(A.Body.Sun, observer, dayStartMs, +1, 1);
     const sunset = sunrise ? rise(A.Body.Sun, observer, sunrise, -1, 1) : rise(A.Body.Sun, observer, dayStartMs, -1, 1);
     const out = {
       dayStart: dayStartMs, sunrise, sunset,
       moonrise: rise(A.Body.Moon, observer, dayStartMs, +1, 1),
       moonset: rise(A.Body.Moon, observer, dayStartMs, -1, 1),
-      vara: weekdayAt((sunrise || dayStartMs + D / 2), observer.longitude),
+      vara: opts.weekday != null ? opts.weekday : weekdayAt((sunrise || dayStartMs + D / 2), observer.longitude),
     };
     // Rise/set found by searching one day ahead may belong to the next civil day.
-    for (const k of ['moonrise', 'moonset']) if (out[k] && out[k] >= dayStartMs + D) out[k] = null;
+    for (const k of ['moonrise', 'moonset']) if (out[k] && out[k] >= dayEnd) out[k] = null;
     if (!sunrise || !sunset || sunset < sunrise) { out.polar = true; return out; }
-    const nextSunrise = rise(A.Body.Sun, observer, sunset, +1, 1.2);
+    const nextSunrise = rise(A.Body.Sun, observer, sunset, +1, 1.2); // null before a polar night: no night Choghadiya
     const prevSunset = rise(A.Body.Sun, observer, sunrise, -1, -1.2);
     out.nextSunrise = nextSunrise;
     const dayLen = sunset - sunrise, e8 = dayLen / 8, m15 = dayLen / 15;
