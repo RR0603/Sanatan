@@ -91,7 +91,7 @@ LS.Calendar = (function () {
     return out;
   }
 
-  // Start and end of the tithi `idx` that is in progress (or next) around `nearMs`.
+  // Start and end of the tithi `idx` nearest to `nearMs` (in progress, or starting within ~1.5 days either side).
   function tithiSpan(idx, nearMs) {
     const t = A.MakeTime(new Date(nearMs - 1.6 * DAY));
     const s = A.SearchMoonPhase(idx * 12, t, 4);
@@ -152,8 +152,14 @@ LS.Calendar = (function () {
       const res = days.map(() => []);
       for (let i = 1; i < days.length - 1; i++) {
         if (v[i] !== v[i - 1]) res[i].push({ tithi: v[i] });
+        // A skipped tithi goes to whichever day's observance time is nearer to it (before or after).
         const skipped = (v[i + 1] - v[i] + 30) % 30 - 1;
-        for (let k = 1; k <= skipped && k < 3; k++) res[i].push({ tithi: (v[i] + k) % 30, kshaya: true });
+        for (let k = 1; k <= skipped && k < 3; k++) {
+          const tithi = (v[i] + k) % 30, r0 = ruleTime(days[i], rule), r1 = ruleTime(days[i + 1], rule);
+          const sp = tithiSpan(tithi, (r0 + r1) / 2);
+          const later = sp && i + 1 < days.length - 1 && r1 - sp.end < sp.start - r0;
+          res[later ? i + 1 : i].push({ tithi, kshaya: true });
+        }
       }
       owned[rule] = res;
       return res;

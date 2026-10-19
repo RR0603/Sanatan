@@ -283,7 +283,7 @@
     }
     if (S.mode === 'sky') LS.Pages.updateFinder(selected, selected ? objEnu(selected, as) : null, view.basis, view.fov);
     dirty = false; lastFrame = now;
-    if (now - lastHud > 250) { lastHud = now; renderClock(); renderReadout(); refreshPanchang(false); if (selected && !$('sheet').hidden) updateSheetLive(); }
+    if (now - lastHud > 250) { lastHud = now; renderClock(); renderReadout(); renderPlaceChip(); refreshPanchang(false); if (selected && !$('sheet').hidden) updateSheetLive(); }
   }
 
   // ---------- gestures ----------
@@ -584,6 +584,13 @@
     else if (live) { sub.textContent = t('realTime'); sub.classList.remove('tithi'); }
     else { sub.textContent = `${fmt(clock.sim, { day: 'numeric', month: 'short', year: 'numeric' })} · ${clock.rate === 0 ? t('paused') : '×' + rateText()}`; sub.classList.remove('tithi'); }
     if (!$('timebar').hidden) syncTimebar(true);
+  }
+  // Nova: a small glass chip at the top with the place and whether the sky is live.
+  function renderPlaceChip() {
+    const live = clock.rate === 1 && Math.abs(clock.sim - Date.now()) < 5000;
+    const name = nm(S.loc).replace(/^(My location|मेरा स्थान) · .*/, I.lang === 'hi' ? 'मेरा स्थान' : 'My location');
+    $('pcText').textContent = live ? name : `${name} · ${fmtShort(clock.sim)}`;
+    $('placeChip').classList.toggle('live', live);
   }
   function renderReadout() {
     const aa = view.basis ? azAltOf(view.basis.f) : { az: view.az, alt: view.alt };
@@ -1218,7 +1225,7 @@
     if (!$('panchang').hidden) renderPanchang();
     if (selected && !$('sheet').hidden) showSheet(selected);
     if ($('searchInput').value) runSearch($('searchInput').value);
-    placeGlider(); jyRefresh(true); renderProRow(); renderPage();
+    placeGlider(); jyRefresh(true); renderProRow(); renderPage(); renderPlaceChip();
     if (!$('tonight').hidden) LS.Pages.renderTonightPanel();
     $('appVersion').textContent = `${t('versionLabel')} ${LS.CONFIG.version}`;
     if (!$('paywall').hidden) renderPaywall();
@@ -1290,6 +1297,7 @@
   $('btnShowUi').innerHTML = ICON.eyeOpen;
   document.querySelectorAll('[data-close]').forEach((b) => { b.innerHTML = ICON.close; });
   $('btnMenu').addEventListener('click', () => toggle('drawer'));
+  $('placeChip').addEventListener('click', () => { if (S.mode === 'sky') { $('dock').hidden = true; toggle('timebar'); } else open('drawer'); });
   $('hudClock').addEventListener('click', () => { $('dock').hidden = true; toggle('timebar'); });
   const zoomBy = (k) => { view.anim = { t0: performance.now(), dur: 300, az0: view.az, daz: 0, alt0: view.alt, alt1: view.alt, fov0: view.fov, fov1: clamp(view.fov * k, 1, 180) }; };
   $('btnZoomIn').addEventListener('click', () => zoomBy(1 / 1.6));

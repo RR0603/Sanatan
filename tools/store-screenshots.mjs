@@ -19,31 +19,40 @@ const DEVICES = [
   ['play-phone', 360, 640, 3],    // 1080 x 1920 — Google Play phone
 ];
 
-const NIGHT = Date.parse('2026-10-18T22:00:00Z'); // 03:30 IST, Ujjain: Orion, Gemini, Guru and Mangala rising
+const NIGHT = Date.parse('2026-10-18T22:00:00Z'); // 03:30 IST, Ujjain: Orion, Gemini, Guru and Mangala rising (Navratri week)
 
 const SCENES = [
   { id: '1-sky', cap: ['Point your phone.', 'See the Vedic sky.'], sub: 'Nakshatras, rashis and grahas over the real sky — live',
     run: async (p) => { await sky(p, 98, 36, 82); } },
-  { id: '2-graha', cap: ['Every graha,', 'every nakshatra.'], sub: 'Rashi, nakshatra, pada, dignity, rise and set',
-    run: async (p) => { await sky(p, 98, 36, 70); await p.evaluate(() => { const a = window.__antariksha; a.select({ type: 'graha', id: 'guru' }); a.goTo({ type: 'graha', id: 'guru' }, false); }); await p.waitForTimeout(1300); } },
-  { id: '3-panchang', cap: ['Panchang for', 'where you stand.'], sub: 'Tithi, nakshatra, yoga, karana, lagna — to the minute',
-    run: async (p) => { await sky(p, 160, 30, 90); await p.click('#hudClock'); await p.click('#btnPanchang'); await p.waitForTimeout(700); } },
-  { id: '4-bhachakra', cap: ['Bhachakra —', 'the living sky as a chart.'], sub: 'Drag the wheel to travel through time',
-    run: async (p) => { await sky(p, 98, 36, 82); await p.click('.mode[data-mode="jyotish"]'); await p.waitForTimeout(1200); } },
-  { id: '5-kundali', cap: ['Your Janma Kundali', '& Dasha.'], sub: 'North & South Indian, Navamsa D9, Vimshottari — Antariksha Pro',
+  { id: '2-today', cap: ['Your day,', 'beautifully timed.'], sub: 'Tithi, Rahu Kaal, Abhijit, Choghadiya — for where you stand',
+    run: async (p) => { await sky(p, 160, 30, 90); await mode(p, 'today'); } },
+  { id: '3-calendar', cap: ['Never miss', 'an Ekadashi.'], sub: 'Festivals, vrats and eclipses — with gentle reminders',
+    run: async (p) => { await mode(p, 'calendar'); } },
+  { id: '4-tonight', cap: ["Tonight's sky,", 'found for you.'], sub: 'See what is up — an arrow guides your phone to it',
     run: async (p) => {
-      await p.click('.mode[data-mode="jyotish"]'); await p.waitForTimeout(600);
-      await p.click('#jyTabs [data-tab="janma"]'); await p.fill('#bName', 'Arjun'); await p.fill('#bDate', '1990-06-15T06:30');
-      await p.selectOption('#bPlace', 'delhi'); await p.click('[data-act="cast"]'); await p.waitForTimeout(1000);
-      await p.evaluate(() => document.querySelector('.jy-panel').scrollIntoView({ block: 'start' })); await p.waitForTimeout(300);
-    } },
-  { id: '6-hindi', cap: ['हिन्दी · English', 'Jyotish & Western names'], sub: 'वैदिक आकाश — आपकी भाषा में',
-    run: async (p) => {
-      await p.click('#btnMenu'); await p.click('#langSeg [data-lang="hi"]'); await p.keyboard.press('Escape');
-      await p.evaluate(() => document.getElementById('scrim').click()); await p.waitForTimeout(400);
       await sky(p, 98, 36, 82);
+      await p.evaluate(() => { document.getElementById('dock').hidden = true; });
+      await p.click('#btnLayers'); await p.click('.dock-btn[data-key="tonightBtn"]'); await p.waitForTimeout(800);
+    } },
+  { id: '5-kundali', cap: ['Kundali, Dasha', '& Milan.'], sub: 'North & South Indian, Navamsa, Vimshottari, 36-guna matching',
+    run: async (p) => {
+      await mode(p, 'jyotish');
+      await p.click('#jyTabs [data-tab="milan"]'); await p.waitForTimeout(300);
+      const fill = async (role, name, dt, place) => { const q = (k) => `.mi-person[data-role="${role}"] [data-mi="${k}"]`; await p.fill(q('name'), name); await p.fill(q('date'), dt); await p.selectOption(q('place'), place); };
+      await fill('g', 'Arjun', '1990-06-15T06:30', 'delhi'); await fill('b', 'Meera', '1992-03-10T14:00', 'mumbai');
+      await p.click('[data-act="milan:match"]'); await p.waitForTimeout(1200);
+      await p.evaluate(() => document.querySelector('.mi-result').scrollIntoView({ block: 'start' })); await p.waitForTimeout(400);
+    } },
+  { id: '6-bhachakra', cap: ['Bhachakra —', 'the living sky as a chart.'], sub: 'Drag the wheel to travel through time',
+    run: async (p) => { await sky(p, 98, 36, 82); await mode(p, 'jyotish'); } },
+  { id: '7-hindi', cap: ['हिन्दी · English', 'Jyotish & Western names'], sub: 'वैदिक आकाश — आपकी भाषा में',
+    run: async (p) => {
+      await p.click('#btnMenu'); await p.click('#langSeg [data-lang="hi"]');
+      await p.evaluate(() => document.getElementById('scrim').click()); await p.waitForTimeout(400);
+      await mode(p, 'today');
     } },
 ];
+async function mode(p, m) { await p.evaluate((m) => window.__antariksha.setMode(m), m); await p.waitForTimeout(1300); }
 
 async function sky(p, az, alt, fov) {
   await p.evaluate(([az, alt, fov, t]) => {

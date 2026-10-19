@@ -46,13 +46,18 @@ LS.Pages = (function () {
     const mu = LS.Muhurta.day(o, day0);
     const ref = mu.sunrise || day0 + 6 * 3600e3;
     const p = Sky.panchang(A.MakeTime(new Date(ref)), o);
-    let upcoming = [], todays = [];
-    try {
-      const r = LS.Calendar.range(o, tz(), day0, 45);
-      upcoming = r.events.filter((e) => e.kind !== 'pradosh' && e.kind !== 'vinayaka' && e.kind !== 'shivaratri' && e.kind !== 'sankashti');
-      todays = r.days[0].events;
-    } catch (e) { console.warn(e); }
-    today = { key, day0, mu, p, upcoming, todays };
+    today = { key, day0, mu, p, upcoming: [], todays: [] };
+    // The 45-day festival scan is the slow part: paint the page first, then fill it in.
+    const fill = () => {
+      if (!today || today.key !== key) return;
+      try {
+        const r = LS.Calendar.range(o, tz(), day0, 45);
+        today.upcoming = r.events.filter((e) => e.kind !== 'pradosh' && e.kind !== 'vinayaka' && e.kind !== 'shivaratri' && e.kind !== 'sankashti');
+        today.todays = r.days[0].events;
+      } catch (e) { console.warn(e); }
+      if (C.S.mode === 'today') renderToday();
+    };
+    setTimeout(fill, 30);
     return today;
   }
 

@@ -33,10 +33,10 @@ const near = (ms, ref, sec = 90) => Math.abs(Date.parse(`${new Date(ms + 330 * 6
   const on = (id) => ev.filter((e) => e.id === id).map((e) => e.key).join(',');
   const expect = {
     ugadi: ['navvarsha', '2026-03-19'], ramnavami: ['ramnavami', '2026-03-26'], hanuman: ['hanuman', '2026-04-02'],
-    gurupurnima: ['gurupurnima', '2026-07-29'], rakhi: ['rakhi', '2026-08-28'], janmashtami: ['janmashtami', '2026-09-03'],
+    gurupurnima: ['gurupurnima', '2026-07-29'], rakhi: ['rakhi', '2026-08-28'], janmashtami: ['janmashtami', '2026-09-04'],
     ganesh: ['ganesh', '2026-09-14'], navratri: ['navratri', '2026-10-11'], dussehra: ['dussehra', '2026-10-20'],
     karvachauth: ['karvachauth', '2026-10-29'], dhanteras: ['dhanteras', '2026-11-06'], diwali: ['diwali', '2026-11-08'],
-    mahashivaratri: ['mahashivaratri', '2026-02-15'], holi: ['holi', '2026-03-04'], vasant: ['vasantpanchami', '2026-01-23'],
+    mahashivaratri: ['mahashivaratri', '2026-02-15'], holika: ['holika', '2026-03-02'], govardhan: ['govardhan', '2026-11-10'], holi: ['holi', '2026-03-04'], vasant: ['vasantpanchami', '2026-01-23'],
   };
   for (const [name, [id, date]] of Object.entries(expect)) check(`${name} on ${date}`, on(id) === date, on(id));
   const ek = ev.filter((e) => e.kind === 'ekadashi');

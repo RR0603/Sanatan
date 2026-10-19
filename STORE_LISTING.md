@@ -24,7 +24,7 @@ The wording leads with astronomy and the Panchang on purpose. The reason is expl
 
 **Play short description (80)**: Point your phone at the sky: nakshatras, grahas and today's Panchang, live. [75]
 
-**Apple promotional text (170)**: The Vedic sky, live. Point your phone up to see the 27 nakshatras, 12 rashis and the navagraha over the real sky, with today's Panchang for where you stand. [156]
+**Apple promotional text (170)**: New: Today's Rahu Kaal and Choghadiya, a festival and Ekadashi calendar with reminders, and Kundali Milan — in a beautiful new glass design. [140]
 
 **Apple keywords (100)**: nakshatra,panchang,planetarium,star map,astronomy,vedic,hindu,tithi,constellation,graha,rashi,sky [97]
 
@@ -47,14 +47,28 @@ FOLLOWS YOUR PHONE, 360°
 • Compass fusion with true-north correction using the World Magnetic Model
 • AR camera view: the sky drawn over the live camera picture
 
-PANCHANG FOR WHERE YOU STAND
+TODAY: YOUR DAY, BEAUTIFULLY TIMED
 • Tithi, nakshatra, yoga, karana and vara, with end times
-• Amanta masa, Vikram and Shaka samvat, ritu, ayana, lagna, sunrise and sunset
-• Calculated on your phone for your exact place and moment, and works offline
+• Sunrise, sunset, moonrise and moonset, and the Moon's phase
+• Rahu Kaal, Yamaganda, Gulika Kaal, Abhijit and Brahma Muhurta, with a live "ends in" status
+• Day and night Choghadiya
+• Share the day's Panchang on WhatsApp in one tap
+• Calculated on your phone for your exact place, and works offline
+
+FESTIVALS & VRATS CALENDAR
+• Every Ekadashi by name, Purnima, Amavasya, Pradosh, Sankashti and Vinayaka Chaturthi, Masik Shivaratri and Sankranti
+• Diwali, Navratri, Dussehra, Holi, Janmashtami, Ganesh Chaturthi, Raksha Bandhan, Karva Chauth, Maha Shivaratri and more, worked out for your city
+• Solar and lunar eclipses (grahan), with times and whether you can see them from where you are
+• Optional morning reminders so you never miss an Ekadashi
+
+TONIGHT'S SKY
+• See which grahas are up tonight, when and where to look
+• Tap one and an arrow on the screen guides your phone to it
 
 BHACHAKRA AND JYOTISH
 • The living sky drawn as a chart, with the lagna on the eastern horizon. Drag the wheel to travel through time.
 • Gochara (transit) kundali in North and South Indian styles
+• Kundali Milan: 36-guna Ashtakoota matching with Mangal dosha check
 • Graha details: rashi, nakshatra, pada, bhava, dignity, drishti, rising and setting times
 
 TIME TRAVEL
@@ -81,7 +95,17 @@ No account, no ads and no tracking. Your location, camera and birth details neve
 Made by Living Sanatan · livingsanatan.com
 ```
 
-**What's new (version 1.0.0)**: First release of Antariksha. Explore the Vedic sky live, with the Panchang, Bhachakra and AR camera view.
+**What's new (version 1.1.0)**:
+
+```
+The biggest update yet:
+• Nova — a brand-new glass design (the original look is still in Settings → Design)
+• Today — Rahu Kaal, Abhijit, Choghadiya, sunrise and moonrise, with a live status
+• Calendar — festivals, Ekadashis, vrats and eclipses for your city, with reminders
+• Tonight — see what's up and let the arrow guide your phone to it
+• Kundali Milan — 36-guna matching
+• Share the day's Panchang in one tap
+```
 
 ## हिन्दी (Hindi localisation)
 
@@ -132,11 +156,12 @@ Made by Living Sanatan · livingsanatan.com
 ## Screenshot captions (already built into the images in `store/`)
 
 1. Point your phone. See the Vedic sky.
-2. Every graha, every nakshatra.
-3. Panchang for where you stand.
-4. Bhachakra: the living sky as a chart.
-5. Your Janma Kundali & Dasha. (Pro)
-6. हिन्दी · English, with Jyotish & Western names
+2. Your day, beautifully timed. (Today)
+3. Never miss an Ekadashi. (Calendar)
+4. Tonight's sky, found for you. (Tonight + finder arrow)
+5. Kundali, Dasha & Milan.
+6. Bhachakra: the living sky as a chart.
+7. हिन्दी · English, with Jyotish & Western names
 
 ## In-app product
 
@@ -156,16 +181,22 @@ over the live sky, and calculates the traditional Indian calendar (Panchang) on-
 
 No account or sign-in is needed. Everything works offline.
 
-To review:
-1. Tap "Follow my phone" (motion permission), then point the device around. Tap the camera
-   button at the bottom right for the AR view.
-2. Tap the date/time at the bottom to travel in time; tap the tithi to open the Panchang.
-3. Switch to "Jyotish" at the top for the Bhachakra wheel and the chart of the current moment.
-4. In-app purchase "Antariksha Pro" (non-consumable): tap the "Dasha" or "Birth" tab in
+To review (the tab bar at the bottom has Sky, Today, Calendar and Jyotish):
+1. Sky: tap the compass button (motion permission), then point the device around. Tap the
+   camera button next to it for the AR view. The layers button (bottom left) → "Tonight"
+   lists visible planets; tap one and an arrow guides the device to it.
+2. Today: the day's Panchang, sunrise/moonrise, Rahu Kaal and Choghadiya. The share button
+   shares the day's Panchang as text.
+3. Calendar: festivals, vrats and eclipses for the month. The bell opens optional local
+   reminders (notification permission is requested only when the user turns them on).
+4. Jyotish: the Bhachakra wheel, the chart of the current moment and Kundali Milan.
+5. In-app purchase "Antariksha Pro" (non-consumable): tap the "Dasha" or "Birth" tab in
    Jyotish to open the paywall. "Restore purchases" is on the paywall and in the menu.
+6. Settings (menu, top left) → Design switches between the new and the classic look.
 
 Location is used only to calculate the sky for the user's place; it is not sent anywhere.
 Camera frames are only displayed, never stored or transmitted.
+Reminders are local notifications scheduled on the device; no server or push service is used.
 ```
 
 ## Apple: App Privacy answers
@@ -185,5 +216,6 @@ Camera frames are only displayed, never stored or transmitted.
 | Location | **Not collected.** It is used on the device only, and data processed only on the device does not need to be declared. |
 | Photos and videos / camera | Not collected |
 | App activity, identifiers, etc. | Not collected |
+| Notifications | Local reminders only; nothing is collected |
 
 Play's *Data shared* question covers transfers to third parties, but service providers acting on your behalf (RevenueCat, Google Play billing) are excluded. So answer **No sharing**.

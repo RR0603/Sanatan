@@ -3,21 +3,49 @@
 A real-time, Stellarium-style planetarium for the Vedic sky, built for [livingsanatan.com](https://livingsanatan.com).
 Point your phone at the sky and the map follows; switch on the camera to see the nakshatras over the real world.
 
-## Two modes, one live sky
+## Four sections, one live sky
 
-Switch between them with the toggle in the top bar:
+Switch between them with the tab bar at the bottom (Nova design) or the switch at the top (Classic design):
 
-- **Akasha (Sky)**: a Stellarium-style planetarium. Drag, zoom, use the sensor or camera, and travel in time.
+- **Sky (Akasha)**: a Stellarium-style planetarium. Drag, zoom, use the sensor or camera, and travel in time. **Tonight** (in the layers sheet) lists the grahas that are up tonight and when to look; tap one and an arrow at the screen edge guides your phone to it.
+- **Today**: the day's Panchang for your place. It shows sunrise and sunset, moonrise and moonset, and the Moon's phase. It shows Rahu Kaal, Yamaganda, Gulika Kaal, Abhijit and Brahma Muhurta on a day timeline, with a live "ends in" status. It also has day and night Choghadiya, tonight's planets and upcoming festivals. One tap shares the day as text.
+- **Calendar**: a month grid with the tithi at sunrise for every day. It marks every Ekadashi (by name), Purnima, Amavasya, Pradosh, Chaturthi, Masik Shivaratri and Sankranti, 32 major festivals, and solar and lunar eclipses visible from your place. Optional morning reminders run in the apps as local notifications.
 - **Jyotish**: the same moment and place as a Vedic chart.
   - **Bhachakra wheel**: the 27 nakshatras with their 108 padas, the 12 rashis as whole-sign bhavas, and the grahas at their true sidereal longitudes. Lagna sits on the eastern horizon (left), so the upper half of the wheel is the sky above you right now. Drag the wheel to travel in time (one turn is one sidereal day); tap a graha to see its drishti.
   - **Kundali**: North Indian or South Indian, Rashi (D1) or Navamsa (D9), with the twelve bhavas, their lords and occupants.
   - **Grahas**: rashi and degree, nakshatra and pada, nakshatra lord, bhava, dignity (uchcha, svakshetra, mitra, sama, shatru, neecha), vakri and asta.
   - **Dasha**: Vimshottari mahadashas and antardashas, with the period running today highlighted.
   - **Birth**: enter a birth date, time and place to cast a Janma Kundali. "See this sky" then shows the actual sky at that moment.
+  - **Milan**: Ashtakoota (36 guna) matching of two birth charts, with each koota explained and a Mangal dosha check.
+
+**Design**: Settings → Design switches between **Nova** (the default) and **Classic**:
+
+- **Nova**: liquid glass, aurora accents and a floating tab bar.
+- **Classic**: the original look.
+
+### How festivals are worked out
+
+Observances follow the amanta lunar month and the tithi that prevails at the time each one is kept:
+
+| Time rule | Observances |
+| --- | --- |
+| Sunrise (udaya tithi) | Most festivals, Ekadashi |
+| Midday | Rama Navami, Ganesh Chaturthi |
+| Afternoon | Dussehra, Bhai Dooj |
+| Evening (pradosh) | Diwali, Dhanteras, Pradosh |
+| Midnight (nishita) | Janmashtami, Shivaratri |
+| Moonrise | Karva Chauth, Sankashti |
+
+- **Kshaya tithis** (a tithi that never prevails at its time rule) are handled: the observance goes to the day on which that tithi falls.
+- **Vriddhi tithis** (prevailing at two consecutive rule times) are handled: the first day keeps the observance.
+- **Adhika months** are handled: no festivals are placed in them, and their Ekadashis are Padmini and Parama.
+- **Raksha Bandhan and Holika Dahan** follow the Bhadra rule.
+- **Sankranti** falls on the day the Sun enters the rashi, or on the next day if that happens after sunset.
+- **Regional traditions** differ (Smarta and Vaishnava Ekadashi, for example), so the day detail shows each tithi's exact start and end.
 
 ## Free and Pro
 
-Almost everything is free: the sky map, sensor and AR camera, Panchang, Bhachakra, the transit Kundali, graha details, time travel and both languages.
+Almost everything is free: the sky map, sensor and AR camera, Today, the festival calendar and reminders, Tonight and the finder, Kundali Milan, Panchang, Bhachakra, the transit Kundali, graha details, time travel, both designs and both languages.
 **Antariksha Pro** is a one-time purchase (₹11 in India, about $3.33 elsewhere) that unlocks the personal features:
 
 - Janma Kundali and the birth-sky view
@@ -103,6 +131,15 @@ Planetary positions come from [Astronomy Engine](https://github.com/cosinekitty/
 
 - **Panchang** (Ujjain, 18 Oct 2026): tithi and nakshatra end times agreed to within a minute; yoga, karana, vara, masa and samvat all matched.
 - **Birth chart** (New Delhi, 15 Jun 1990, 06:30): lagna, all nine grahas' rashi, nakshatra, pada, bhava and dignity, and every D9 placement matched exactly. Vimshottari antardasha boundaries matched, and mahadasha boundaries agreed to within about 3 hours.
+- **Today timings** (Ujjain, 19 Oct 2026):
+  - Sunrise, sunset and moonrise matched to within a second.
+  - Rahu Kaal, Yamaganda, Gulika, Abhijit and Brahma Muhurta all matched to within a second.
+  - The day Choghadiya matched.
+  - Night Choghadiya follows the common Drik order (Sunday night begins with Shubh). Some engines use a different order.
+- **Kundali Milan**: three test couples matched KundaliMCP on all eight kootas: 30.5, 23.5 and 6.5 of 36.
+- **Festivals**: 2026 dates for New Delhi were checked against KundaliMCP's tithi timings. Examples: Ugadi 19 Mar, Holika Dahan 2 Mar, Raksha Bandhan 28 Aug, Janmashtami 4 Sep, Dussehra 20 Oct and Diwali 8 Nov.
+
+`npm test` runs all of these checks.
 
 ## Project layout
 
@@ -119,6 +156,12 @@ js/app.js            gestures, time, search, panels, settings, paywall
 js/config.js         launch settings: RevenueCat keys, prices, store links
 js/pro.js            Pro entitlement (RevenueCat in the apps, store links on the web)
 js/magnetic.js       World Magnetic Model 2025 (true north for the compass)
+js/tz.js             civil dates and time zones
+js/muhurta.js        Today: sunrise/moonrise, Rahu Kaal, Abhijit, Brahma Muhurta, Choghadiya
+js/calendar.js       festivals, Ekadashis, vrats, Sankranti and eclipses
+js/milan.js          Ashtakoota (36 guna) matching and Mangal dosha
+js/pages.js          Today, Calendar, Tonight + finder, Milan, reminders, share
+css/nova.css         Nova design (default); css/app.css is the base and the Classic look
 js/vedic.js          nakshatra / rashi / graha / Panchang vocabulary (EN + HI)
 js/i18n.js           interface strings (EN + HI)
 js/data/*.js         generated star and constellation data
