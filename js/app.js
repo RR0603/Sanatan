@@ -89,7 +89,7 @@
     atmosphere: true, ground: true, milkyway: true, labels: true, starNames: true, night: false,
     groundOpacity: 0.82, starBrightness: 1, arFov: 62, compassOffset: 0,
     mode: 'sky', names: 'vedic', jyTab: 'kundali', kStyle: 'north', kVarga: 'D1', birth: null, profiles: [],
-    theme: 'nova', reminders: null, milan: null,
+    theme: 'nova', tabbar: false, reminders: null, milan: null,
     view: null,
   };
   const KEY = 'antariksha.v1';
@@ -466,11 +466,14 @@
     $('langSeg').querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.lang === I.lang));
     $('namesSeg').querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.names === Nm.culture));
     $('themeSeg').querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.theme === S.theme));
+    $('tabbarToggle').classList.toggle('on', !!S.tabbar);
   }
   function applyTheme() {
     S.theme = S.theme === 'classic' ? 'classic' : 'nova';
     document.body.classList.toggle('theme-nova', S.theme === 'nova');
     document.body.classList.toggle('theme-classic', S.theme === 'classic');
+    // The bottom tab bar is optional (off unless turned on in Settings → Design).
+    document.body.classList.toggle('has-tabbar', !!S.tabbar);
     const meta = document.querySelector('meta[name="theme-color"]');
     if (meta) meta.content = S.theme === 'nova' ? '#050714' : '#04060f';
     requestAnimationFrame(placeGlider);
@@ -1234,6 +1237,7 @@
   }
   $('langSeg').querySelectorAll('button').forEach((b) => b.addEventListener('click', () => { S.lang = b.dataset.lang; I.set(S.lang); persist(); }));
   $('themeSeg').querySelectorAll('button').forEach((b) => b.addEventListener('click', () => { S.theme = b.dataset.theme; applyTheme(); }));
+  $('tabbarToggle').addEventListener('click', () => { S.tabbar = !S.tabbar; applyTheme(); invalidate(); });
   $('btnRemDrawer').addEventListener('click', () => { close('drawer'); $('btnReminders').click(); });
   I.onChange(applyLang);
 

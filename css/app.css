@@ -787,3 +787,7 @@ html[lang="hi"] .cal-wk span { text-transform: none; letter-spacing: 0; }
 .place-chip { display: none; }
 .scrim { z-index: 19; }
 .drawer { z-index: 20; }
+.toggle.tabbar-opt { width: 100%; margin-top: 8px; padding: 10px 12px; }
+.toggle.tabbar-opt span { display: flex; flex-direction: column; gap: 2px; }
+.toggle.tabbar-opt b { font-size: 13px; font-weight: 600; }
+.toggle.tabbar-opt small { font-size: 11px; color: var(--muted); }

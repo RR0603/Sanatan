@@ -5,7 +5,7 @@ Point your phone at the sky and the map follows; switch on the camera to see the
 
 ## Four sections, one live sky
 
-Switch between them with the tab bar at the bottom (Nova design) or the switch at the top (Classic design):
+Switch between them with the switch at the top. Settings → Design → **Bottom tab bar** (off by default) moves them to a floating bar at the bottom of the screen instead:
 
 - **Sky (Akasha)**: a Stellarium-style planetarium. Drag, zoom, use the sensor or camera, and travel in time. **Tonight** (in the layers sheet) lists the grahas that are up tonight and when to look; tap one and an arrow at the screen edge guides your phone to it.
 - **Today**: the day's Panchang for your place. It shows sunrise and sunset, moonrise and moonset, and the Moon's phase. It shows Rahu Kaal, Yamaganda, Gulika Kaal, Abhijit and Brahma Muhurta on a day timeline, with a live "ends in" status. It also has day and night Choghadiya, tonight's planets and upcoming festivals. One tap shares the day as text.
@@ -20,7 +20,7 @@ Switch between them with the tab bar at the bottom (Nova design) or the switch a
 
 **Design**: Settings → Design switches between **Nova** (the default) and **Classic**:
 
-- **Nova**: liquid glass, aurora accents and a floating tab bar.
+- **Nova**: liquid glass and aurora accents.
 - **Classic**: the original look.
 
 ### How festivals are worked out

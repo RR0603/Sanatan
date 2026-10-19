@@ -181,7 +181,7 @@ over the live sky, and calculates the traditional Indian calendar (Panchang) on-
 
 No account or sign-in is needed. Everything works offline.
 
-To review (the tab bar at the bottom has Sky, Today, Calendar and Jyotish):
+To review (the switch at the top has Sky, Today, Calendar and Jyotish):
 1. Sky: tap the compass button (motion permission), then point the device around. Tap the
    camera button next to it for the AR view. The layers button (bottom left) → "Tonight"
    lists visible planets; tap one and an arrow guides the device to it.
@@ -192,7 +192,8 @@ To review (the tab bar at the bottom has Sky, Today, Calendar and Jyotish):
 4. Jyotish: the Bhachakra wheel, the chart of the current moment and Kundali Milan.
 5. In-app purchase "Antariksha Pro" (non-consumable): tap the "Dasha" or "Birth" tab in
    Jyotish to open the paywall. "Restore purchases" is on the paywall and in the menu.
-6. Settings (menu, top left) → Design switches between the new and the classic look.
+6. Settings (menu, top left) → Design switches between the new and the classic look, and can
+   move the section switch to a tab bar at the bottom of the screen.
 
 Location is used only to calculate the sky for the user's place; it is not sent anywhere.
 Camera frames are only displayed, never stored or transmitted.
