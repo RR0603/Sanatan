@@ -10,7 +10,7 @@ Most of what is left is **accounts, forms and pasting keys**. None of it needs a
 | Bundle ID / package name | `com.livingsanatan.antariksha` (fixed forever once published) |
 | In-app product | `antariksha_pro_lifetime`, non-consumable (one-time, never expires) |
 | Pro entitlement (RevenueCat) | `pro` |
-| Free | Sky map, AR camera, sensor tracking, Panchang, Bhachakra wheel, transit Kundali (D1), all grahas, time travel, Hindi and English |
+| Free | Sky map, AR camera, sensor tracking, Today (Rahu Kaal, Choghadiya), festival calendar and reminders, Tonight and the finder arrow, Kundali Milan, Panchang, Bhachakra wheel, transit Kundali (D1), all grahas, time travel, both designs, Hindi and English |
 | Pro | Janma Kundali (birth chart), birth-sky view, Vimshottari Dasha, Navamsa D9, saved family profiles |
 | Store copy | [`STORE_LISTING.md`](STORE_LISTING.md) |
 | Screenshots | [`store/`](store) (regenerate with `npm run store-shots`) |
@@ -343,6 +343,18 @@ Optional: under App Store localisation, add **Hindi** with the Hindi copy from `
   - Or offer a version without the Kundali/Dasha tabs. A free toggle in `js/app.js` (`PRO_TABS`) and the D9 option are the only places involved.
 
 ---
+
+## Version 1.1 (this update): what changes for the stores
+
+| | |
+| --- | --- |
+| New permission | **Notifications**, only when the user turns on reminders. Android 13+ shows the system prompt then; iOS asks the same way. Play needs no extra declaration: these are local notifications and the app does not use exact alarms. |
+| Privacy answers | Unchanged. Reminders are scheduled on the phone; no data leaves it. |
+| Screenshots | 7 per device in `store/`. Re-run `npm run store-shots` (needs `npm i --no-save playwright`) after design changes. |
+| "What's new" text | In [`STORE_LISTING.md`](STORE_LISTING.md). |
+| Pro | Unchanged. Every new feature is free. |
+
+If you publish 1.0.0 first, ship 1.1.0 with a `v1.1.0` tag. If 1.1.0 is your first release, just use it as is.
 
 ## Releasing updates
 

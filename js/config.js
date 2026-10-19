@@ -3,7 +3,7 @@ window.LS = window.LS || {};
 
 LS.CONFIG = {
   appId: 'com.livingsanatan.antariksha',
-  version: '1.0.0',
+  version: '1.1.0',
 
   pro: {
     // RevenueCat (https://app.revenuecat.com) handles App Store + Google Play purchases.
