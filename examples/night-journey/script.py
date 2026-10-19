@@ -1,0 +1,107 @@
+# [id, say (TTS), caption, pause_after_seconds]
+L=[
+# ── INVOCATION
+["inv0","{ॐ गं गणपतये नमः}.","Oṃ gaṃ gaṇapataye namaḥ.",1.0],
+["inv1","{वक्रतुण्ड महाकाय सूर्यकोटि समप्रभ}. {निर्विघ्नं कुरु मे देव सर्वकार्येषु सर्वदा}.","Vakratuṇḍa mahākāya sūryakoṭi samaprabha. Nirvighnaṃ kuru me deva sarvakāryeṣu sarvadā.",.6],
+["inv2","O Lord of the curved trunk, radiant as a million suns. Remove every obstacle from this journey.","O Lord of the curved trunk, radiant as a million suns… remove every obstacle from this journey.",1.2],
+["inv3","{ॐ नमः शिवाय}.","Oṃ namaḥ śivāya.",.8],
+["inv4","To {शिव}. The stillness in which every experience appears, and disappears.","To Śiva — the stillness in which every experience appears… and disappears.",1.6],
+# ── INTRO
+["in0","Every night, you leave your body.","Every night, you leave your body.",.7],
+["in1","You lose the world. Your name. Even time. And every morning you come back, and say, I slept.","You lose the world. Your name. Even time. And every morning you come back, and say: “I slept.”",.9],
+["in2","The rishis asked a dangerous question. Who was there, to come back?","The ṛṣis asked a dangerous question. Who was there… to come back?",1.2],
+["in3","Tonight, we walk the road they mapped. Vibration. Inner light. Leaving the body. Yoga nidra. Turiya. And finally, Kundalini.","Tonight, we walk the road they mapped. Vibration. Inner light. Leaving the body. Yoga nidrā. Turīya. And finally… Kuṇḍalinī.",.9],
+["in4","First, sitting. Then, the same journey, lying in your own bed.","First, sitting. Then, the same journey — lying in your own bed.",.8],
+["in5","But hold one thing through all of it. Every experience you will have, appears to you. You are not the experience. You are the one it appears to.","But hold one thing through all of it. Every experience you will have… appears to you. You are not the experience. You are the one it appears to.",1.8],
+# ── MAP
+["mp0","The {माण्डूक्य} {उपनिषद्} says you live in four states.","The Māṇḍūkya Upaniṣad says you live in four states.",.4],
+["mp1","Waking. Dreaming. Deep sleep. And the fourth, {तुरीय}. Not a state at all, but the witness of all three.","Waking. Dreaming. Deep sleep. And the fourth — Turīya. Not a state at all, but the witness of all three.",1.0],
+["mp2","The {तैत्तिरीय} {उपनिषद्} says you wear five sheaths. A body of food. Of breath. Of mind. Of knowing. And of bliss. Each one finer than the last.","The Taittirīya Upaniṣad says you wear five sheaths. A body of food. Of breath. Of mind. Of knowing. And of bliss. Each one finer than the last.",1.0],
+["mp3","And the yoga texts say, through your subtle body run seventy-two thousand channels. Three matter most. {इडा}, the moon. {पिङ्गला}, the sun. And {सुषुम्ना}, the silent middle.","And the yoga texts say: through your subtle body run seventy-two thousand channels. Three matter most. Iḍā, the moon. Piṅgalā, the sun. And Suṣumnā, the silent middle.",1.0],
+["mp4","Everything you feel tonight, is movement in this subtle body. Let us begin.","Everything you feel tonight is movement in this subtle body. Let us begin.",1.6],
+# ── PART ONE: SEATED
+["st0","Part one. Seated.","Part one. Seated.",1.0],
+["st1","Sit. Spine upright, but soft. {पतञ्जलि} asks for only two things. Steady, and easy. {स्थिरसुखम् आसनम्}.","Sit. Spine upright, but soft. Patañjali asks for only two things: steady, and easy. Sthira-sukham āsanam.",.8],
+["st2","Close your eyes. Let the shoulders fall. Let the jaw loosen. Let the tongue rest.","Close your eyes. Let the shoulders fall. Let the jaw loosen. Let the tongue rest.",5.0],
+["br0","Now, the breath. Close the right nostril with your thumb. Breathe in through the left, slowly.","Now, the breath. Close the right nostril with your thumb. Breathe in through the left… slowly.",3.0],
+["br1","Close the left. Open the right. Breathe out.","Close the left. Open the right. Breathe out.",3.5],
+["br2","In through the right. Switch. Out through the left.","In through the right. Switch. Out through the left.",3.5],
+["br3","This is {नाडी} {शोधन}. The {हठ} {योग} {प्रदीपिका} says it purifies the channels. Continue on your own. Slow. Without force.","This is nāḍī śodhana. The Haṭha Yoga Pradīpikā says it purifies the channels. Continue on your own. Slow. Without force.",24.0],
+["bh0","Now release the hand. Breathe in deeply. And as you breathe out, hum, like a bee.","Now release the hand. Breathe in deeply. And as you breathe out, hum… like a bee.",9.0],
+["bh1","Again. Breathe in. And hum.","Again. Breathe in… and hum.",9.0],
+["bh2","Feel where the hum lives. In the skull. The face. The chest. That buzzing, is the first door.","Feel where the hum lives. In the skull. The face. The chest. That buzzing is the first door.",2.0],
+# ── VIBRATION
+["vb0","Stop humming. And listen to what remains.","Stop humming. And listen to what remains.",5.0],
+["vb1","A tingling. A pressure between the eyebrows. A faint ringing in the ears. This is {प्राण}, life force, becoming noticeable. The {काश्मीर} {शैव} masters called it {स्पन्द}. The sacred tremor.","A tingling. A pressure between the eyebrows. A faint ringing in the ears. This is prāṇa — life-force — becoming noticeable. The Kashmir Śaiva masters called it spanda. The sacred tremor.",1.0],
+["vb2","The {हठ} {योग} {प्रदीपिका} describes the inner sounds. At first, like the ocean, thunder, and kettle drums. Then, like drums, conch and bells. At last, like tinkling bells, the flute, the {वीणा}, and the humming bee.","The Haṭha Yoga Pradīpikā describes the inner sounds. At first, like the ocean, thunder and kettle-drums. Then like drums, conch and bells. At last, like tinkling bells, the flute, the vīṇā… and the humming bee.",1.0],
+["vb3","Don't chase them. Don't push them away. Just notice. The vibration is happening, and something is aware of it, without vibrating at all.","Don't chase them. Don't push them away. Just notice: the vibration is happening… and something is aware of it, without vibrating at all.",14.0],
+# ── INNER LIGHT
+["lx0","Now rest your attention, gently, between the eyebrows. The {गीता} itself points here. Not straining. Just resting.","Now rest your attention, gently, between the eyebrows. The Gītā itself points here. Not straining. Just resting.",6.0],
+["lx1","Behind closed eyes, the darkness begins to move. Colours. Clouds. Points of light. Sometimes, whole landscapes.","Behind closed eyes, the darkness begins to move. Colours. Clouds. Points of light. Sometimes… whole landscapes.",1.0],
+["lx2","Thousands of years before anyone said psychedelic, the {श्वेताश्वतर} {उपनिषद्} listed them. Mist. Smoke. Sun. Wind. Fire. Fireflies. Lightning. Crystal. Moon.","Thousands of years before anyone said “psychedelic”, the Śvetāśvatara Upaniṣad listed them. Mist. Smoke. Sun. Wind. Fire. Fireflies. Lightning. Crystal. Moon.",.6],
+["lx3","These forms come first, it says, when {ब्रह्मन्} is about to be revealed in yoga.","These forms come first, it says, when Brahman is about to be revealed in yoga.",1.0],
+["lx4","{पतञ्जलि} calls it the luminous state, beyond sorrow. {विशोका वा ज्योतिष्मती}.","Patañjali calls it the luminous state, beyond sorrow. Viśokā vā jyotiṣmatī.",1.0],
+["lx5","Enjoy the colours. But ask, quietly. The light is seen. Who is seeing the light?","Enjoy the colours. But ask, quietly: the light is seen. Who is seeing the light?",14.0],
+# ── OUT OF BODY
+["ob0","As the body grows still, something strange happens. It stops sending reports. Hands disappear. Edges blur.","As the body grows still, something strange happens. It stops sending reports. Hands disappear. Edges blur.",1.0],
+["ob1","You may feel heavy. Then very light. Floating. Rising. Turning.","You may feel heavy. Then very light. Floating. Rising. Turning.",2.0],
+["ob2","This is the subtle body, the {सूक्ष्म} {शरीर}, loosening from the physical one. The same body you travel in, every night, in dreams.","This is the subtle body — the sūkṣma śarīra — loosening from the physical one. The same body you travel in, every night, in dreams.",1.0],
+["ob3","{पतञ्जलि} names its highest form, {महाविदेहा}. The great bodiless state. Awareness moving outside the body, not imagined. And from it, he says, the veil over the light is destroyed.","Patañjali names its highest form mahā-videhā. The great bodiless state. Awareness moving outside the body, not imagined. And from it, he says, the veil over the light is destroyed.",.8],
+["ob4","But he also warns. These powers are obstacles to {समाधि}. Don't get lost in where you can go. Notice who is going nowhere at all.","But he also warns: these powers are obstacles to samādhi. Don't get lost in where you can go. Notice who is going nowhere at all.",14.0],
+# ── YOGA NIDRA
+["yn0","Now let the body sleep, and keep the mind awake. This is yoga nidra. Yogic sleep.","Now let the body sleep, and keep the mind awake. This is yoga nidrā. Yogic sleep.",1.0],
+["yn1","In the {देवी} {माहात्म्य}, Yoganidra is the Goddess herself, holding {विष्णु} asleep, on the cosmic ocean, between universes. When she withdrew from his eyes, he awoke.","In the Devī Māhātmya, Yoganidrā is the Goddess herself — holding Viṣṇu asleep on the cosmic ocean, between universes. When she withdrew from his eyes, he awoke.",1.0],
+["yn2","In his sleep, a universe is dreamed and dissolved. In yours, the self you think you are, is dreamed and dissolved.","In his sleep, a universe is dreamed and dissolved. In yours, the self you think you are is dreamed… and dissolved.",1.0],
+["yn3","Stay at the edge. The body heavy. The breath slow. Images drifting. And you, watching, without falling in.","Stay at the edge. The body heavy. The breath slow. Images drifting. And you, watching… without falling in.",16.0],
+# ── TURIYA
+["tu0","Now notice. Waking came and went today. A dream will come and go tonight. Deep sleep too. What has not come and gone?","Now notice. Waking came and went today. A dream will come and go tonight. Deep sleep too. What has not come and gone?",3.0],
+["tu1","The {माण्डूक्य} says the fourth is not inward knowing, not outward knowing. Unseen. Ungraspable. Peace. {शिव}. Not two. That is the Self. That is to be known.","The Māṇḍūkya says the fourth is not inward-knowing, not outward-knowing. Unseen. Ungraspable. Peace. Śiva. Not two. That is the Self. That is to be known.",1.2],
+["tu2","{तुरीय} is not a fourth experience to reach. It is what every experience is happening in.","Turīya is not a fourth experience to reach. It is what every experience is happening in.",.8],
+["tu3","The {शिव} {सूत्र} say, pour the fourth into the three, like oil.","The Śiva Sūtras say: pour the fourth into the three… like oil.",1.0],
+["tu4","Feel it now. Not the body. Not the light. Not the floating. The quiet knowing, of all of it.","Feel it now. Not the body. Not the light. Not the floating. The quiet knowing… of all of it.",18.0],
+# ── KUNDALINI
+["ku0","And now, the last door.","And now… the last door.",1.2],
+["ku1","At the base of the spine, the texts say, {शक्ति} sleeps. Coiled three and a half times. {कुण्डलिनी}.","At the base of the spine, the texts say, Śakti sleeps. Coiled three and a half times. Kuṇḍalinī.",1.0],
+["ku2","The {हठ} {योग} {प्रदीपिका} says, as the serpent king holds up the earth with its mountains and forests, {कुण्डलिनी} holds up all the practices of yoga.","The Haṭha Yoga Pradīpikā says: as the serpent king holds up the earth with its mountains and forests, Kuṇḍalinī holds up all the practices of yoga.",1.0],
+["ku3","She rises through {सुषुम्ना}, piercing the centres. {मूलाधार}. {स्वाधिष्ठान}. {मणिपूर}. {अनाहत}. {विशुद्ध}. {आज्ञा}.","She rises through Suṣumnā, piercing the centres. Mūlādhāra. Svādhiṣṭhāna. Maṇipūra. Anāhata. Viśuddha. Ājñā.",.8],
+["ku4","Until, in the thousand petalled lotus at the crown, {शक्ति} meets {शिव}. {शंकर} sang it in the {सौन्दर्य} {लहरी}. In the thousand petalled lotus, you play in secret, with your Lord.","Until, in the thousand-petalled lotus at the crown, Śakti meets Śiva. Śaṅkara sang it in the Saundarya Laharī: in the thousand-petalled lotus, you play in secret with your Lord.",1.2],
+["ku5","The tradition is clear. {कुण्डलिनी} is not forced. She is invited. With a teacher. With patience. With a gentle breath. So tonight, we only breathe, and feel.","The tradition is clear. Kuṇḍalinī is not forced. She is invited — with a teacher, with patience, with a gentle breath. So tonight, we only breathe, and feel.",1.0],
+["ku6","Breathe in, and feel a thread of light rise from the base of the spine, to the point between the eyebrows.","Breathe in… and feel a thread of light rise from the base of the spine to the point between the eyebrows.",3.0],
+["ku7","Breathe out, and let it rest, back down. Like a lamp, carried up a dark staircase, and down again.","Breathe out… and let it rest back down. Like a lamp carried up a dark staircase… and down again.",22.0],
+["ku8","If heat, trembling, or emotion comes, let it pass, like weather. If it ever feels too much, open your eyes, touch the ground, and breathe normally.","If heat, trembling or emotion comes, let it pass like weather. If it ever feels too much, open your eyes, touch the ground, and breathe normally.",1.0],
+["ku9","Now let the light rest at the crown. {शिव} and {शक्ति}. Stillness, and movement. Not two.","Now let the light rest at the crown. Śiva and Śakti. Stillness, and movement. Not two.",16.0],
+# ── BRIDGE
+["bd0","That was the seated path. Now, the path almost no one teaches. The same journey, lying down, in your own bed, just before sleep.","That was the seated path. Now, the path almost no one teaches: the same journey, lying down, in your own bed, just before sleep.",1.8],
+# ── PART TWO: LYING DOWN
+["lb0","Part two. Lying down.","Part two. Lying down.",1.0],
+["lb1","The {हठ} {योग} {प्रदीपिका} names this posture. Lying on the back, like a corpse, is {शवासन}. It removes fatigue, and lets the mind rest.","The Haṭha Yoga Pradīpikā names this posture. Lying on the back like a corpse is Śavāsana. It removes fatigue, and lets the mind rest.",1.0],
+["lb2","Lie on your back. Arms a little away from the body. Palms up. Feet falling open. A thin pillow, or none. Lights off.","Lie on your back. Arms a little away from the body. Palms up. Feet falling open. A thin pillow, or none. Lights off.",5.0],
+["lb3","Make one quiet decision before you begin. A {सङ्कल्प}. A short sentence in your heart, like, I will remain aware. Say it three times, silently.","Make one quiet decision before you begin. A saṅkalpa. A short sentence in your heart, like: “I will remain aware.” Say it three times, silently.",10.0],
+["lb4","Now count your breaths backwards, from twenty seven, to one. Breathing in, twenty seven. Breathing out, twenty seven. In, twenty six. Out, twenty six.","Now count your breaths backwards, from twenty-seven to one. Breathing in, twenty-seven. Breathing out, twenty-seven. In, twenty-six. Out, twenty-six.",2.0],
+["lb5","Continue on your own. If you lose count, smile, and begin again.","Continue on your own. If you lose count, smile, and begin again.",30.0],
+["lb6","Now awareness will travel through the body. Don't move. Just feel each part, as it is named.","Now awareness will travel through the body. Don't move. Just feel each part as it is named.",1.5],
+["lb7","Right hand thumb. Second finger. Third. Fourth. Fifth. Palm. Wrist. Elbow. Shoulder. Right side of the waist. Hip. Thigh. Knee. Calf. Ankle. Heel. Sole. Toes.","Right hand thumb. Second finger. Third. Fourth. Fifth. Palm. Wrist. Elbow. Shoulder. Right side of the waist. Hip. Thigh. Knee. Calf. Ankle. Heel. Sole. Toes.",1.5],
+["lb8","Left hand thumb. Second finger. Third. Fourth. Fifth. Palm. Wrist. Elbow. Shoulder. Left side of the waist. Hip. Thigh. Knee. Calf. Ankle. Heel. Sole. Toes.","Left hand thumb. Second finger. Third. Fourth. Fifth. Palm. Wrist. Elbow. Shoulder. Left side of the waist. Hip. Thigh. Knee. Calf. Ankle. Heel. Sole. Toes.",1.5],
+["lb9","Back of the head. The spine. The whole back. Forehead. Eyebrows. The space between them. Eyes. Nose. Lips. Chin. Throat. Chest. Navel. The whole body. The whole body, together.","Back of the head. The spine. The whole back. Forehead. Eyebrows. The space between them. Eyes. Nose. Lips. Chin. Throat. Chest. Navel. The whole body. The whole body, together.",6.0],
+["lb10","Feel the body heavy. So heavy, it sinks into the bed.","Feel the body heavy. So heavy it sinks into the bed.",7.0],
+["lb11","Now light. So light, it could float above the mattress.","Now light. So light it could float above the mattress.",8.0],
+["lb12","You are at the edge of sleep now. The body is asleep. You are not. This edge, is the door.","You are at the edge of sleep now. The body is asleep. You are not. This edge is the door.",1.2],
+["lb13","The {विज्ञान} {भैरव} {तन्त्र} points exactly here. When sleep has not yet come, and the outer world has faded, in that in-between state, the supreme Goddess shines.","The Vijñāna Bhairava Tantra points exactly here. When sleep has not yet come, and the outer world has faded — in that in-between state, the supreme Goddess shines.",2.0],
+["lb14","You may feel buzzing. A rushing sound. A wave through the body. Don't move. Don't get excited. Let it grow, like rain getting louder.","You may feel buzzing. A rushing sound. A wave through the body. Don't move. Don't get excited. Let it grow, like rain getting louder.",14.0],
+["lb15","Look into the darkness behind the eyelids. Don't search. Let it show you. Colours. A blue point. Moving shapes. Just watch.","Look into the darkness behind the eyelids. Don't search. Let it show you. Colours. A blue point. Moving shapes. Just watch.",14.0],
+["lb16","Now feel the body as a room, and you, as the space inside it. Let that space grow. Past the skin. Past the bed. Past the walls. Past the city. Past the earth.","Now feel the body as a room… and you as the space inside it. Let that space grow. Past the skin. Past the bed. Past the walls. Past the city. Past the earth.",3.0],
+["lb17","You are not leaving the body. You are noticing, you were never only inside it.","You are not leaving the body. You are noticing you were never only inside it.",16.0],
+["lb18","Let the breath breathe itself. Thoughts come like clouds. You don't follow them. You are the sky, they float in.","Let the breath breathe itself. Thoughts come like clouds. You don't follow them. You are the sky they float in.",16.0],
+["lb19","Before sleep, one gentle practice. Breathing in, feel the light rise along the spine, to between the eyebrows. Breathing out, let it rest at the crown, like moonlight. No force. No locks. Only feeling.","Before sleep, one gentle practice. Breathing in, feel the light rise along the spine to between the eyebrows. Breathing out, let it rest at the crown, like moonlight. No force. No locks. Only feeling.",24.0],
+["lb20","And as sleep comes, don't fight it. Let the body go. Only notice the moment the world disappears.","And as sleep comes, don't fight it. Let the body go. Only notice the moment the world disappears.",3.0],
+["lb21","{गौडपाद} wrote, when the one asleep in beginningless illusion awakens, he knows the unborn. The sleepless. The dreamless. The one without a second.","Gauḍapāda wrote: when the one asleep in beginningless illusion awakens, he knows the unborn. The sleepless. The dreamless. The one without a second.",16.0],
+# ── CLOSE
+["cl0","Whether you fell asleep, or saw light, or felt nothing at all, something was there, through all of it. Unborn. Sleepless. Dreamless. That, is you.","Whether you fell asleep, or saw light, or felt nothing at all — something was there through all of it. Unborn. Sleepless. Dreamless. That… is you.",2.0],
+["cl1","If it is night, simply sleep. If you wish to return, move the fingers, feel the bed, take a deep breath, and open your eyes, slowly.","If it is night, simply sleep. If you wish to return — move the fingers, feel the bed, take a deep breath, and open your eyes, slowly.",2.0],
+["cl2","A word of care. These are powerful practices. If you have a history of seizures, psychosis, or serious mental illness, practise only with a qualified teacher, and your doctor's guidance.","A word of care. These are powerful practices. If you have a history of seizures, psychosis or serious mental illness, practise only with a qualified teacher and your doctor's guidance.",1.5],
+["cl3","{ॐ नमः शिवाय}. This is {सनातन}. Living {सनातन} dot com.","Oṃ namaḥ śivāya. This is Sanātan. livingsanatan.com",4.0],
+]
+import json
+json.dump([[a,b,c] for a,b,c,d in L],open('lines.json','w'),ensure_ascii=False,indent=0)
+json.dump({a:d for a,b,c,d in L},open('pauses.json','w'))
+words=sum(len(c.split()) for a,b,c,d in L);print(len(L),'lines',words,'words','pauses',round(sum(d for *_,d in L),1),'s')
