@@ -48,7 +48,7 @@ const SCENES = [
   { id: '8-ratri', cap: ['Ratri —', 'the night, dressed in gold.'], sub: 'Night mode, tanpura Nada, meteor showers and a journey through tonight',
     run: async (p) => {
       await p.evaluate(() => { const a = window.__antariksha; a.S.ratri = true; a.applyTheme(); });
-      await sky(p, 98, 36, 82); await p.waitForTimeout(1500);
+      await sky(p, 98, 36, 82); await mode(p, 'today'); await p.waitForTimeout(1500);
     } },
   { id: '7-hindi', cap: ['हिन्दी · English', 'Jyotish & Western names'], sub: 'वैदिक आकाश — आपकी भाषा में',
     run: async (p) => {
