@@ -159,7 +159,8 @@ LS.Sky = (function () {
     else karana = K.movable[(kIdx - 1) % 7];
 
     // Amanta lunar month: named by the sidereal sign of the Sun at the new moon that began it.
-    const prevNew = A.SearchMoonPhase(0, time.AddDays(-30), 30.5);
+    // The new moon that began this lunation (search backwards so a new moon a few hours ago is not skipped).
+    const prevNew = A.SearchMoonPhase(0, time, -30);
     const nextNew = A.SearchMoonPhase(0, time, 30.5);
     const rashiAtPrev = Math.floor(sidLonOf(A.Body.Sun, prevNew) / 30);
     const rashiAtNext = nextNew ? Math.floor(sidLonOf(A.Body.Sun, nextNew) / 30) : -1;

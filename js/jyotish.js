@@ -112,5 +112,8 @@ LS.Jyotish = (function () {
     return out;
   }
 
-  return { chart, dignity, aspects, vimshottari, antardashas, navamsa, midheaven, lordOf, NAVA, DASHA_YEARS };
+  // Natural relationship of graha `a` towards graha `b`.
+  const relation = (a, b) => (FRIENDS[a].includes(b) ? 'friend' : ENEMIES[a].includes(b) ? 'enemy' : 'neutral');
+
+  return { chart, dignity, aspects, vimshottari, antardashas, navamsa, midheaven, lordOf, relation, NAVA, DASHA_YEARS };
 })();
