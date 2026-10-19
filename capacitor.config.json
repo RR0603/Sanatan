@@ -23,6 +23,10 @@
       "style": "DARK",
       "overlaysWebView": true,
       "backgroundColor": "#00000000"
+    },
+    "LocalNotifications": {
+      "smallIcon": "ic_stat_antariksha",
+      "iconColor": "#FFB347"
     }
   }
 }

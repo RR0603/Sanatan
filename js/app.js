@@ -43,6 +43,14 @@
     pause: svg('<path d="M8 5v14M16 5v14" stroke-width="2.6"/>'),
     rev: svg('<path d="M11 6 4 12l7 6zM20 6l-7 6 7 6z" fill="currentColor" stroke="none"/>'),
     fwd: svg('<path d="M13 6l7 6-7 6zM4 6l7 6-7 6z" fill="currentColor" stroke="none"/>'),
+    today: svg('<path d="M3 17h18M6.3 17a5.7 5.7 0 0 1 11.4 0"/><path d="M12 5.5v2.2M4.6 9.1l1.6 1.4M19.4 9.1l-1.6 1.4M2.5 13.2h2M19.5 13.2h2M8 20.5h8"/>'),
+    calendar: svg('<rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M3.5 9.8h17M8.2 3v4M15.8 3v4"/><circle cx="12" cy="15" r="1.6" fill="currentColor"/>'),
+    share: svg('<path d="M12 15V3.5M7.5 8 12 3.5 16.5 8"/><path d="M5 11.5v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/>'),
+    bell: svg('<path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 2h-15z"/><path d="M10 20.5a2 2 0 0 0 4 0"/>'),
+    prev: svg('<path d="M15 5l-7 7 7 7"/>', 'stroke-width="2"'),
+    next: svg('<path d="M9 5l7 7-7 7"/>', 'stroke-width="2"'),
+    tonight: svg('<path d="M14.5 3.5a7.5 7.5 0 1 0 6 11.3A6 6 0 0 1 14.5 3.5z"/><path d="M5 4.5l.5 1.4 1.4.5-1.4.5L5 8.3l-.5-1.4-1.4-.5 1.4-.5z"/>'),
+    finder: '<svg viewBox="0 0 56 56"><defs><linearGradient id="fg" x1="0" x2="1"><stop offset="0" stop-color="#7ee8fa"/><stop offset="1" stop-color="#ffd27a"/></linearGradient></defs><circle cx="28" cy="28" r="26" fill="rgba(10,14,32,.55)" stroke="rgba(255,255,255,.25)"/><path d="M44 28 22 16v24z" fill="url(#fg)"/></svg>',
   };
 
   // ---------- persisted state ----------
@@ -81,6 +89,7 @@
     atmosphere: true, ground: true, milkyway: true, labels: true, starNames: true, night: false,
     groundOpacity: 0.82, starBrightness: 1, arFov: 62, compassOffset: 0,
     mode: 'sky', names: 'vedic', jyTab: 'kundali', kStyle: 'north', kVarga: 'D1', birth: null, profiles: [],
+    theme: 'nova', reminders: null, milan: null,
     view: null,
   };
   const KEY = 'antariksha.v1';
@@ -166,18 +175,8 @@
   }
 
   // ---------- time zone helpers ----------
-  function tzOffsetMin(tz, ms) {
-    try {
-      const p = {};
-      new Intl.DateTimeFormat('en-US', { timeZone: tz, hourCycle: 'h23', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' })
-        .formatToParts(new Date(ms)).forEach((x) => { p[x.type] = x.value; });
-      return Math.round((Date.UTC(+p.year, +p.month - 1, +p.day, +p.hour % 24, +p.minute, +p.second) - ms) / 60000);
-    } catch (e) { return -new Date(ms).getTimezoneOffset(); }
-  }
-  function localMidnight(ms, tz) {
-    const off = tzOffsetMin(tz, ms) * 60000;
-    return Math.floor((ms + off) / 86400000) * 86400000 - off;
-  }
+  const tzOffsetMin = (tz, ms) => LS.TZ.offsetMin(tz, ms);
+  const localMidnight = (ms, tz) => LS.TZ.midnight(ms, tz);
   const locale = () => (I.lang === 'hi' ? 'hi-IN' : 'en-IN');
   function fmt(ms, opts) {
     try { return new Intl.DateTimeFormat(locale(), { timeZone: S.loc.tz, ...opts }).format(new Date(ms)); } catch (e) { return new Date(ms).toLocaleString(); }
@@ -259,6 +258,7 @@
     }
 
     if (S.mode === 'jyotish') jyFrame(now);
+    if (PAGE_MODES.includes(S.mode) && !dirty && now - lastFrame < 1000) return;
     const realtime = clock.rate === 1;
     const interval = view.fov < 5 ? 100 : view.fov < 30 ? 400 : 1000;
     const timeDue = clock.rate !== 0 && (!realtime || now - lastFrame > interval);
@@ -281,6 +281,7 @@
       perf.ms = perf.ms * 0.9 + (performance.now() - t0) * 0.1;
       if (++perf.n > 60 && perf.ms > 14 && R.lowerQuality()) invalidate();
     }
+    if (S.mode === 'sky') LS.Pages.updateFinder(selected, selected ? objEnu(selected, as) : null, view.basis, view.fov);
     dirty = false; lastFrame = now;
     if (now - lastHud > 250) { lastHud = now; renderClock(); renderReadout(); refreshPanchang(false); if (selected && !$('sheet').hidden) updateSheetLive(); }
   }
@@ -427,6 +428,7 @@
     { key: 'camera', icon: 'camera', cyan: true, action: () => setAR(!view.ar), state: () => view.ar },
     { key: 'art', icon: 'art' },
     { key: 'pro', icon: 'pro', action: () => { $('dock').hidden = true; showPaywall(); }, state: () => LS.Pro.isPro(), label: 'proLocked' },
+    { key: 'tonightBtn', icon: 'tonight', cyan: true, action: () => { $('dock').hidden = true; toggle('tonight'); }, state: () => !$('tonight').hidden, label: 'tonight' },
     { key: 'panchangBtn', icon: 'panchang', action: () => { $('dock').hidden = true; toggle('panchang'); }, state: () => !$('panchang').hidden, label: 'panchang' },
     { key: 'time', icon: 'time', cyan: true, action: () => { $('dock').hidden = true; toggle('timebar'); }, state: () => !$('timebar').hidden, label: 'time' },
     { key: 'night', icon: 'night', action: () => { S.night = !S.night; applyNight(); }, state: () => S.night },
@@ -463,6 +465,16 @@
     $('btnLayers').classList.toggle('on', !$('dock').hidden);
     $('langSeg').querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.lang === I.lang));
     $('namesSeg').querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.names === Nm.culture));
+    $('themeSeg').querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.theme === S.theme));
+  }
+  function applyTheme() {
+    S.theme = S.theme === 'classic' ? 'classic' : 'nova';
+    document.body.classList.toggle('theme-nova', S.theme === 'nova');
+    document.body.classList.toggle('theme-classic', S.theme === 'classic');
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.content = S.theme === 'nova' ? '#050714' : '#04060f';
+    requestAnimationFrame(placeGlider);
+    syncDock(); persist();
   }
   function applyNight() { document.body.classList.toggle('night', !!S.night); persist(); }
   function setZen(on) { document.body.classList.toggle('zen', on); $('btnShowUi').hidden = !on; }
@@ -517,6 +529,7 @@
     renderSettingsText();
     astro = null; refreshPanchang(true); invalidate();
     if (selected) showSheet(selected);
+    LS.Pages.onLocation(); LS.Pages.resetCalendar(); renderPage();
   }
   function geolocate(userAsked) {
     const done = (lat, lon) => {
@@ -538,13 +551,16 @@
   }
 
   // ---------- panels ----------
-  const PANELS = ['panchang', 'drawer', 'timebar'];
+  const PANELS = ['panchang', 'tonight', 'drawer', 'timebar'];
   function toggle(id) { if ($(id).hidden) open(id); else close(id); }
   function open(id) {
     if (id === 'drawer') { $('scrim').hidden = false; }
-    if (id === 'panchang' && window.innerWidth <= 720) hideSheet();
+    if ((id === 'panchang' || id === 'tonight') && window.innerWidth <= 720) hideSheet();
+    if (id === 'panchang') $('tonight').hidden = true;
+    if (id === 'tonight') $('panchang').hidden = true;
     $(id).hidden = false;
     if (id === 'panchang') renderPanchang();
+    if (id === 'tonight') LS.Pages.renderTonightPanel();
     if (id === 'timebar') syncTimebar();
     syncDock();
   }
@@ -587,8 +603,11 @@
 
   function renderPanchang() {
     if (!panch) return;
-    const p = panch;
     $('pTitle').textContent = `${fmtDate(clock.sim)} · ${nm(S.loc)}`;
+    $('pGrid').innerHTML = panchangCells(panch, sunDay && { sunrise: sunDay.rise && sunDay.rise.date.getTime(), sunset: sunDay.set && sunDay.set.date.getTime() });
+  }
+  // Panchang grid cells; sun = { sunrise, sunset } in ms.
+  function panchangCells(p, sun) {
     const nk = V.nakshatras[p.nakshatra];
     const cells = [
       [t('vara'), nm(V.varas[p.vara]), '', false],
@@ -602,10 +621,10 @@
       [t('lagna'), nm(V.rashis[Math.floor(p.lagna / 30)]), dms(p.lagna % 30), false],
       [t('sunRashi'), nm(V.rashis[p.sunRashi]), dms(p.sunSid % 30), false],
       [t('moonRashi'), nm(V.rashis[p.moonRashi]), dms(p.moonSid % 30), false],
-      [t('sunrise'), sunDay && sunDay.rise ? fmtTime(sunDay.rise.date.getTime()) : '—', `${t('sunset')} ${sunDay && sunDay.set ? fmtTime(sunDay.set.date.getTime()) : '—'}`, false],
+      [t('sunrise'), sun && sun.sunrise ? fmtTime(sun.sunrise) : '—', `${t('sunset')} ${sun && sun.sunset ? fmtTime(sun.sunset) : '—'}`, false],
       [t('ayanamsa'), dms(p.ayanamsa), '', true],
     ];
-    $('pGrid').innerHTML = cells.map(([k, v, s, wide]) => `<div class="pcell${wide ? ' wide' : ''}"><div class="k">${k}</div><div class="v">${v}</div>${s ? `<div class="s">${s}</div>` : ''}</div>`).join('');
+    return cells.map(([k, v, s, wide]) => `<div class="pcell${wide ? ' wide' : ''}"><div class="k">${k}</div><div class="v">${v}</div>${s ? `<div class="s">${s}</div>` : ''}</div>`).join('');
   }
 
   // ---------- time bar ----------
@@ -649,7 +668,7 @@
       afterTimeJump();
     });
   }
-  function afterTimeJump() { astro = null; syncTimebar(); refreshPanchang(true); renderClock(); invalidate(); }
+  function afterTimeJump() { astro = null; syncTimebar(); refreshPanchang(true); renderClock(); invalidate(); if (S.mode === 'today') LS.Pages.renderToday(); }
 
   // ---------- info sheet ----------
   function select(obj) {
@@ -879,19 +898,34 @@
     g.style.width = on.offsetWidth + 'px';
     g.style.transform = `translateX(${on.offsetLeft - 4}px)`;
   }
+  const MODES = ['sky', 'today', 'calendar', 'jyotish'];
+  const PAGE_MODES = ['today', 'calendar'];
   function setMode(m, initial) {
-    S.mode = m === 'jyotish' ? 'jyotish' : 'sky';
-    document.body.classList.toggle('mode-jyotish', S.mode === 'jyotish');
-    $('modeSwitch').querySelectorAll('.mode').forEach((b) => { b.classList.toggle('on', b.dataset.mode === S.mode); b.setAttribute('aria-selected', b.dataset.mode === S.mode); });
+    S.mode = MODES.includes(m) ? m : 'sky';
+    for (const k of MODES) document.body.classList.toggle('mode-' + k, S.mode === k);
+    document.body.classList.toggle('page-mode', S.mode !== 'sky');
+    for (const box of [$('modeSwitch'), $('tabbar')]) box.querySelectorAll('[data-mode]').forEach((b) => { b.classList.toggle('on', b.dataset.mode === S.mode); b.setAttribute('aria-selected', b.dataset.mode === S.mode); });
     $('jyotish').hidden = S.mode !== 'jyotish';
-    if (S.mode === 'jyotish') {
-      $('panchang').hidden = true;
+    $('today').hidden = S.mode !== 'today';
+    $('calendar').hidden = S.mode !== 'calendar';
+    if (S.mode !== 'sky') {
+      $('panchang').hidden = true; $('tonight').hidden = true; $('timebar').hidden = true; $('dock').hidden = true;
       if (view.sensor && !view.ar) setSensor(false);
-      requestAnimationFrame(() => { jy.wheel.resize(); jyRefresh(true); });
+      if (view.ar) setAR(false);
+      $('finder').hidden = true;
     }
+    if (PAGE_MODES.includes(S.mode)) { $('sheet').hidden = true; selected = null; view.track = false; }
+    if (S.mode === 'jyotish') requestAnimationFrame(() => { jy.wheel.resize(); jyRefresh(true); });
+    renderPage();
     if (!initial && selected && !$('sheet').hidden) showSheet(selected);
     requestAnimationFrame(placeGlider);
     persist(); invalidate();
+  }
+  function renderPage() {
+    try {
+      if (S.mode === 'today') { LS.Pages.renderToday(); $('todayBody').parentElement.parentElement.scrollTop = 0; }
+      if (S.mode === 'calendar') LS.Pages.renderCalendar();
+    } catch (e) { console.warn('page failed', e); }
   }
 
   // ---------- Jyotish view ----------
@@ -914,13 +948,13 @@
         select(obj); renderJyPanel();
       },
     });
-    $('modeSwitch').querySelector('[data-mode="sky"] .mi').innerHTML = ICON.sky;
-    $('modeSwitch').querySelector('[data-mode="jyotish"] .mi').innerHTML = ICON.chakra;
-    $('modeSwitch').querySelectorAll('.mode').forEach((b) => b.addEventListener('click', () => setMode(b.dataset.mode)));
+    const MODE_ICON = { sky: ICON.sky, today: ICON.today, calendar: ICON.calendar, jyotish: ICON.chakra };
+    $('modeSwitch').querySelectorAll('.mode').forEach((b) => { b.querySelector('.mi').innerHTML = MODE_ICON[b.dataset.mode]; b.addEventListener('click', () => setMode(b.dataset.mode)); });
+    $('tabbar').querySelectorAll('[data-mode]').forEach((b) => { b.querySelector('.ti').innerHTML = MODE_ICON[b.dataset.mode]; b.addEventListener('click', () => setMode(b.dataset.mode)); });
     $('namesSeg').querySelectorAll('button').forEach((b) => b.addEventListener('click', () => setNames(b.dataset.names)));
     $('jyTabs').querySelectorAll('button').forEach((b) => b.addEventListener('click', () => {
       if (PRO_TABS.includes(b.dataset.tab) && !LS.Pro.isPro()) { showPaywall(); return; }
-      S.jyTab = b.dataset.tab; persist(); renderJyPanel();
+      S.jyTab = b.dataset.tab; jy.tabChanged = true; persist(); renderJyPanel();
     }));
     $('btnJyNow').addEventListener('click', () => { clock.sim = Date.now(); clock.rate = 1; afterTimeJump(); jyRefresh(true); });
     $('btnJySky').addEventListener('click', () => setMode('sky'));
@@ -985,9 +1019,11 @@
       b.classList.toggle('locked', !pro && PRO_TABS.includes(b.dataset.tab));
     });
     const c = jy.chart;
-    const html = { kundali: jyKundali, grahas: jyGrahas, dasha: jyDasha, janma: jyJanma }[S.jyTab] || jyKundali;
+    const html = { kundali: jyKundali, grahas: jyGrahas, dasha: jyDasha, janma: jyJanma, milan: () => LS.Pages.milanHtml() }[S.jyTab] || jyKundali;
     // Keep form fields intact while the clock ticks.
     if (S.jyTab === 'janma' && $('jyBody').querySelector('#bDate')) return;
+    if (S.jyTab === 'milan' && $('jyBody').querySelector('.mi-person') && !jy.tabChanged) return;
+    jy.tabChanged = false;
     $('jyBody').innerHTML = html(c);
   }
   const optSeg = (key, opts) => `<div class="seg mini">${opts.map(([v, label]) => `<button data-opt="${key}" data-val="${v}" class="${S[key] === v ? 'on' : ''}">${label}</button>`).join('')}</div>`;
@@ -1092,6 +1128,7 @@
     </div>`;
   }
   function jyAction(act) {
+    if (act.startsWith('milan:')) { LS.Pages.milanAction(act.slice(6)); return; }
     if (act === 'now') { clock.sim = Date.now(); clock.rate = 1; afterTimeJump(); jyRefresh(true); return; }
     if (act.startsWith('load:')) { const p = (S.profiles || []).find((x) => x.pid === act.slice(5)); if (p) { S.birth = p; applyBirth(p); } return; }
     if (act.startsWith('del:')) { S.profiles = (S.profiles || []).filter((x) => x.pid !== act.slice(4)); persist(); $('jyBody').innerHTML = jyJanma(); return; }
@@ -1181,12 +1218,15 @@
     if (!$('panchang').hidden) renderPanchang();
     if (selected && !$('sheet').hidden) showSheet(selected);
     if ($('searchInput').value) runSearch($('searchInput').value);
-    placeGlider(); jyRefresh(true); renderProRow();
+    placeGlider(); jyRefresh(true); renderProRow(); renderPage();
+    if (!$('tonight').hidden) LS.Pages.renderTonightPanel();
     $('appVersion').textContent = `${t('versionLabel')} ${LS.CONFIG.version}`;
     if (!$('paywall').hidden) renderPaywall();
     invalidate();
   }
   $('langSeg').querySelectorAll('button').forEach((b) => b.addEventListener('click', () => { S.lang = b.dataset.lang; I.set(S.lang); persist(); }));
+  $('themeSeg').querySelectorAll('button').forEach((b) => b.addEventListener('click', () => { S.theme = b.dataset.theme; applyTheme(); }));
+  $('btnRemDrawer').addEventListener('click', () => { close('drawer'); $('btnReminders').click(); });
   I.onChange(applyLang);
 
   // ---------- misc controls ----------
@@ -1239,6 +1279,11 @@
   $('btnSensor').addEventListener('click', () => { setSensor(!view.sensor); });
   $('btnCam').addEventListener('click', () => { setAR(!view.ar); });
   $('btnPanchang').addEventListener('click', () => { close('timebar'); open('panchang'); });
+  $('btnTodayPrev').innerHTML = ICON.prev; $('btnCalPrev').innerHTML = ICON.prev;
+  $('btnTodayNext').innerHTML = ICON.next; $('btnCalNext').innerHTML = ICON.next;
+  $('btnShare').innerHTML = ICON.share; $('btnReminders').innerHTML = ICON.bell;
+  $('remClose').innerHTML = ICON.close;
+  $('finder').querySelector('.fa').innerHTML = ICON.finder;
   $('btnZoomIn').innerHTML = ICON.plus;
   $('btnZoomOut').innerHTML = ICON.minus;
   $('compassNeedle').innerHTML = ICON.compass;
@@ -1258,6 +1303,7 @@
     if (e.target.tagName === 'INPUT') return;
     if (e.key === '/') { e.preventDefault(); $('searchBox').hidden = false; $('searchInput').focus(); }
     if (e.key === 'Escape' && !$('paywall').hidden) { hidePaywall(); return; }
+    if (e.key === 'Escape' && !$('reminders').hidden) { $('reminders').hidden = true; return; }
     if (e.key === 'Escape') { PANELS.forEach((p) => { if (!$(p).hidden) close(p); }); if (!$('sheet').hidden) close('sheet'); setZen(false); }
     const step = 4 * view.fov / 60;
     if (e.key === 'ArrowLeft') { view.az = (view.az - step + 360) % 360; invalidate(); }
@@ -1276,6 +1322,11 @@
   Nm.set(S.names);
   LS.Pro.init().then(() => { renderProRow(); syncDock(); jyRefresh(false); });
   buildDock(); buildSettings(); buildTimebar(); buildSearchIndex(); initJyotish();
+  LS.Pages.init({
+    S, view, clock, Nm, CITIES, observer, setMode, select, goTo, toast, persist, invalidate, afterTimeJump,
+    fmt, fmtTime, fmtShort, tithiName, panchangCells, isNative: LS.Pro.isNative,
+  });
+  applyTheme();
   I.set(S.lang);
   setMode(S.mode, true);
   applyNight();
@@ -1298,5 +1349,5 @@
   }
   showLocToast();
   setTimeout(showIntro, 3300);
-  window.__antariksha = { view, clock, S, select, goTo, setMode, setNames, jy, invalidate, showPaywall };
+  window.__antariksha = { view, clock, S, select, goTo, setMode, setNames, jy, invalidate, showPaywall, applyTheme };
 })();

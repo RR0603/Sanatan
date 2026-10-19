@@ -15,8 +15,9 @@
 <link rel="apple-touch-icon" href="img/icon-192.png">
 <link rel="stylesheet" href="css/fonts.css">
 <link rel="stylesheet" href="css/app.css">
+<link rel="stylesheet" href="css/nova.css">
 </head>
-<body>
+<body class="theme-nova">
 <video id="cam" playsinline muted autoplay></video>
 <canvas id="gl"></canvas>
 <canvas id="sky"></canvas>
@@ -27,6 +28,8 @@
     <button class="bare" id="btnMenu" aria-label="Menu"></button>
     <div class="modes" id="modeSwitch" role="tablist">
       <button class="mode" data-mode="sky" role="tab"><span class="mi"></span><span class="ml" data-t="modeSky"></span></button>
+      <button class="mode" data-mode="today" role="tab"><span class="mi"></span><span class="ml" data-t="modeToday"></span></button>
+      <button class="mode" data-mode="calendar" role="tab"><span class="mi"></span><span class="ml" data-t="modeCalendar"></span></button>
       <button class="mode" data-mode="jyotish" role="tab"><span class="mi"></span><span class="ml" data-t="modeJyotish"></span></button>
       <i class="mode-glider"></i>
     </div>
@@ -55,6 +58,19 @@
     </div>
     <div class="pgrid" id="pGrid"></div>
   </aside>
+
+  <aside class="panel glass tonight" id="tonight" hidden>
+    <div class="panel-head">
+      <div>
+        <div class="eyebrow" data-t="tonightSky"></div>
+        <div class="panel-title" id="tnTitle"></div>
+      </div>
+      <button class="icon-btn ghost" data-close="tonight" aria-label="Close"></button>
+    </div>
+    <div id="tonightBody"></div>
+  </aside>
+
+  <div class="finder" id="finder" hidden aria-hidden="true"><div class="fa"></div><span class="fl"></span></div>
 
   <div class="side-ctrls">
     <button class="bare" id="btnZoomIn" aria-label="Zoom in"></button>
@@ -124,9 +140,48 @@
           <button data-tab="grahas" data-t="grahas"></button>
           <button data-tab="dasha" data-t="dasha"></button>
           <button data-tab="janma" data-t="janma"></button>
+          <button data-tab="milan" data-t="milan"></button>
         </div>
         <div class="jy-body" id="jyBody"></div>
       </div>
+    </div>
+  </section>
+
+  <section class="page" id="today" hidden>
+    <div class="page-wrap">
+      <header class="page-head">
+        <div class="page-titles">
+          <div class="eyebrow" data-t="todayTitle"></div>
+          <h1 class="page-title" id="todayDate"></h1>
+          <div class="page-sub" id="todayPlace"></div>
+        </div>
+        <div class="page-actions">
+          <button class="icon-btn glass" id="btnTodayPrev" aria-label="Previous day"></button>
+          <button class="pill accent" id="btnTodayNow" data-t="today"></button>
+          <button class="icon-btn glass" id="btnTodayNext" aria-label="Next day"></button>
+          <button class="icon-btn glass" id="btnShare" aria-label="Share"></button>
+        </div>
+      </header>
+      <div class="page-body" id="todayBody"></div>
+    </div>
+  </section>
+
+  <section class="page" id="calendar" hidden>
+    <div class="page-wrap">
+      <header class="page-head">
+        <div class="page-titles">
+          <div class="eyebrow" data-t="calendarTitle"></div>
+          <h1 class="page-title" id="calTitle"></h1>
+          <div class="page-sub" id="calSub"></div>
+        </div>
+        <div class="page-actions">
+          <button class="icon-btn glass" id="btnCalPrev" aria-label="Previous month"></button>
+          <button class="pill" id="btnCalToday" data-t="today"></button>
+          <button class="icon-btn glass" id="btnCalNext" aria-label="Next month"></button>
+          <button class="icon-btn glass" id="btnReminders" aria-label="Reminders"></button>
+        </div>
+      </header>
+      <div class="page-body" id="calBody"></div>
     </div>
   </section>
 
@@ -166,6 +221,12 @@
       <h3 data-t="proEyebrow"></h3>
       <div class="pro-row" id="proRow"></div>
 
+      <h3 data-t="design"></h3>
+      <div class="seg wide" id="themeSeg">
+        <button data-theme="nova" data-t="themeNova"></button>
+        <button data-theme="classic" data-t="themeClassic"></button>
+      </div>
+
       <h3 data-t="language"></h3>
       <div class="seg wide" id="langSeg">
         <button data-lang="en">English</button>
@@ -180,6 +241,9 @@
         <label><span data-t="longitude"></span><input class="field" id="lonInput" type="number" step="0.0001" min="-180" max="180"></label>
       </div>
       <button class="pill wide" id="btnApplyLoc" data-t="apply"></button>
+
+      <h3 data-t="reminders"></h3>
+      <button class="pill wide" id="btnRemDrawer" data-t="remindersManage"></button>
 
       <h3 data-t="names"></h3>
       <div class="seg wide" id="namesSeg">
@@ -205,6 +269,26 @@
       <p class="credits" id="appVersion"></p>
     </div>
   </aside>
+
+  <nav class="tabbar" id="tabbar" aria-label="Sections">
+    <button data-mode="sky"><span class="ti"></span><span class="tl" data-t="modeSky"></span></button>
+    <button data-mode="today"><span class="ti"></span><span class="tl" data-t="modeToday"></span></button>
+    <button data-mode="calendar"><span class="ti"></span><span class="tl" data-t="modeCalendar"></span></button>
+    <button data-mode="jyotish"><span class="ti"></span><span class="tl" data-t="modeJyotish"></span></button>
+  </nav>
+
+  <section class="modal" id="reminders" hidden role="dialog" aria-modal="true">
+    <div class="modal-card">
+      <div class="panel-head">
+        <div>
+          <div class="eyebrow" data-t="reminders"></div>
+          <div class="panel-title" data-t="remindersTitle"></div>
+        </div>
+        <button class="icon-btn ghost" id="remClose" aria-label="Close"></button>
+      </div>
+      <div id="remBody"></div>
+    </div>
+  </section>
 
   <div class="toast glass" id="toast" hidden></div>
 
@@ -256,9 +340,14 @@
 <script src="js/jyotish.js"></script>
 <script src="js/render.js"></script>
 <script src="js/chart.js"></script>
+<script src="js/tz.js"></script>
+<script src="js/muhurta.js"></script>
+<script src="js/calendar.js"></script>
+<script src="js/milan.js"></script>
 <script src="js/magnetic.js"></script>
 <script src="js/sensors.js"></script>
 <script src="js/pro.js"></script>
+<script src="js/pages.js"></script>
 <script src="js/app.js"></script>
 </body>
 </html>
