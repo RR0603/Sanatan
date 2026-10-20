@@ -202,6 +202,8 @@ To review (the switch at the top has Sky, Today, Calendar and Jyotish):
    Jyotish to open the paywall. "Restore purchases" is on the paywall and in the menu.
 6. Settings (menu, top left) → Design switches between the new and the classic look, and can
    move the section switch to a tab bar at the bottom of the screen.
+7. The layers button also has Ratri (night mode), Yatra (a 45-second time-lapse of tonight),
+   Ulka (meteor showers) and Nada (an optional tanpura drone; sound plays only after a tap).
 
 Location is used only to calculate the sky for the user's place; it is not sent anywhere.
 Camera frames are only displayed, never stored or transmitted.

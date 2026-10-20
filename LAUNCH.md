@@ -23,6 +23,67 @@ Time to plan for:
 
 ---
 
+## Launch-day plan (publishing as an individual, no company yet)
+
+You do **not** need a registered company. Both stores accept an individual developer with a government ID, a PAN and an Indian bank account. You can move the apps to a company account later; both stores support app transfers.
+
+**Payments in India: use the stores' own billing (already built in).**
+
+- Inside the iOS and Android apps, unlocking features must be paid through Apple In-App Purchase and Google Play Billing. Linking to Razorpay, UPI or any outside payment for Pro inside the apps is grounds for rejection (Apple 3.1.1; Play Payments policy).
+- The app already uses both stores through **RevenueCat**, which is free up to $2.5k per month.
+- Buyers in India pay with whatever their store offers, including UPI, cards and net banking.
+- The stores pay out to your bank account every month. They are the seller of record for the customer's purchase. Ask a CA about your own income tax and GST position.
+
+**The order of work.** You can't launch on every channel tomorrow, so launch what can go live and start the rest:
+
+1. **Tonight**
+   1. Enrol in the **Apple Developer Program as an Individual** (B1). Apple's approval can take from a few hours to about 2 days.
+   2. Create the **Google Play personal account** (A1). Identity checks take 1–3 days.
+   3. Create a **RevenueCat** account (R1).
+2. **Tomorrow (launch day)**
+   1. Publish the **website**: copy the repository folder to `livingsanatan.com/antariksha/`. This also puts the privacy policy, terms and support pages online, which both stores require. The site works today.
+      - The web paywall says "Coming soon to the App Store and Google Play" until `storeLinks` are filled in.
+      - To give web visitors Pro free for launch week, set `webMode: 'free'` in `js/config.js`.
+   2. Put your legal name in `terms.html`. `npm run preflight` lists anything that's still missing.
+   3. As soon as each account is approved:
+      - Create the app and the in-app product (B3/B6, A2/A6).
+      - Paste the RevenueCat keys (R4), commit, and run the **iOS release** and **Android release** workflows.
+3. **iOS**
+   1. The build goes to TestFlight. Submit it for review together with the in-app purchase (B8).
+   2. Review typically takes 24–48 h. With the account approved, the App Store version is realistic **2–5 days** after you enrol.
+4. **Android (personal account)**
+   1. Start **closed testing with 12+ testers for 14 days** (A8). Google requires this before production for new personal accounts; it cannot be skipped.
+   2. Invite your community on launch day, via a Google Group or the opt-in link.
+   3. Production follows after about day 15–20.
+
+**What `npm run preflight` checks before every store build** (the release workflows refuse to build until it passes):
+
+- The RevenueCat keys are present.
+- The legal-name placeholder is gone and the support e-mail is set.
+- The version number agrees across the web app, Android and iOS.
+- The iOS usage descriptions and privacy manifest are in place, and export compliance is answered.
+- No exact-alarm or background-location permissions are requested.
+- Android cloud backup and web debugging are off.
+- No secret keys ship in the app.
+
+**App Review notes to keep in mind** (already reflected in the app and in `STORE_LISTING.md`):
+
+- **Apple 3.1.1:** Pro is a store purchase with **Restore purchases**. The apps show only the store's localised price and never mention another platform or an outside payment.
+- **Apple 4.3(b):** the listing leads with the planetarium and the Panchang (Education/Reference). Avoid "horoscope" and "predictions" in the name, subtitle and screenshots.
+- **Apple 5.1.1:**
+  - Each permission has a clear purpose string.
+  - Location is asked for once at first launch to set the sky for your place; you can pick a city instead.
+  - Camera and motion are asked for only when the user taps them, and notifications only when reminders are turned on.
+  - There are no accounts and no tracking, and the privacy manifest is bundled.
+- **Google Play:**
+  - Target SDK 36.
+  - Foreground location only.
+  - No exact alarms.
+  - Notifications only after the user opts in.
+  - Data safety answers are in `STORE_LISTING.md`.
+
+---
+
 ## Step 0: Decide and prepare (½ day)
 
 1. **Who publishes: an individual or an organisation?** The seller name shown on the store is your personal name or your organisation's legal name.
