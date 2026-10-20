@@ -27,6 +27,8 @@ Switch between them with the switch at the top. Settings → Design → **Bottom
 
 The Time panel has a close button.
 
+**First-run hints**: on phones, a little star mascot points at the compass button for six seconds ("Tap me, then point your phone at the sky"). About 13 seconds in, a glowing camera button invites you to try the AR view. Each hint stops appearing once that feature has been used, and shows at most once per session.
+
 **Design**: Settings → Design switches between **Nova** (the default) and **Classic**:
 
 - **Nova**: liquid glass and aurora accents.

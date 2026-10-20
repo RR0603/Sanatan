@@ -5,6 +5,7 @@ LS.I18N = (function () {
   const S = {
     en: {
       // Ratri, Nada, Ulka, Yatra
+      coachSensor: 'Psst! Tap me, then point your phone at the sky ✨', coachCamera: 'Try the camera — see the stars over your world 📷',
       ratri: 'Ratri', nada: 'Nada', meteors: 'Ulka', yatra: 'Yatra',
       ratriOpt: 'Ratri night mode', ratriOptSub: 'Midnight & gold, star-dust and shooting stars',
       ratriOn: 'Ratri — the night sky, dressed in gold', nadaOn: 'Nada — a tanpura drone tuned to 136.1 Hz (Om)', nadaUnsupported: 'Sound is not available on this device',
@@ -115,6 +116,7 @@ LS.I18N = (function () {
     },
     hi: {
       // Ratri, Nada, Ulka, Yatra
+      coachSensor: 'सुनिए! मुझे छुएँ, फिर फ़ोन आकाश की ओर करें ✨', coachCamera: 'कैमरा आज़माएँ — अपनी दुनिया पर तारे देखें 📷',
       ratri: 'रात्रि', nada: 'नाद', meteors: 'उल्का', yatra: 'यात्रा',
       ratriOpt: 'रात्रि मोड', ratriOptSub: 'आधी रात और स्वर्ण, तारों की धूल और टूटते तारे',
       ratriOn: 'रात्रि — स्वर्ण में सजा रात का आकाश', nadaOn: 'नाद — १३६.१ हर्ट्ज़ (ॐ) पर तानपुरा', nadaUnsupported: 'इस उपकरण पर ध्वनि उपलब्ध नहीं',

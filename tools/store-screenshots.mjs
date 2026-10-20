@@ -93,7 +93,7 @@ for (const [name, w, h, dpr] of DEVICES) {
   for (const scene of SCENES) {
     if (process.env.ONLY && !existsMissing(name, scene.id)) continue;
     const ctx = await browser.newContext({ viewport: { width: w, height: h }, deviceScaleFactor: dpr, isMobile: w < 900, hasTouch: true, timezoneId: 'Asia/Kolkata', locale: 'en-IN' });
-    await ctx.addInitScript(() => { try { sessionStorage.setItem('antariksha.intro', '1'); } catch (e) { /* ignore */ } });
+    await ctx.addInitScript(() => { try { sessionStorage.setItem('antariksha.intro', '1'); sessionStorage.setItem('antariksha.coach', '1'); } catch (e) { /* ignore */ } });
     const p = await ctx.newPage();
     await p.goto(BASE + '?preview');
     await p.waitForTimeout(1500);

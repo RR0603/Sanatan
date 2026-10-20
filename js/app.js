@@ -394,6 +394,7 @@
       }, () => S.compassOffset, () => magneticDeclination());
       if (!ok) { syncDock(); return false; }
       view.sensor = true; view.track = false; view.anim = null;
+      flag('usedSensor', 1); if (coach.step === 'sensor') hideCoach();
       toast(`${t('sensorHint')} · ${t('calibHint')}`);
     } else {
       LS.Sensors.stop();
@@ -412,6 +413,7 @@
       if (!sensing) { syncDock(); return; }
       try { await LS.Sensors.startCamera(video); } catch (e) { toast(t('cameraDenied'), 6000); syncDock(); return; }
       view.ar = true; view.fovBeforeAr = view.fov; view.fov = S.arFov;
+      flag('usedCamera', 1); if (coach.step) hideCoach();
       document.body.classList.add('ar');
     } else {
       LS.Sensors.stopCamera(video);
@@ -973,7 +975,7 @@
     }
     if (PAGE_MODES.includes(S.mode)) { $('sheet').hidden = true; selected = null; view.track = false; }
     if (S.mode === 'jyotish') requestAnimationFrame(() => { jy.wheel.resize(); jyRefresh(true); });
-    renderPage(); LS.FX.wake(); bloom();
+    renderPage(); LS.FX.wake(); bloom(); if (coach.step) hideCoach();
     if (!initial && selected && !$('sheet').hidden) showSheet(selected);
     requestAnimationFrame(placeGlider);
     persist(); invalidate();
@@ -1309,16 +1311,64 @@
 
   // ---------- phone intro & sensor help ----------
   const isTouch = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
-  const isIOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-  let interacted = false;
-  ['pointerdown', 'keydown'].forEach((ev) => window.addEventListener(ev, () => { interacted = true; }, { once: true, capture: true }));
-  function showIntro() {
-    if (!isTouch || view.sensor || interacted || S.mode !== 'sky' || !$('paywall').hidden) return;
-    try { if (sessionStorage.getItem('antariksha.intro')) return; sessionStorage.setItem('antariksha.intro', '1'); } catch (e) { /* ignore */ }
-    const p = $('intro').querySelector('p');
-    p.textContent = t('introText') + (isIOS && !navigator.standalone && !LS.Pro.isNative ? ' ' + t('addHome') : '');
-    $('intro').hidden = false;
+
+  // ---------- coach marks: a cute star shows new users the compass, then the camera ----------
+  const STAR = '<svg viewBox="0 0 40 40" aria-hidden="true"><defs><radialGradient id="cst" cx="45%" cy="35%" r="70%"><stop offset="0" stop-color="#fff6d8"/><stop offset=".55" stop-color="#ffd27a"/><stop offset="1" stop-color="#ff9a4a"/></radialGradient></defs>'
+    + '<path d="M20 3.5l4.6 9.8 10.7 1.3-7.9 7.3 2.1 10.6L20 27.3l-9.5 5.2 2.1-10.6-7.9-7.3 10.7-1.3z" fill="url(#cst)" stroke="url(#cst)" stroke-width="2.4" stroke-linejoin="round"/>'
+    + '<g class="eyes" fill="#3a1c00"><ellipse cx="16.6" cy="18.2" rx="1.45" ry="1.9"/><ellipse cx="23.4" cy="18.2" rx="1.45" ry="1.9"/></g>'
+    + '<circle cx="14" cy="21.6" r="1.5" fill="#ff7a8a" opacity=".55"/><circle cx="26" cy="21.6" r="1.5" fill="#ff7a8a" opacity=".55"/>'
+    + '<path d="M17.8 21.8q2.2 2.2 4.4 0" fill="none" stroke="#3a1c00" stroke-width="1.3" stroke-linecap="round"/></svg>';
+  const flag = (k, v) => { try { if (v === undefined) return localStorage.getItem('antariksha.' + k) === '1'; localStorage.setItem('antariksha.' + k, '1'); } catch (e) { /* storage blocked */ } return false; };
+  const coach = { step: null, timers: [] };
+  function hideCoach() {
+    coach.step = null;
+    for (const id of ['coach', 'coachRing', 'coachCam']) $(id).hidden = true;
+    $('btnSensor').classList.remove('coach-target');
   }
+  const coachBlocked = () => S.mode !== 'sky' || !$('paywall').hidden || !$('drawer').hidden || !$('reminders').hidden
+    || document.body.classList.contains('yatra') || document.body.classList.contains('zen') || !$('dock').hidden || !$('timebar').hidden;
+  // Place the bubble above a target point (x, y = centre of the thing we point at), with its tail aimed at it.
+  function placeCoach(x, y, r) {
+    const el = $('coach'), ring = $('coachRing');
+    ring.style.left = `${x}px`; ring.style.top = `${y}px`; ring.style.setProperty('--r', `${r}px`);
+    el.style.visibility = 'hidden'; el.hidden = false;
+    const w = el.offsetWidth, h = el.offsetHeight;
+    const left = Math.max(10, Math.min(window.innerWidth - w - 10, x - w / 2));
+    el.style.left = `${left}px`; el.style.top = `${y - r - h - 16}px`;
+    el.style.setProperty('--tail', `${Math.max(18, Math.min(w - 18, x - left))}px`);
+    el.style.visibility = '';
+    ring.hidden = false;
+  }
+  function showCoach(step) {
+    if (coachBlocked()) return;
+    const sb = $('btnSensor').getBoundingClientRect();
+    if (!sb.width) return;
+    coach.step = step;
+    $('coach').querySelector('.coach-star').innerHTML = STAR;
+    $('coach').classList.toggle('cam', step === 'camera');
+    $('coachText').textContent = t(step === 'sensor' ? 'coachSensor' : 'coachCamera');
+    if (step === 'sensor') {
+      $('btnSensor').classList.add('coach-target');
+      placeCoach(sb.left + sb.width / 2, sb.top + sb.height / 2, sb.width / 2 + 4);
+    } else {
+      // The camera button sits just left of the compass; show a glowing stand-in there.
+      const cam = $('coachCam'), size = 46;
+      const x = sb.left - 34, y = sb.top + sb.height / 2;
+      cam.style.left = `${x - size / 2}px`; cam.style.top = `${y - size / 2}px`;
+      cam.hidden = false;
+      placeCoach(x, y, size / 2 + 4);
+    }
+    coach.timers.push(setTimeout(() => { if (coach.step === step) hideCoach(); }, 6000));
+  }
+  function startCoach() {
+    if (!(isTouch || LS.Pro.isNative)) return;
+    try { if (sessionStorage.getItem('antariksha.coach')) return; sessionStorage.setItem('antariksha.coach', '1'); } catch (e) { /* ignore */ }
+    if (!flag('usedSensor')) coach.timers.push(setTimeout(() => { if (!view.sensor) showCoach('sensor'); }, 1200));
+    if (!flag('usedCamera')) coach.timers.push(setTimeout(() => { if (!view.ar && coach.step == null) showCoach('camera'); }, 13000));
+  }
+  $('coach').addEventListener('click', () => { const s = coach.step; hideCoach(); if (s === 'sensor') setSensor(true); else if (s === 'camera') setAR(true); });
+  $('coachCam').addEventListener('click', () => { hideCoach(); setAR(true); });
+  $('coachCam').innerHTML = ICON.camera;
   let locToastTimer = null;
   function showLocToast() {
     const el = $('locToast');
@@ -1431,6 +1481,6 @@
     navigator.serviceWorker.register('sw.js').catch(() => {});
   }
   showLocToast();
-  setTimeout(showIntro, 3300);
+  startCoach();
   window.__antariksha = { view, clock, S, select, goTo, setMode, setNames, jy, invalidate, showPaywall, applyTheme, setRatri, setMeteors };
 })();
