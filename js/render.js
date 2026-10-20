@@ -408,8 +408,10 @@ void main(){
         hits.push({ x, y, r: 24, obj: { type: 'constellation', id: c.id }, prio: 0 });
       }
 
-      // Zodiac band: ecliptic, rashi and nakshatra divisions (sidereal, Lahiri)
-      const ayan = sc.ayanamsa;
+      // Zodiac band: ecliptic and the 12 signs. Vedic: sidereal rashis (Lahiri) with the 27 nakshatra divisions.
+      // Western: the tropical zodiac, measured from the March equinox.
+      const vedicSky = Nm.isVedic();
+      const ayan = vedicSky ? sc.ayanamsa : 0;
       if (st.rashi) {
         ctx.strokeStyle = COLORS.zodiac; ctx.lineWidth = 0.9;
         const ecl = []; for (let l = 0; l <= 360; l += 2) ecl.push(ect(l, 0));
@@ -432,7 +434,7 @@ void main(){
           }
         }
         ctx.strokeStyle = COLORS.nakTick;
-        for (let k = 0; k < 27; k++) {
+        for (let k = 0; k < (vedicSky ? 27 : 0); k++) {
           const lon = ayan + k * Sky.NAK, pts = [];
           for (let b = -5; b <= 5; b += 2.5) pts.push(ect(lon, b));
           polyline(pts);
@@ -519,7 +521,7 @@ void main(){
         if (rp < 0.9) ctx.fillRect(px - rp, py - rp, rp * 2, rp * 2);
         else { ctx.beginPath(); ctx.arc(px, py, rp, 0, 6.2832); ctx.fill(); }
         if (m < 4.6 || data.vedicNames[i]) hits.push({ x: px, y: py, r: 16, obj: { type: 'star', id: i }, prio: data.vedicNames[i] ? 3 : 1 });
-        if (st.labels && st.starNames && (m < labelLimit || (data.vedicNames[i] && m < labelLimit + 1.5))) starLabels.push([i, px, py, rp]);
+        if (st.labels && st.starNames && (m < labelLimit || (data.vedicNames[i] && Nm.isVedic() && m < labelLimit + 1.5))) starLabels.push([i, px, py, rp]);
       }
       ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
       for (const [i, x, y, rp] of starLabels) {
@@ -528,7 +530,7 @@ void main(){
         // Yogataras are already named by their nakshatra figure when that layer is on.
         if (vn && vn.kind === 'nakshatra' && st.nakshatra && (Nm.isVedic() || !data.names[i])) continue;
         const text = Nm.star(vn, data.names[i]);
-        if (vn && (Nm.isVedic() || !data.names[i])) color = COLORS.vedicStar;
+        if (vn && Nm.isVedic()) color = COLORS.vedicStar;
         if (!text) continue;
         tag(text, x + rp + 5, y - rp - 4, color, 11.5, { weight: 400, align: 'left', prio: (vn ? 5 : 4) - data.mag[i] * 0.1 });
       }

@@ -230,7 +230,7 @@
         const i = obj.id === 'abhijit' ? R.data.abhFig.yt : R.data.nakFigs[obj.id].yt;
         const v = starVec(i); return Sky.apply(fr.eqj2enu, v[0], v[1], v[2]);
       }
-      case 'rashi': { const v = Sky.eclVec(as.ayanamsa + obj.id * 30 + 15, 0); return Sky.apply(fr.ect2enu, v[0], v[1], v[2]); }
+      case 'rashi': { const v = Sky.eclVec((Nm.isVedic() ? as.ayanamsa : 0) + obj.id * 30 + 15, 0); return Sky.apply(fr.ect2enu, v[0], v[1], v[2]); }
       case 'constellation': { const c = R.data.western.find((x) => x.id === obj.id); return Sky.apply(fr.eqj2enu, c.label[0], c.label[1], c.label[2]); }
       case 'asterism': { const v = starVec(R.data.asterisms[obj.id].labelStar); return Sky.apply(fr.eqj2enu, v[0], v[1], v[2]); }
     }
@@ -435,7 +435,7 @@
     { key: 'meteors', icon: 'meteor', cyan: true, action: () => setMeteors(!S.meteors), state: () => !!S.meteors },
     { key: 'nada', icon: 'nada', action: () => setNada(!LS.Nada.on), state: () => LS.Nada.on }, { sep: true },
     { key: 'nakshatra', icon: 'nakshatra' }, { key: 'rashi', icon: 'rashi' }, { key: 'graha', icon: 'graha' },
-    { key: 'constellations', icon: 'western', label: 'mandala' }, { key: 'grid', icon: 'grid' },
+    { key: 'constellations', icon: 'western', dyn: () => (Nm.isVedic() ? 'mandala' : 'consWestern') }, { key: 'grid', icon: 'grid' },
     { key: 'names', icon: 'names', action: () => setNames(Nm.isVedic() ? 'western' : 'vedic'), state: () => Nm.isVedic(), dyn: () => (Nm.isVedic() ? 'vedicShort' : 'westernShort') }, { sep: true },
     { key: 'atmosphere', icon: 'atmosphere' }, { key: 'ground', icon: 'ground' }, { key: 'milkyway', icon: 'milkyway' }, { sep: true },
     { key: 'sensor', icon: 'sensor', cyan: true, action: () => setSensor(!view.sensor), state: () => view.sensor },
@@ -460,9 +460,18 @@
       b.addEventListener('click', () => {
         if (d.action) d.action(); else { S[d.key] = !S[d.key]; invalidate(); persist(); }
         syncDock();
+        // Layer switches: let the menu fade almost away for a moment so the change can be seen on the sky.
+        if (!d.action || ['names', 'ratri', 'meteors', 'night'].includes(d.key)) peekDock();
       });
       dock.appendChild(b);
     }
+  }
+  let peekTimer = null;
+  function peekDock() {
+    const dock = $('dock');
+    dock.classList.add('peek');
+    clearTimeout(peekTimer);
+    peekTimer = setTimeout(() => dock.classList.remove('peek'), 1500);
   }
   function syncDock() {
     for (const b of $('dock').querySelectorAll('.dock-btn')) {
@@ -571,7 +580,7 @@
     });
   }
   function renderSettingsText() {
-    for (const b of $('settingToggles').querySelectorAll('.toggle')) b.querySelector('span').textContent = t(b.dataset.key === 'constellations' ? 'mandala' : b.dataset.key);
+    for (const b of $('settingToggles').querySelectorAll('.toggle')) b.querySelector('span').textContent = t(b.dataset.key === 'constellations' ? (Nm.isVedic() ? 'mandala' : 'consWestern') : b.dataset.key);
     const sel = $('citySelect');
     sel.innerHTML = `<option value="" disabled>${t('location')}</option>` + CITIES.map((c) => `<option value="${c.id}">${nm(c)}</option>`).join('');
     sel.value = CITIES.some((c) => c.id === S.loc.id) ? S.loc.id : '';
@@ -741,12 +750,19 @@
   function hideSheet() { $('sheet').hidden = true; }
   function rowsHtml(rows) { return rows.filter(Boolean).map(([k, v]) => `<div class="k">${k}</div><div class="v">${v}</div>`).join(''); }
 
+  // Position in the zodiac. Vedic: sidereal rashi and nakshatra. Western: the tropical sign first (as Western
+  // astrology and Stellarium's modern culture use), with the sidereal rashi alongside.
   function zodiacRows(sidLon) {
     const z = Sky.zodiacInfo(sidLon);
+    const nak = [t('inNakshatra'), `${nm(V.nakshatras[z.nakshatra])} · ${t('pada')} ${I.num(z.pada)}`];
+    if (Nm.isVedic()) return [[t('siderealLon'), dms(sidLon)], [t('inRashi'), `${Nm.rashi(z.rashi)} ${dms(z.degInRashi)}`], nak];
+    const trop = Sky.norm360(sidLon + (astro || computeAstro()).ayanamsa);
+    const rs = V.rashis[z.rashi];
     return [
-      [t('siderealLon'), dms(sidLon)],
-      [t('inRashi'), `${Nm.rashi(z.rashi)} ${dms(z.degInRashi)}`],
-      [t('inNakshatra'), `${nm(V.nakshatras[z.nakshatra])} · ${t('pada')} ${I.num(z.pada)}`],
+      [t('tropicalLon'), dms(trop)],
+      [t('inSign'), `${Nm.rashi(Math.floor(trop / 30))} ${dms(trop % 30)}`],
+      [t('siderealSign'), `${I.lang === 'hi' ? rs.hi : rs.en} ${dms(z.degInRashi)}`],
+      nak,
     ];
   }
   function posRows(enu, as) {
@@ -826,11 +842,14 @@
     } else if (obj.type === 'rashi') {
       const rs = V.rashis[obj.id];
       type = `${t('rashiType')} ${I.num(obj.id + 1)} / ${I.num(12)}`; title = Nm.rashi(obj.id); sub = Nm.rashiAlt(obj.id); glyph = '♈♉♊♋♌♍♎♏♐♑♒♓'[obj.id];
-      const inHere = Sky.GRAHA_ORDER.filter((id) => Math.floor(as.grahas[id].sidLon / 30) === obj.id).map((id) => Nm.graha(id));
+      const vedicSky = Nm.isVedic();
+      // Vedic rashis are sidereal; Western signs are tropical (measured from the March equinox).
+      const inHere = Sky.GRAHA_ORDER.filter((id) => Math.floor((vedicSky ? as.grahas[id].sidLon : as.grahas[id].tropLon) / 30) === obj.id).map((id) => Nm.graha(id));
       const firstNak = Math.floor(obj.id * 30 / Sky.NAK), lastNak = Math.floor((obj.id * 30 + 29.999) / Sky.NAK);
       const naks = []; for (let k = firstNak; k <= lastNak; k++) naks.push(nm(V.nakshatras[k]));
       rows = [[t('symbol'), nm(rs.symbol)], [t('lord'), Nm.graha(rs.lord)], [t('element'), nm(V.elements[rs.el])],
-        [t('nakshatra'), naks.join(', ')], inHere.length ? [t('graha'), inHere.join(', ')] : null];
+        vedicSky ? [t('nakshatra'), naks.join(', ')] : null, inHere.length ? [t('graha'), inHere.join(', ')] : null];
+      if (!vedicSky) desc = t('tropicalNote');
       sheetStatic = { star: null };
     } else if (obj.type === 'constellation') {
       const c = R.data.western.find((x) => x.id === obj.id);
@@ -904,7 +923,7 @@
       if (R.data.vedicNames[i] && R.data.vedicNames[i].kind === 'star') continue;
       idx.push({ obj: { type: 'star', id: +i }, glyph: '·', names: [name, starDesig[i]], label: () => name, sub: () => `${t('starType')} · ${starDesig[i] || ''}`, minor: true });
     }
-    for (const c of R.data.western) idx.push({ obj: { type: 'constellation', id: c.id }, glyph: '✧', names: [c.en, c.hi, c.id, ...(V.constellations[c.id] || [])], label: () => Nm.constellation(c), sub: () => `${t('consType')} · ${Nm.constellationAlt(c)}`, minor: true });
+    for (const c of R.data.western) idx.push({ obj: { type: 'constellation', id: c.id }, glyph: '✧', names: [c.la, c.en, c.hi, c.id, ...(V.constellations[c.id] || [])], label: () => Nm.constellation(c), sub: () => `${t('consType')} · ${Nm.constellationAlt(c)}`, minor: true });
     searchIndex = idx.map((e) => ({ ...e, keys: e.names.filter(Boolean).map(fold) }));
   }
   let activeResult = -1, currentResults = [];
@@ -946,8 +965,19 @@
 
 
   // ---------- names & modes ----------
+  // Each naming culture is a sky culture with its own layers, as in Stellarium: Vedic shows the nakshatra
+  // figures and the sidereal rashi band; Western shows the IAU constellation lines (and, if wanted, the
+  // tropical zodiac). The user's own layer choices are remembered per culture.
+  const CULTURE_LAYERS = ['nakshatra', 'rashi', 'constellations'];
+  const CULTURE_DEFAULTS = { vedic: { nakshatra: true, rashi: true, constellations: false }, western: { nakshatra: false, rashi: false, constellations: true } };
   function setNames(c) {
-    S.names = c; Nm.set(c); persist();
+    const from = Nm.culture;
+    if (c !== from) {
+      S.cultureLayers = S.cultureLayers || {};
+      S.cultureLayers[from] = Object.fromEntries(CULTURE_LAYERS.map((k) => [k, !!S[k]]));
+      Object.assign(S, CULTURE_DEFAULTS[c] || {}, S.cultureLayers[c] || {});
+    }
+    S.names = c; Nm.set(c); persist(); renderSettingsText();
     syncDock();
     if (selected && !$('sheet').hidden) showSheet(selected);
     if ($('searchInput').value) runSearch($('searchInput').value);
@@ -1404,13 +1434,17 @@
   $('searchIco').innerHTML = ICON.search;
   $('btnSearch').innerHTML = ICON.search;
   $('searchClose').innerHTML = ICON.close;
-  $('btnLayers').innerHTML = ICON.layers;
+  // The options button carries a small "Menu" caption; it glows softly until the menu has been opened once.
+  $('btnLayers').innerHTML = `${ICON.layers}<span class="bl-cap" data-t="menuLbl"></span>`;
+  try { if (!localStorage.getItem('antariksha.openedMenu')) $('btnLayers').classList.add('invite'); } catch (e) { /* ignore */ }
   $('btnCam').innerHTML = ICON.camera;
   $('aperture').innerHTML = ICON.aperture;
   $('ltIco').innerHTML = ICON.clock;
   $('btnSearch').addEventListener('click', () => { $('searchBox').hidden = false; $('searchInput').focus(); });
   $('searchClose').addEventListener('click', () => { $('searchInput').value = ''; runSearch(''); $('searchBox').hidden = true; });
-  $('btnLayers').addEventListener('click', () => { $('dock').hidden = !$('dock').hidden; if (!$('dock').hidden) { $('timebar').hidden = true; } syncDock(); });
+  $('btnLayers').addEventListener('click', () => {
+    $('btnLayers').classList.remove('invite'); try { localStorage.setItem('antariksha.openedMenu', '1'); } catch (e) { /* ignore */ }
+    $('dock').hidden = !$('dock').hidden; if (!$('dock').hidden) { $('timebar').hidden = true; } syncDock(); });
   $('btnSensor').addEventListener('click', () => { setSensor(!view.sensor); });
   $('btnCam').addEventListener('click', () => { setAR(!view.ar); });
   $('btnPanchang').addEventListener('click', () => { close('timebar'); open('panchang'); });

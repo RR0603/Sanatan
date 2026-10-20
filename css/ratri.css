@@ -69,7 +69,7 @@ body.ratri .page.bloom .page-body > *, body.ratri .panel, body.ratri.bloom .jy-s
   animation: rtBloom .9s cubic-bezier(.2, .8, .2, 1) both;
 }
 /* Centred panels keep their translateX(-50%) while blooming. */
-body.ratri .dock, body.ratri .timebar, body.ratri .intro { animation: rtBloomX .8s cubic-bezier(.2, .8, .2, 1) both; }
+body.ratri .dock, body.ratri .timebar, body.ratri .intro { animation: rtBloomX .8s cubic-bezier(.2, .8, .2, 1) backwards; }
 body.ratri .sheet { animation: rtBloom .9s cubic-bezier(.2, .8, .2, 1) both; }
 body.ratri .page.bloom .page-body > :nth-child(2) { animation-delay: .08s; }
 body.ratri .page.bloom .page-body > :nth-child(3) { animation-delay: .16s; }

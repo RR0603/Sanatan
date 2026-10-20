@@ -5,6 +5,8 @@ LS.I18N = (function () {
   const S = {
     en: {
       // Ratri, Nada, Ulka, Yatra
+      tropicalLon: 'Tropical longitude', inSign: 'Sign (tropical)', siderealSign: 'Rashi (sidereal)', consWestern: 'Constellations', menuLbl: 'Menu',
+      tropicalNote: 'A Western tropical sign, measured from the March equinox. The Vedic rashi of the same name lies about 24° further east (Lahiri ayanamsa).',
       proPending: 'Payment pending — Pro unlocks as soon as the store confirms it', locAsk: 'Show the sky and Panchang for where you are?', locAskYes: 'Use my location', locAskNo: 'Choose a city later',
       coachSensor: 'Psst! Tap me, then point your phone at the sky ✨', coachCamera: 'Try the camera — see the stars over your world 📷',
       ratri: 'Ratri', nada: 'Nada', meteors: 'Ulka', yatra: 'Yatra',
@@ -117,6 +119,8 @@ LS.I18N = (function () {
     },
     hi: {
       // Ratri, Nada, Ulka, Yatra
+      tropicalLon: 'सायन भोगांश', inSign: 'राशि (सायन)', siderealSign: 'राशि (निरयन)', consWestern: 'तारामण्डल', menuLbl: 'मेनू',
+      tropicalNote: 'पाश्चात्य सायन राशि, वसन्त विषुव से मापी गई। इसी नाम की वैदिक (निरयन) राशि लगभग २४° पूर्व में है (लाहिरी अयनांश)।',
       proPending: 'भुगतान लम्बित — स्टोर की पुष्टि होते ही प्रो खुल जाएगा', locAsk: 'आपके स्थान का आकाश और पंचांग दिखाएँ?', locAskYes: 'मेरा स्थान उपयोग करें', locAskNo: 'बाद में शहर चुनें',
       coachSensor: 'सुनिए! मुझे छुएँ, फिर फ़ोन आकाश की ओर करें ✨', coachCamera: 'कैमरा आज़माएँ — अपनी दुनिया पर तारे देखें 📷',
       ratri: 'रात्रि', nada: 'नाद', meteors: 'उल्का', yatra: 'यात्रा',

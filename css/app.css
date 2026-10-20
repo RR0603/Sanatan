@@ -873,3 +873,60 @@ body.ratri .coach { background: linear-gradient(170deg, rgba(243, 217, 164, .1),
 html[lang="hi"] body.ratri .coach { font-family: var(--deva); font-style: normal; font-size: 13.5px; }
 body.ratri .coach::after { background: rgba(8, 8, 18, .92); border-color: rgba(243, 217, 164, .5); }
 @media (prefers-reduced-motion: reduce) { .coach, .coach-star, .coach-star .eyes, .coach-ring::before, .coach-ring::after, .coach-cam, .compass-btn.coach-target { animation: none; } }
+
+/* ======================================================================
+   Options menu (the layers sheet): see-through so each change is visible on the sky behind it,
+   with crisp, shadowed labels. Toggling a layer briefly fades the menu ("peek") to show the result.
+   The #dock id outranks the theme rules on purpose.
+   ====================================================================== */
+#dock {
+  background: linear-gradient(170deg, rgba(255, 255, 255, .08), rgba(255, 255, 255, 0) 45%), rgba(6, 9, 22, .26);
+  -webkit-backdrop-filter: blur(3px) saturate(125%); backdrop-filter: blur(3px) saturate(125%);
+  border: 1px solid rgba(255, 255, 255, .16);
+  box-shadow: 0 18px 50px rgba(0, 0, 0, .35), inset 0 1px 0 rgba(255, 255, 255, .12);
+  grid-template-columns: repeat(auto-fill, minmax(66px, 1fr)); gap: 4px 2px; padding: 12px 8px 10px;
+  max-height: min(52vh, 460px); overflow-y: auto; scrollbar-width: none; overscroll-behavior: contain;
+  transition: opacity .35s ease, transform .35s ease;
+}
+#dock::-webkit-scrollbar { display: none; }
+#dock .dock-btn { gap: 5px; padding: 3px 0; }
+#dock .dock-btn svg {
+  width: 44px; height: 44px; padding: 11px;
+  background: rgba(8, 12, 28, .5); border: 1px solid rgba(255, 255, 255, .18);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, .35); color: #f4f6ff;
+}
+#dock .dock-btn span {
+  font-size: 10.5px; font-weight: 600; color: #fff; letter-spacing: .02em;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, .95), 0 0 8px rgba(0, 0, 0, .85), 0 0 16px rgba(0, 0, 0, .6);
+}
+#dock .dock-btn.on svg { color: #1a0d00; border-color: transparent; }
+#dock .dock-btn.cyan.on svg { color: #08202a; }
+#dock.peek { opacity: .1; transform: translateX(-50%) translateY(6px); pointer-events: none; }
+#dock.peek:hover { opacity: .1; }
+body.ratri #dock { background: linear-gradient(170deg, rgba(243, 217, 164, .07), transparent 45%), rgba(4, 4, 12, .3); border-color: rgba(243, 217, 164, .26); }
+body.ratri #dock .dock-btn svg { background: rgba(6, 6, 16, .55); border-color: rgba(243, 217, 164, .3); color: #f3d9a4; }
+body.ratri #dock .dock-btn.on svg { color: #1d1206; }
+
+/* "Menu" caption under the bottom-left options button */
+#btnLayers { width: auto; height: auto; min-width: 48px; padding: 4px 6px 2px; display: flex; flex-direction: column; align-items: center; gap: 2px; border-radius: 14px; }
+#btnLayers .bl-cap {
+  font-size: 10px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: rgba(240, 244, 255, .78);
+  text-shadow: 0 1px 2px #000, 0 0 6px rgba(0, 0, 0, .8); line-height: 1;
+}
+html[lang="hi"] #btnLayers .bl-cap { text-transform: none; letter-spacing: 0; font-size: 11px; }
+#btnLayers.on .bl-cap { color: var(--cyan); }
+/* A soft, slow invitation until the menu has been opened once (then never again). */
+#btnLayers.invite svg { animation: menuInvite 2.8s ease-in-out infinite; }
+#btnLayers.invite .bl-cap {
+  background: linear-gradient(90deg, rgba(240, 244, 255, .7) 0%, #ffd8a0 50%, rgba(240, 244, 255, .7) 100%);
+  background-size: 200% 100%; -webkit-background-clip: text; background-clip: text; color: transparent; animation: capShimmer 3.2s linear infinite;
+}
+@keyframes menuInvite { 0%, 100% { filter: drop-shadow(0 1px 2px rgba(0, 0, 0, .9)); } 50% { filter: drop-shadow(0 0 8px rgba(255, 200, 120, .75)) drop-shadow(0 1px 2px rgba(0, 0, 0, .9)); } }
+@keyframes capShimmer { to { background-position: -200% 0; } }
+body.ratri #btnLayers .bl-cap { color: rgba(243, 217, 164, .85); }
+@media (prefers-reduced-motion: reduce) { #btnLayers.invite svg, #btnLayers.invite .bl-cap { animation: none; } #dock { transition: none; } }
+#dock { animation: dockIn .26s ease-out; }
+@keyframes dockIn { from { opacity: 0; transform: translateX(-50%) translateY(10px); } to { opacity: 1; transform: translateX(-50%); } }
+body.ratri #dock { animation: rtBloomX .8s cubic-bezier(.2, .8, .2, 1) backwards; }
+#dock .dock-btn.on svg { background: var(--nv-aurora, linear-gradient(135deg, var(--saffron), var(--saffron-2))); box-shadow: 0 6px 18px rgba(255, 150, 80, .45); }
+#dock .dock-btn.cyan.on svg { background: var(--nv-ice, linear-gradient(135deg, #a5f3ff, var(--cyan))); box-shadow: 0 6px 18px rgba(126, 200, 250, .45); }

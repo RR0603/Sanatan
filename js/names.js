@@ -25,19 +25,22 @@ LS.Names = (function () {
     rashi(k) { const r = V.rashis[k]; return hi() ? r.hi : vedic() ? r.en : r.west; },
     rashiAlt(k) { const r = V.rashis[k]; return vedic() ? (hi() ? r.en : r.west) : `${r.en} · ${r.hi}`; },
     nakshatra(k) { const n = V.nakshatras[k]; return hi() ? n.hi : n.en; },
+    // Western: the official IAU (Latin) name, as Stellarium shows it; the English meaning goes in the subtitle.
     constellation(c) {
       const v = V.constellations[c.id];
       if (vedic() && v) return hi() ? v[1] : v[0];
-      return c.en;
+      return c.la || c.en;
     },
     constellationAlt(c) {
       const v = V.constellations[c.id];
-      if (!v) return c.la || '';
-      return vedic() ? `${c.en} · ${c.la || c.id}` : (hi() ? v[1] : v[0]);
+      if (vedic()) return `${c.en} · ${c.la || c.id}`;
+      const meaning = c.en && c.en !== c.la ? c.en : '';
+      return [meaning, v ? (hi() ? v[1] : v[0]) : ''].filter(Boolean).join(' · ');
     },
-    // Star label: Jyotish name when the culture is vedic and one exists, else the proper name.
+    // Star label. Vedic: the Jyotish name when there is one, else the IAU proper name.
+    // Western: only the IAU (WGSN) proper name, as in Stellarium's modern sky culture.
     star(vn, proper) {
-      if (vn && (vedic() || !proper)) return hi() ? vn.hi : vn.en;
+      if (vn && vedic()) return hi() ? vn.hi : vn.en;
       return proper || null;
     },
     direction(k, short) {

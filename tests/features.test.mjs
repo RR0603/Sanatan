@@ -61,6 +61,15 @@ const near = (ms, ref, sec = 90) => Math.abs(Date.parse(`${new Date(ms + 330 * 6
     check(`Milan ${total}/36`, r.total === total && got === parts, `${r.total} · ${got}`);
   }
 }
+// Western (tropical) vs Vedic (sidereal) zodiac: on 25 Mar 2026 the Sun is in tropical Aries but sidereal Meena.
+{
+  const time = A.MakeTime(new Date(Date.UTC(2026, 2, 25, 6, 0))), obs = new A.Observer(28.6, 77.2, 0);
+  const g = LS.Sky.grahas(time, obs, LS.Sky.frames(time, obs)).surya;
+  const ay = LS.Sky.ayanamsa(time);
+  check('Lahiri ayanamsa ≈ 24.2° in 2026', Math.abs(ay - 24.21) < 0.05, ay.toFixed(3));
+  check('Sun 25 Mar 2026: tropical Aries, sidereal Meena', Math.floor(g.tropLon / 30) === 0 && Math.floor(g.sidLon / 30) === 11, `${g.tropLon.toFixed(2)} / ${g.sidLon.toFixed(2)}`);
+}
+
 // Edge cases found in review: Sankranti just before a range, polar days, DST days, midnight clock changes
 {
   const delhi = new A.Observer(28.6139, 77.209, 0);
