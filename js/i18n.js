@@ -5,6 +5,7 @@ LS.I18N = (function () {
   const S = {
     en: {
       // Ratri, Nada, Ulka, Yatra
+      proPending: 'Payment pending — Pro unlocks as soon as the store confirms it', locAsk: 'Show the sky and Panchang for where you are?', locAskYes: 'Use my location', locAskNo: 'Choose a city later',
       coachSensor: 'Psst! Tap me, then point your phone at the sky ✨', coachCamera: 'Try the camera — see the stars over your world 📷',
       ratri: 'Ratri', nada: 'Nada', meteors: 'Ulka', yatra: 'Yatra',
       ratriOpt: 'Ratri night mode', ratriOptSub: 'Midnight & gold, star-dust and shooting stars',
@@ -116,6 +117,7 @@ LS.I18N = (function () {
     },
     hi: {
       // Ratri, Nada, Ulka, Yatra
+      proPending: 'भुगतान लम्बित — स्टोर की पुष्टि होते ही प्रो खुल जाएगा', locAsk: 'आपके स्थान का आकाश और पंचांग दिखाएँ?', locAskYes: 'मेरा स्थान उपयोग करें', locAskNo: 'बाद में शहर चुनें',
       coachSensor: 'सुनिए! मुझे छुएँ, फिर फ़ोन आकाश की ओर करें ✨', coachCamera: 'कैमरा आज़माएँ — अपनी दुनिया पर तारे देखें 📷',
       ratri: 'रात्रि', nada: 'नाद', meteors: 'उल्का', yatra: 'यात्रा',
       ratriOpt: 'रात्रि मोड', ratriOptSub: 'आधी रात और स्वर्ण, तारों की धूल और टूटते तारे',

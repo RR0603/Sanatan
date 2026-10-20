@@ -363,7 +363,7 @@ LS.Pages = (function () {
     const opts = C.CITIES.map((c) => `<option value="${c.id}"${place === c.id ? ' selected' : ''}>${nm(c)}</option>`).join('');
     return `<div class="mi-person" data-role="${role}">
       <div class="eyebrow">${t(role === 'g' ? 'groom' : 'bride')}</div>
-      ${profiles.length ? `<select class="field" data-mi="profile"><option value="">${t('pickProfile')}</option>${profiles.map((x) => `<option value="${x.pid}">${esc(x.name || t('birthChart'))}</option>`).join('')}</select>` : ''}
+      ${profiles.length ? `<select class="field" data-mi="profile"><option value="">${t('pickProfile')}</option>${profiles.map((x) => `<option value="${esc(x.pid)}">${esc(x.name || t('birthChart'))}</option>`).join('')}</select>` : ''}
       <input class="field" data-mi="name" placeholder="${t('birthName')}" value="${esc(dr ? dr.name : p ? p.name : '')}" maxlength="40">
       <input class="field" data-mi="date" type="datetime-local" value="${val}">
       <select class="field" data-mi="place"><option value="">${t('birthPlace')}</option>${opts}</select>
@@ -475,7 +475,7 @@ LS.Pages = (function () {
     el.innerHTML = `
       ${native ? '' : `<p class="note warn">${t('remAppOnly')}</p>`}
       <button class="toggle big${p.on ? ' on' : ''}" data-rem="on"><span><b>${t('remindersOn')}</b><small>${t('remindersSub')}</small></span><i></i></button>
-      <div class="rem-time"><span>${t('remTime')}</span><input class="field" type="time" id="remTime" value="${p.time}"></div>
+      <div class="rem-time"><span>${t('remTime')}</span><input class="field" type="time" id="remTime" value="${esc(p.time)}"></div>
       <div class="toggles one">${REMINDER_KINDS.map((k) => `<button class="toggle${p[k] ? ' on' : ''}" data-rem="${k}"><span>${t('rem_' + k)}</span><i></i></button>`).join('')}</div>
       <p class="note">${t('remNote')}</p>`;
   }

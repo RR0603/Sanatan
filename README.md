@@ -152,6 +152,22 @@ Planetary positions come from [Astronomy Engine](https://github.com/cosinekitty/
 
 `npm test` runs all of these checks.
 
+## Security and store readiness
+
+- **Ships nothing remote:** the app bundles every file, makes no network calls of its own and runs offline. The only outside service is RevenueCat, inside the native store SDKs. There are no accounts, no tracking and no analytics.
+- **Web hardening:** the website has a strict Content-Security-Policy, with no remote scripts and no inline scripts.
+- **No HTML injection:** user-entered text (names, profiles) is escaped wherever it is written into the page, and the app starts cleanly even if its saved data is corrupted.
+- **Purchases:**
+  - Purchases and restores go only through Apple and Google. Pro is never granted from local storage on the website, and the app shows only the store's own price.
+  - A failed store load is retried when you tap Buy. A pending purchase and a store outage each get their own clear message.
+- **Release workflows:**
+  - Workflows run with read-only permissions, pass secrets only to the steps that need them and pin third-party actions to commits.
+  - They skip install scripts and run `npm run preflight` before building.
+- **Store policies:**
+  - iOS has a privacy manifest.
+  - Android has no exact alarms, no background location and no cloud backup of birth data.
+  - The Android back button closes panels in order before leaving the app.
+
 ## Project layout
 
 ```

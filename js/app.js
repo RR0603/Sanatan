@@ -99,6 +99,10 @@
   const KEY = 'antariksha.v1';
   let saved = {};
   try { saved = JSON.parse(localStorage.getItem(KEY) || '{}'); } catch (e) { saved = {}; }
+  // Never let corrupted storage stop the app from starting.
+  if (!saved || typeof saved !== 'object' || Array.isArray(saved)) saved = {};
+  if (saved.loc && (typeof saved.loc !== 'object' || !isFinite(saved.loc.lat) || !isFinite(saved.loc.lon))) delete saved.loc;
+  if (!Array.isArray(saved.profiles)) delete saved.profiles;
   const S = { ...DEFAULTS, ...saved, loc: { ...DEFAULTS.loc, ...(saved.loc || {}) } };
   let saveTimer = null;
   function persist() {
@@ -1176,14 +1180,14 @@
     const lat = b ? b.lat : S.loc.lat, lon = b ? b.lon : S.loc.lon;
     const opts = CITIES.map((c) => `<option value="${c.id}"${c.id === placeId ? ' selected' : ''}>${nm(c)}</option>`).join('');
     const profiles = (S.profiles || []).map((p) => `<div class="profile${b && b.pid === p.pid ? ' on' : ''}">
-        <button class="pf-main" data-act="load:${p.pid}"><b>${esc(p.name || t('birthChart'))}</b><span>${fmtDay(p.ms)} · ${esc(nm(p))}</span></button>
-        <button class="pf-del" data-act="del:${p.pid}" aria-label="${t('remove')}">×</button></div>`).join('');
+        <button class="pf-main" data-act="load:${esc(p.pid)}"><b>${esc(p.name || t('birthChart'))}</b><span>${fmtDay(p.ms)} · ${esc(nm(p))}</span></button>
+        <button class="pf-del" data-act="del:${esc(p.pid)}" aria-label="${t('remove')}">×</button></div>`).join('');
     return `<div class="form">
       <div class="eyebrow">${t('profiles')}</div>
       <div class="profiles">${profiles || `<p class="note">${t('noProfiles')}</p>`}</div>
       <div class="eyebrow" style="margin-top:16px">${t('birthTitle')}</div>
-      ${b ? `<div class="birth-chip">✦ ${b.name || t('birthChart')} · ${fmtDay(b.ms)}</div>` : ''}
-      <label>${t('birthName')}<input class="field" id="bName" value="${(b && b.name ? b.name : '').replace(/"/g, '&quot;')}" maxlength="40"></label>
+      ${b ? `<div class="birth-chip">✦ ${esc(b.name || t('birthChart'))} · ${fmtDay(b.ms)}</div>` : ''}
+      <label>${t('birthName')}<input class="field" id="bName" value="${esc(b && b.name ? b.name : '')}" maxlength="40"></label>
       <label>${t('birthDate')}<input class="field" id="bDate" type="datetime-local" value="${val}"></label>
       <label>${t('birthPlace')}<select class="field" id="bPlace"><option value="custom">${t('custom')}</option>${opts}</select></label>
       <div class="row2">
@@ -1239,7 +1243,12 @@
     const stores = $('pwStores');
     stores.hidden = true;
   }
-  function showPaywall() { renderPaywall(); $('paywall').hidden = false; }
+  function showPaywall() {
+    renderPaywall(); $('paywall').hidden = false;
+    // If the store didn't answer at launch, ask again so the price and Buy button come alive.
+    if (LS.Pro.isNative && !LS.Pro.price()) LS.Pro.loadOfferings().then(() => { if (!$('paywall').hidden) renderPaywall(); });
+  }
+  const restoreToast = (r) => toast(t(r === 'error' ? 'proUnavailable' : r ? 'proRestored' : 'proNothing'), 4500);
   function hidePaywall() { $('paywall').hidden = true; }
   async function buyPro() {
     const btn = $('pwBuy');
@@ -1255,6 +1264,7 @@
       $('pwStores').hidden = false;
       return;
     }
+    if (res === 'pending') { toast(t('proPending'), 6000); return; }
     if (res === 'unavailable') toast(t('proUnavailable'), 5000);
   }
   function renderProRow() {
@@ -1265,14 +1275,14 @@
     if (!pro) $('proRowBuy').addEventListener('click', () => { close('drawer'); showPaywall(); });
     if (LS.Pro.isNative) {
       const r = document.createElement('button'); r.className = 'pill wide'; r.textContent = t('restore');
-      r.addEventListener('click', async () => { const ok = await LS.Pro.restore(); toast(t(ok ? 'proRestored' : 'proNothing')); });
+      r.addEventListener('click', async () => restoreToast(await LS.Pro.restore()));
       $('proRow').appendChild(r);
     }
   }
   $('pwClose').addEventListener('click', hidePaywall);
   $('paywall').addEventListener('click', (e) => { if (e.target.id === 'paywall') hidePaywall(); });
   $('pwBuy').addEventListener('click', buyPro);
-  $('pwRestore').addEventListener('click', async () => { const ok = await LS.Pro.restore(); toast(t(ok ? 'proRestored' : 'proNothing')); renderPaywall(); });
+  $('pwRestore').addEventListener('click', async () => { restoreToast(await LS.Pro.restore()); renderPaywall(); });
   LS.Pro.onChange(() => { renderProRow(); syncDock(); if (!$('paywall').hidden) renderPaywall(); jyRefresh(false); if (LS.Pro.isPro()) hidePaywall(); });
   {
     const L = LS.CONFIG.links;
@@ -1455,6 +1465,7 @@
     if (!$('reminders').hidden) { $('reminders').hidden = true; return; }
     if (!$('drawer').hidden) { close('drawer'); return; }
     if (!$('searchBox').hidden) { $('searchClose').click(); return; }
+    if (!$('locAsk').hidden) { $('locAskNo').click(); return; }
     if (coach.step) { hideCoach(); return; }
     if (!$('help').hidden) { $('help').hidden = true; return; }
     if (!$('sheet').hidden) { close('sheet'); return; }
@@ -1487,10 +1498,17 @@
   applyNight();
   refreshPanchang(true);
   requestAnimationFrame(frame);
+  let coachDeferred = false;
   if (!saved.loc) {
-    // First run: try the device's location (falls back to Ujjain, the prime meridian of Jyotisha).
-    if (LS.Pro.isNative) geolocate(false);
-    else if (navigator.permissions && navigator.permissions.query) {
+    // First run: use the device's location (falls back to Ujjain, the prime meridian of Jyotisha).
+    // In the apps, explain why first and let the user choose, so the system prompt comes in context.
+    if (LS.Pro.isNative) {
+      coachDeferred = true;
+      const done = () => { $('locAsk').hidden = true; startCoach(); };
+      $('locAskYes').addEventListener('click', () => { done(); geolocate(true); });
+      $('locAskNo').addEventListener('click', done);
+      setTimeout(() => { $('locAsk').hidden = false; }, 900);
+    } else if (navigator.permissions && navigator.permissions.query) {
       navigator.permissions.query({ name: 'geolocation' }).then((p) => { if (p.state !== 'denied') geolocate(false); }).catch(() => geolocate(false));
     } else geolocate(false);
   }
@@ -1503,6 +1521,6 @@
     navigator.serviceWorker.register('sw.js').catch(() => {});
   }
   showLocToast();
-  startCoach();
+  if (!coachDeferred) startCoach();
   window.__antariksha = { view, clock, S, select, goTo, setMode, setNames, jy, invalidate, showPaywall, applyTheme, setRatri, setMeteors };
 })();

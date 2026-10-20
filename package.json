@@ -9,7 +9,7 @@
     "sync": "npm run build && npx cap sync",
     "ios": "npm run sync && npx cap open ios",
     "android": "npm run sync && npx cap open android",
-    "assets": "npx capacitor-assets generate --assetPath resources --iconBackgroundColor '#04060f' --iconBackgroundColorDark '#04060f' --splashBackgroundColor '#04060f' --splashBackgroundColorDark '#04060f'",
+    "assets": "npx --yes @capacitor/assets@3.0.5 generate --assetPath resources --iconBackgroundColor '#04060f' --iconBackgroundColorDark '#04060f' --splashBackgroundColor '#04060f' --splashBackgroundColorDark '#04060f'",
     "version": "node scripts/set-version.mjs",
     "serve": "python3 -m http.server 8000",
     "store-shots": "node tools/store-screenshots.mjs",
@@ -30,7 +30,6 @@
     "@revenuecat/purchases-capacitor": "^13.7.4"
   },
   "devDependencies": {
-    "@capacitor/assets": "^3.0.5",
     "@capacitor/cli": "^8.5.3"
   }
 }
