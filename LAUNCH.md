@@ -14,6 +14,7 @@ Most of what is left is **accounts, forms and pasting keys**. None of it needs a
 | Pro | Janma Kundali (birth chart), birth-sky view, Vimshottari Dasha, Navamsa D9, saved family profiles |
 | Store copy | [`STORE_LISTING.md`](STORE_LISTING.md) |
 | Screenshots | [`store/`](store) (regenerate with `npm run store-shots`) |
+| Ready-to-upload kit | [`fastlane/`](fastlane): every listing field, icon, feature graphic and screenshot in store layout. See its README for which file goes in which box. Regenerate with `npm run store-kit`. |
 
 Time to plan for:
 

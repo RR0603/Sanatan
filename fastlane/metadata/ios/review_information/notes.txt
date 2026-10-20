@@ -1,0 +1,25 @@
+Antariksha is a real-time planetarium of the Vedic (Indian) sky. It uses the device's
+gyroscope, compass and rear camera to draw the stars, the 27 nakshatras and the planets
+over the live sky, and calculates the traditional Indian calendar (Panchang) on-device.
+
+No account or sign-in is needed. Everything works offline.
+
+To review (the switch at the top has Sky, Today, Calendar and Jyotish):
+1. Sky: tap the compass button (motion permission), then point the device around. Tap the
+   camera button next to it for the AR view. The layers button (bottom left) → "Tonight"
+   lists visible planets; tap one and an arrow guides the device to it.
+2. Today: the day's Panchang, sunrise/moonrise, Rahu Kaal and Choghadiya. The share button
+   shares the day's Panchang as text.
+3. Calendar: festivals, vrats and eclipses for the month. The bell opens optional local
+   reminders (notification permission is requested only when the user turns them on).
+4. Jyotish: the Bhachakra wheel, the chart of the current moment and Kundali Milan.
+5. In-app purchase "Antariksha Pro" (non-consumable): tap the "Dasha" or "Birth" tab in
+   Jyotish to open the paywall. "Restore purchases" is on the paywall and in the menu.
+6. Settings (menu, top left) → Design switches between the new and the classic look, and can
+   move the section switch to a tab bar at the bottom of the screen.
+7. The layers button also has Ratri (night mode), Yatra (a 45-second time-lapse of tonight),
+   Ulka (meteor showers) and Nada (an optional tanpura drone; sound plays only after a tap).
+
+Location is used only to calculate the sky for the user's place; it is not sent anywhere.
+Camera frames are only displayed, never stored or transmitted.
+Reminders are local notifications scheduled on the device; no server or push service is used.

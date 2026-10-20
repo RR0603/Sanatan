@@ -1,0 +1,3 @@
+# Antariksha store identifiers (see LAUNCH.md).
+app_identifier("com.livingsanatan.antariksha") # App Store bundle ID
+package_name("com.livingsanatan.antariksha")   # Google Play package name

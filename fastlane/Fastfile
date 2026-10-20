@@ -1,0 +1,35 @@
+# Optional: push the store listing (text + screenshots) with fastlane instead of pasting it by hand.
+# The app binaries themselves come from the GitHub "iOS release" and "Android release" workflows.
+#
+#   gem install fastlane
+#   fastlane ios metadata       # needs APP_STORE_CONNECT_API_KEY_PATH (a JSON key file, see fastlane docs)
+#   fastlane android metadata   # needs SUPPLY_JSON_KEY (the Play service-account JSON, see LAUNCH.md A7)
+
+platform :ios do
+  desc "Upload App Store listing, screenshots and review notes (no binary, no submission)"
+  lane :metadata do
+    deliver(
+      api_key_path: ENV["APP_STORE_CONNECT_API_KEY_PATH"],
+      skip_binary_upload: true,
+      submit_for_review: false,
+      overwrite_screenshots: true,
+      force: true,
+      precheck_include_in_app_purchases: false,
+      metadata_path: "./fastlane/metadata/ios",
+      screenshots_path: "./fastlane/screenshots"
+    )
+  end
+end
+
+platform :android do
+  desc "Upload Google Play listing, graphics and screenshots (no binary)"
+  lane :metadata do
+    supply(
+      json_key: ENV["SUPPLY_JSON_KEY"],
+      skip_upload_apk: true,
+      skip_upload_aab: true,
+      skip_upload_changelogs: true,
+      metadata_path: "./fastlane/metadata/android"
+    )
+  end
+end

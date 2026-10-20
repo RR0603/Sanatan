@@ -83,9 +83,10 @@ Names are a separate setting from the interface language (the ॐ button in the 
 | | Jyotish names | Western names |
 | --- | --- | --- |
 | Grahas | Surya, Chandra, Mangala… | Sun, Moon, Mars… |
-| Rashis | Mesha, Vrishabha… | Aries, Taurus… (still sidereal) |
-| Stars | Dhruva, Lubdhaka, Agastya, the Saptarishi… | Polaris, Sirius, Canopus… |
-| 88 constellations | Garuda, Hamsa, Vasuki, Yamuna, Saptarishi… | Aquila, Cygnus, Hydra, Eridanus, Ursa Major… |
+| Zodiac | Sidereal rashis (Lahiri): Mesha, Vrishabha…, with the 27 nakshatra divisions | Tropical signs from the March equinox: Aries, Taurus… (the sidereal rashi is shown alongside) |
+| Stars | Dhruva, Lubdhaka, Agastya, the Saptarishi… | The IAU (WGSN) proper names only: Polaris, Sirius, Canopus… (358 stars) |
+| 88 constellations | Garuda, Hamsa, Vasuki, Yamuna, Saptarishi… | IAU Latin names, as in Stellarium: Aquila, Cygnus, Hydra, Eridanus, Ursa Major… |
+| Figures shown | Nakshatra figures, Puranic asterisms, the rashi band | IAU constellation lines (each culture remembers your own layer choices) |
 | Directions | Uttara, Ishanya, Purva… | N, NE, E… |
 
 The interface language (English / हिन्दी) can be combined with either.

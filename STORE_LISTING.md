@@ -110,6 +110,7 @@ The biggest update yet:
 • Calendar — festivals, Ekadashis, vrats and eclipses for your city, with reminders
 • Tonight — see what's up and let the arrow guide your phone to it
 • Kundali Milan — 36-guna matching
+• Western sky: IAU constellation lines and names, and the tropical zodiac
 • Share the day's Panchang in one tap
 • Ratri night mode, Nada tanpura sound, Ulka meteor showers and the Yatra night journey
 ```
