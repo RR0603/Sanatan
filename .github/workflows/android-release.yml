@@ -26,6 +26,7 @@ jobs:
       - uses: android-actions/setup-android@v3
       - run: npm ci
       - run: npm test
+      - run: npm run preflight
       - run: npm run build && npx cap sync android
       - name: Decode upload keystore
         run: echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > "$RUNNER_TEMP/upload.jks"

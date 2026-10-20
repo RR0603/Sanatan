@@ -33,6 +33,9 @@ LS.CONFIG = {
   },
 
   links: {
+    // Where privacy.html, terms.html and support.html are published. The apps open the legal pages from
+    // here in the browser (App Store / Play require a public privacy policy URL anyway).
+    web: 'https://livingsanatan.com/antariksha/',
     site: 'https://livingsanatan.com',
     privacy: 'privacy.html',
     terms: 'terms.html',

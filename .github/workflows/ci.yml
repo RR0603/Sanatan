@@ -12,4 +12,5 @@ jobs:
         with: { node-version: 22, cache: npm }
       - run: npm ci
       - run: npm test
+      - run: npm run preflight -- --warn
       - run: npm run build

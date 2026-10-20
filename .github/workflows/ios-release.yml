@@ -20,6 +20,7 @@ jobs:
         with: { xcode-version: '26' }
       - run: npm ci
       - run: npm test
+      - run: npm run preflight
       - run: npm run build && npx cap sync ios
       - name: App Store Connect API key
         run: printf '%s' "${{ secrets.ASC_KEY_P8 }}" > "$RUNNER_TEMP/AuthKey.p8"

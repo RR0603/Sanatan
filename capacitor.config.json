@@ -6,11 +6,13 @@
   "ios": {
     "contentInset": "never",
     "backgroundColor": "#04060f",
-    "allowsLinkPreview": false
+    "allowsLinkPreview": false,
+    "webContentsDebuggingEnabled": false
   },
   "android": {
     "backgroundColor": "#04060f",
-    "allowMixedContent": false
+    "allowMixedContent": false,
+    "webContentsDebuggingEnabled": false
   },
   "plugins": {
     "SplashScreen": {
@@ -27,6 +29,11 @@
     "LocalNotifications": {
       "smallIcon": "ic_stat_antariksha",
       "iconColor": "#FFB347"
+    },
+    "SystemBars": {
+      "insetsHandling": "css",
+      "initialViewportFitValueHint": "cover",
+      "style": "DARK"
     }
   }
 }

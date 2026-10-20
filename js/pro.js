@@ -71,8 +71,10 @@ LS.Pro = (function () {
     try { tz = Intl.DateTimeFormat().resolvedOptions().timeZone || ''; } catch (e) { /* ignore */ }
     return /Asia\/(Kolkata|Calcutta)/.test(tz) || (navigator.languages || [navigator.language]).some((l) => /-IN$/i.test(l || ''));
   }
+  // In the apps only the store's own localised price is ever shown ('' until the store has answered).
   function price() {
     if (pkg && pkg.product && pkg.product.priceString) return pkg.product.priceString;
+    if (isNative) return '';
     return inIndia() ? C.webPrice.india : C.webPrice.world;
   }
 

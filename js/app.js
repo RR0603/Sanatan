@@ -1232,7 +1232,8 @@
   function renderPaywall() {
     $('pwList').innerHTML = PRO_FEATURES.map(([k, ks, g]) => `<li><i>${g}</i><span><b>${t(k)}</b><small>${t(ks)}</small></span></li>`).join('');
     const pro = LS.Pro.isPro();
-    $('pwBuy').textContent = pro ? t('proActive') : `${t('unlockFor')} ${LS.Pro.price()}`;
+    const price = LS.Pro.price();
+    $('pwBuy').textContent = pro ? t('proActive') : price ? `${t('unlockFor')} ${price}` : t('unlockPro');
     $('pwBuy').disabled = pro;
     $('pwRestore').hidden = !LS.Pro.isNative;
     const stores = $('pwStores');
@@ -1260,7 +1261,7 @@
     const pro = LS.Pro.isPro();
     $('proRow').innerHTML = pro
       ? `<div class="pro-on">✦ ${t('proActive')}</div>`
-      : `<button class="pill wide accent" id="proRowBuy">✦ ${t('unlockPro')} · ${LS.Pro.price()}</button>`;
+      : `<button class="pill wide accent" id="proRowBuy">✦ ${t('unlockPro')}${LS.Pro.price() ? ' · ' + LS.Pro.price() : ''}</button>`;
     if (!pro) $('proRowBuy').addEventListener('click', () => { close('drawer'); showPaywall(); });
     if (LS.Pro.isNative) {
       const r = document.createElement('button'); r.className = 'pill wide'; r.textContent = t('restore');
@@ -1275,7 +1276,10 @@
   LS.Pro.onChange(() => { renderProRow(); syncDock(); if (!$('paywall').hidden) renderPaywall(); jyRefresh(false); if (LS.Pro.isPro()) hidePaywall(); });
   {
     const L = LS.CONFIG.links;
-    for (const [id, href] of [['pwTerms', L.terms], ['pwPrivacy', L.privacy], ['lnkPrivacy', L.privacy], ['lnkTerms', L.terms], ['lnkSupport', L.support]]) $(id).href = href;
+    // In the apps a relative link would replace the app with the page (no way back), so use the public URLs,
+    // which open in the system browser.
+    const abs = (u) => (LS.Pro.isNative && !/^https?:/.test(u) ? L.web + u : u);
+    for (const [id, href] of [['pwTerms', L.terms], ['pwPrivacy', L.privacy], ['lnkPrivacy', L.privacy], ['lnkTerms', L.terms], ['lnkSupport', L.support]]) $(id).href = abs(href);
   }
 
   // ---------- language ----------
@@ -1442,7 +1446,25 @@
 
   // ---------- boot ----------
   Nm.set(S.names);
-  LS.Pro.init().then(() => { renderProRow(); syncDock(); jyRefresh(false); });
+  LS.Pro.init().then(() => { renderProRow(); syncDock(); jyRefresh(false); if (!$('paywall').hidden) renderPaywall(); });
+  // Android back button: close the top-most layer first; at the plain sky view, send the app to the background.
+  const AppPlugin = LS.Pro.isNative && window.Capacitor.Plugins && window.Capacitor.Plugins.App;
+  if (AppPlugin && AppPlugin.addListener) AppPlugin.addListener('backButton', () => {
+    if (LS.Yatra.running) { LS.Yatra.stop(); return; }
+    if (!$('paywall').hidden) { hidePaywall(); return; }
+    if (!$('reminders').hidden) { $('reminders').hidden = true; return; }
+    if (!$('drawer').hidden) { close('drawer'); return; }
+    if (!$('searchBox').hidden) { $('searchClose').click(); return; }
+    if (coach.step) { hideCoach(); return; }
+    if (!$('help').hidden) { $('help').hidden = true; return; }
+    if (!$('sheet').hidden) { close('sheet'); return; }
+    if (!$('dock').hidden) { $('dock').hidden = true; syncDock(); return; }
+    for (const id of ['timebar', 'panchang', 'tonight']) if (!$(id).hidden) { close(id); return; }
+    if (document.body.classList.contains('zen')) { setZen(false); return; }
+    if (view.ar) { setAR(false); return; }
+    if (S.mode !== 'sky') { setMode('sky'); return; }
+    if (AppPlugin.minimizeApp) AppPlugin.minimizeApp(); else AppPlugin.exitApp();
+  });
   buildDock(); buildSettings(); buildTimebar(); buildSearchIndex(); initJyotish();
   LS.Pages.init({
     S, view, clock, Nm, CITIES, observer, setMode, select, goTo, toast, persist, invalidate, afterTimeJump,
