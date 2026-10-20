@@ -4,3 +4,4 @@
 - 2026-10 · You were never born — birth/death belong to the body; awareness was never born (Gītā 2.20)
 - 2026-10 · God is not up there — "up" is not a place; the seeker is the sought (tat tvam asi)
 - 2026-10 · The Night Journey (18 min guided practice) — sitting practice, then lying down: vibrations, light, Yoga Nidrā, Turīya, Kuṇḍalinī
+- 2026-10-20 · You have never seen yourself — whatever is seen is not the seer; the witness (sākṣī) is never an object (Dṛg-Dṛśya-Viveka 1, Bṛhadāraṇyaka 3.4.2)
