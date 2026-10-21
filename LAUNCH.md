@@ -104,7 +104,7 @@ You do **not** need a registered company. Both stores accept an individual devel
    - `https://livingsanatan.com/antariksha/terms.html`
    - `https://livingsanatan.com/antariksha/support.html`
 
-   (The old GitHub Pages workflow was removed from this repo, so livingsanatan.com is the place.)
+   Or use the free GitHub Pages site: once this branch is merged into `main`, open repository **Settings → Pages → Source: GitHub Actions**. The **Website** workflow then publishes the app and these pages to `https://rr0603.github.io/sanatan/` on every push to `main` (for example `https://rr0603.github.io/sanatan/privacy.html`). Point a subdomain such as `sky.livingsanatan.com` at it later if you like.
 4. **Push this branch to `main`** (merge the pull request), so that GitHub Actions can run the release workflows from it.
 
 ---
