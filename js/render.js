@@ -17,6 +17,8 @@ LS.Renderer = (function () {
     grid: 'rgba(120,170,230,0.13)', eqGrid: 'rgba(230,140,200,0.12)', horizon: 'rgba(255,170,90,0.55)',
     starLabel: 'rgba(175,195,235,0.85)', vedicStar: 'rgba(255,212,160,0.92)', select: '#7ee8fa',
   };
+  // Western sky: Stellarium's default colours, measured from its own renders.
+  const STEL = { line: '#333399', label: '#6a9eef', star: '#c3c3c7', planet: '#9a9ad0', cardinal: '#cc3319' };
   function hexA(hex, a) {
     const n = parseInt(hex.slice(1), 16);
     return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${a})`;
@@ -62,13 +64,15 @@ void main(){
   float cs = dot(e, uSun);
 
   vec3 zen = mix(vec3(0.004, 0.008, 0.024), vec3(0.08, 0.26, 0.66), day);
-  vec3 hor = mix(vec3(0.020, 0.034, 0.075), vec3(0.52, 0.70, 0.92), day);
+  vec3 hor = mix(vec3(0.024, 0.030, 0.048), vec3(0.52, 0.70, 0.92), day);
   float g = pow(1.0 - clamp(alt, 0.0, 1.0), 2.6);
   vec3 sky = mix(zen, hor, g);
   float tw = exp(-pow((uSunAlt + 4.0) / 6.5, 2.0));
   sky += vec3(1.0, 0.42, 0.16) * tw * pow(cs * 0.5 + 0.5, 3.0) * g * 0.75;
   float cpos = max(cs, 0.0);
   sky += vec3(1.0, 0.92, 0.75) * smoothstep(-6.0, 4.0, uSunAlt) * (pow(cpos, 400.0) * 0.9 + pow(cpos, 24.0) * 0.25);
+  // Night haze hugging the horizon, a neutral grey band a few degrees deep, as in Stellarium.
+  sky += vec3(0.082, 0.082, 0.080) * (1.0 - day) * exp(-max(alt, 0.0) / 0.06);
   sky = mix(vec3(0.003, 0.005, 0.014), sky, uAtmo);
 
   vec3 gv = uEnu2Gal * e;
@@ -76,16 +80,16 @@ void main(){
   float v = 0.5 - asin(clamp(gv.z, -1.0, 1.0)) / PI;
   float mw = texture2D(uTex, vec2(fract(u), v)).r;
   float mwVis = uMW * (1.0 - day * uAtmo) * smoothstep(-0.02, 0.18, alt * uAtmo + (1.0 - uAtmo));
-  vec3 mwc = vec3(0.70, 0.76, 1.0) * pow(mw, 1.3) * 0.30 * mwVis;
+  vec3 mwc = vec3(0.78, 0.81, 0.95) * pow(mw, 1.3) * 0.18 * mwVis;
 
   vec3 col = sky * uSkyAlpha + mwc;
   float a = max(uSkyAlpha, clamp(mw * 0.30 * mwVis * 2.0, 0.0, 1.0));
 
   if (alt < 0.0) {
     float depth = clamp(-alt * 6.0, 0.0, 1.0);
-    vec3 gc = mix(vec3(0.05, 0.045, 0.04) + hor * 0.25, vec3(0.012, 0.014, 0.018), depth);
-    gc += vec3(1.0, 0.55, 0.2) * 0.10 * (1.0 - depth) * (0.4 + 0.6 * tw + 0.3 * day);
-    float ga = uGround * (0.7 + 0.3 * depth);
+    vec3 gc = mix(vec3(0.055, 0.056, 0.05) + hor * 0.25, vec3(0.026, 0.028, 0.016), depth);
+    gc += vec3(1.0, 0.55, 0.2) * 0.10 * (1.0 - depth) * (0.6 * tw + 0.3 * day);
+    float ga = uGround >= 0.999 ? 1.0 : uGround * (0.7 + 0.3 * depth);
     col = gc * ga + col * (1.0 - ga);
     a = ga + a * (1.0 - ga);
   }
@@ -277,6 +281,7 @@ void main(){
       const eqj = (v) => refract(Sky.apply(sc.fr.eqj2enu, v[0], v[1], v[2]));
       const ect = (lon, lat) => { const v = Sky.eclVec(lon, lat); return refract(Sky.apply(sc.fr.ect2enu, v[0], v[1], v[2])); };
       const hiLang = I.lang === 'hi';
+      const west = !Nm.isVedic();
       const font = (px, weight = 500) => `${weight} ${px}px ${hiLang ? "'Noto Sans Devanagari', " : ''}'Space Grotesk', system-ui, sans-serif`;
 
       function polyline(points, close) {
@@ -395,16 +400,17 @@ void main(){
 
       // Western / Indian-named constellations
       if (st.constellations) {
-        ctx.strokeStyle = COLORS.western; ctx.lineWidth = 0.9;
+        ctx.strokeStyle = west ? STEL.line : COLORS.western; ctx.lineWidth = west ? 1 : 0.9;
         ctx.beginPath();
-        for (const c of data.western) for (const pl of c.lines) for (let i = 1; i < pl.length; i++) segGap(eqj(pl[i - 1]), eqj(pl[i]), 4, 4);
+        for (const c of data.western) for (const pl of c.lines) for (let i = 1; i < pl.length; i++) segGap(eqj(pl[i - 1]), eqj(pl[i]), west ? 3 : 4, west ? 3 : 4);
         ctx.stroke();
       }
       if ((st.constellations || st.art) && st.labels) for (const c of data.western) {
         if (sc.fov > 120 && c.rank > 1) continue;
         const p = proj(eqj(c.label)); if (!onScreen(p, 0)) continue;
         const x = p.x, y = p.y;
-        tag(hairspace(Nm.constellation(c)), x, y, COLORS.westernLabel, 10.5, { weight: 500, prio: 3 - c.rank * 0.1 });
+        if (west) tag(Nm.constellation(c), x, y, STEL.label, 13, { weight: 400, prio: 3 - c.rank * 0.1 });
+        else tag(hairspace(Nm.constellation(c)), x, y, COLORS.westernLabel, 10.5, { weight: 500, prio: 3 - c.rank * 0.1 });
         hits.push({ x, y, r: 24, obj: { type: 'constellation', id: c.id }, prio: 0 });
       }
 
@@ -482,7 +488,9 @@ void main(){
       const limit = Math.min(fovLimit, skyLimit) + (st.starBrightness - 1) * 1.2;
       const gain = st.starBrightness * (sc.ar ? 1.2 : 1);
       const zoom = Math.min(1.8, Math.max(0, Math.log10(60 / sc.fov)) * 0.55);
-      const labelLimit = sc.fov > 100 ? 1.6 : sc.fov > 50 ? 2.6 : sc.fov > 20 ? 3.8 : 5.2;
+      // Western follows Stellarium's default label amount: only the brightest stars are named until you zoom in.
+      const labelLimit = west ? (sc.fov > 100 ? 0.8 : sc.fov > 50 ? 1.3 : sc.fov > 20 ? 2.4 : sc.fov > 8 ? 3.6 : 5)
+        : (sc.fov > 100 ? 1.6 : sc.fov > 50 ? 2.6 : sc.fov > 20 ? 3.8 : 5.2);
       const groundDim = st.ground && !sc.ar ? 1 - st.groundOpacity * 0.85 : 1;
       ctx.globalCompositeOperation = 'lighter';
       const starLabels = [];
@@ -526,19 +534,20 @@ void main(){
       ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
       for (const [i, x, y, rp] of starLabels) {
         const vn = data.vedicNames[i];
-        let color = COLORS.starLabel;
+        let color = west ? STEL.star : COLORS.starLabel;
         // Yogataras are already named by their nakshatra figure when that layer is on.
         if (vn && vn.kind === 'nakshatra' && st.nakshatra && (Nm.isVedic() || !data.names[i])) continue;
         const text = Nm.star(vn, data.names[i]);
         if (vn && Nm.isVedic()) color = COLORS.vedicStar;
         if (!text) continue;
-        tag(text, x + rp + 5, y - rp - 4, color, 11.5, { weight: 400, align: 'left', prio: (vn ? 5 : 4) - data.mag[i] * 0.1 });
+        tag(text, x + rp + 5, y - rp - 4, color, west ? 12 : 11.5, { weight: 400, align: 'left', prio: (vn ? 5 : 4) - data.mag[i] * 0.1 });
       }
 
       // Grahas
       if (st.graha) {
         const moon = sc.grahas.chandra;
         for (const id of Sky.GRAHA_ORDER) {
+          if (west && (id === 'rahu' || id === 'ketu')) continue; // Stellarium does not draw the lunar nodes
           const g = sc.grahas[id], gv = V.grahas[id];
           const e = refract(g.enu);
           const p = proj(e);
@@ -575,21 +584,56 @@ void main(){
           }
           hits.push({ x, y, r: Math.max(22, rad + 10), obj: { type: 'graha', id }, prio: 5 });
           if (st.labels) {
-            const txt = `${Nm.graha(id)}${g.retro && id !== 'rahu' && id !== 'ketu' ? (hiLang ? ' (व)' : ' ℞') : ''}`;
-            tag(txt, x + rad + 6, y + rad + 3, gv.color, 12.5, { weight: 600, align: 'left', prio: 8 });
+            if (west) tag(Nm.graha(id), x + rad + 5, y - rad - 3, STEL.planet, 12.5, { weight: 400, align: 'left', prio: 8 });
+            else {
+              const txt = `${Nm.graha(id)}${g.retro && id !== 'rahu' && id !== 'ketu' ? (hiLang ? ' (व)' : ' ℞') : ''}`;
+              tag(txt, x + rad + 6, y + rad + 3, gv.color, 12.5, { weight: 600, align: 'left', prio: 8 });
+            }
           }
         }
       }
 
-      // Horizon + eight directions
+      // The ground hides what is below the horizon, as a Stellarium landscape does: everything drawn so far is
+      // erased there in proportion to the ground opacity, and labels anchored there are dropped. In the
+      // stereographic projection the horizon is a circle (or, looking exactly sideways, a straight line).
+      const groundA = st.ground && !sc.ar ? st.groundOpacity : 0;
+      if (groundA > 0.01) {
+        const nx = r[2], ny = u[2], nz = f[2];
+        const below = Math.abs(nz) > 0.002
+          ? (x, y) => { const X = (x - cx) / scale - 2 * nx / nz, Y = (cy - y) / scale - 2 * ny / nz; return (X * X + Y * Y < 4 / (nz * nz)) !== (nz > 0); }
+          : (x, y) => nx * (x - cx) - ny * (y - cy) < 0;
+        ctx.save();
+        ctx.globalCompositeOperation = 'destination-out';
+        ctx.globalAlpha = Math.min(1, groundA);
+        ctx.beginPath();
+        if (Math.abs(nz) > 0.002) {
+          // Looking above the horizon the sky is inside the circle, so the ground is the rest of the screen.
+          if (nz > 0) ctx.rect(-10, -10, W + 20, H + 20);
+          ctx.arc(cx + scale * 2 * nx / nz, cy - scale * 2 * ny / nz, scale * 2 / Math.abs(nz), 0, Math.PI * 2);
+          ctx.fill('evenodd');
+        } else {
+          const L = W + H, dx = -ny, dy = -nx; // along the horizon line on screen
+          ctx.moveTo(cx - dx * L, cy - dy * L); ctx.lineTo(cx + dx * L, cy + dy * L);
+          ctx.lineTo(cx + dx * L - nx * L, cy + dy * L + ny * L); ctx.lineTo(cx - dx * L - nx * L, cy - dy * L + ny * L);
+          ctx.closePath(); ctx.fill();
+        }
+        ctx.restore();
+        if (groundA > 0.6) {
+          for (let i = labelQueue.length - 1; i >= 0; i--) if (below(labelQueue[i].x, labelQueue[i].y)) labelQueue.splice(i, 1);
+          if (groundA > 0.95) hits = hits.filter((h) => !below(h.x, h.y));
+        }
+      }
+
+      // Horizon + eight directions (Western: no horizon line over a solid ground, red cardinal letters, as in Stellarium)
       ctx.strokeStyle = COLORS.horizon; ctx.lineWidth = 1;
       const hz = []; for (let az = 0; az <= 360; az += 2) hz.push([Math.sin(az * D2R), Math.cos(az * D2R), 0]);
-      polyline(hz);
+      if (!(west && groundA > 0.95)) polyline(hz);
       for (let k = 0; k < 8; k++) {
         const az = k * 45 * D2R, main = k % 2 === 0;
         const p = proj([Math.sin(az), Math.cos(az), 0.012]); if (!onScreen(p, 0)) continue;
         const px = p.x, py = p.y;
-        tag(hiLang ? V.directions[k].hi : V.directionsShort[k], px, py - (main ? 15 : 11), k === 0 ? '#ff7a6a' : 'rgba(255,214,160,0.9)', main ? 17 : 11.5, { weight: 600, prio: 9 });
+        const dirColor = west ? STEL.cardinal : k === 0 ? '#ff7a6a' : 'rgba(255,214,160,0.9)';
+        tag(hiLang ? V.directions[k].hi : V.directionsShort[k], px, py - (main ? 15 : 11), dirColor, main ? 17 : 11.5, { weight: west ? 500 : 600, prio: 9 });
         if (!hiLang && Nm.isVedic() && main) tag(hairspace(V.directions[k].en), px, py + 3, 'rgba(255,214,160,0.55)', 8.5, { weight: 600, prio: 9 });
       }
 

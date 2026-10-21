@@ -89,12 +89,12 @@
   const DEFAULTS = {
     lang: (navigator.language || '').toLowerCase().startsWith('hi') ? 'hi' : 'en',
     loc: { ...CITIES[0] },
-    nakshatra: true, rashi: true, graha: true, constellations: false, art: true, grid: false, eqGrid: false,
+    nakshatra: true, rashi: true, graha: true, constellations: false, art: false, grid: false, eqGrid: false,
     atmosphere: true, ground: true, milkyway: true, labels: true, starNames: true, night: false,
-    groundOpacity: 0.82, starBrightness: 1, arFov: 62, compassOffset: 0,
+    groundOpacity: 1, starBrightness: 1, arFov: 62, compassOffset: 0,
     mode: 'sky', names: 'vedic', jyTab: 'kundali', kStyle: 'north', kVarga: 'D1', birth: null, profiles: [],
     theme: 'nova', tabbar: false, reminders: null, milan: null, ratri: false, nada: false, meteors: false,
-    view: null,
+    view: null, skyRev: 2,
   };
   const KEY = 'antariksha.v1';
   let saved = {};
@@ -103,6 +103,8 @@
   if (!saved || typeof saved !== 'object' || Array.isArray(saved)) saved = {};
   if (saved.loc && (typeof saved.loc !== 'object' || !isFinite(saved.loc.lat) || !isFinite(saved.loc.lon))) delete saved.loc;
   if (!Array.isArray(saved.profiles)) delete saved.profiles;
+  // Sky look 2 (Stellarium defaults): a solid ground and no constellation art, applied once to older saves.
+  if (!(saved.skyRev >= 2)) { if (saved.groundOpacity === 0.82) delete saved.groundOpacity; delete saved.art; }
   const S = { ...DEFAULTS, ...saved, loc: { ...DEFAULTS.loc, ...(saved.loc || {}) } };
   let saveTimer = null;
   function persist() {

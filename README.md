@@ -84,9 +84,9 @@ Names are a separate setting from the interface language (the ॐ button in the 
 | --- | --- | --- |
 | Grahas | Surya, Chandra, Mangala… | Sun, Moon, Mars… |
 | Zodiac | Sidereal rashis (Lahiri): Mesha, Vrishabha…, with the 27 nakshatra divisions | Tropical signs from the March equinox: Aries, Taurus… (the sidereal rashi is shown alongside) |
-| Stars | Dhruva, Lubdhaka, Agastya, the Saptarishi… | The IAU (WGSN) proper names only: Polaris, Sirius, Canopus… (358 stars) |
+| Stars | Dhruva, Lubdhaka, Agastya, the Saptarishi… | Stellarium's star names: Polaris, Sirius, Navi… (581 stars, every IAU name included); like Stellarium, only the brightest are labelled until you zoom in |
 | 88 constellations | Garuda, Hamsa, Vasuki, Yamuna, Saptarishi… | IAU Latin names, as in Stellarium: Aquila, Cygnus, Hydra, Eridanus, Ursa Major… |
-| Figures shown | Nakshatra figures, Puranic asterisms, the rashi band | IAU constellation lines (each culture remembers your own layer choices) |
+| Figures shown | Nakshatra figures, Puranic asterisms, the rashi band | Stellarium's modern constellation figures, drawn in Stellarium's colours (each culture remembers your own layer choices) |
 | Directions | Uttara, Ishanya, Purva… | N, NE, E… |
 
 The interface language (English / हिन्दी) can be combined with either.
@@ -151,6 +151,8 @@ Planetary positions come from [Astronomy Engine](https://github.com/cosinekitty/
 - **Kundali Milan**: three test couples matched KundaliMCP on all eight kootas: 30.5, 23.5 and 6.5 of 36.
 - **Festivals**: 2026 dates for New Delhi were checked against KundaliMCP's tithi timings. Examples: Ugadi 19 Mar, Holika Dahan 2 Mar, Raksha Bandhan 28 Aug, Janmashtami 4 Sep, Dussehra 20 Oct and Diwali 8 Nov.
 
+- **The sky against Stellarium**: for Ujjain on 21 Oct 2026 at 20:30 IST, the apparent azimuth and altitude of 20 planets and bright stars agree with Stellarium 23.4 to under 1 arcminute (largest 0.8′), and side-by-side renders at the same view put every star within 1–2 pixels of Stellarium's. The ground hides what is below the horizon, as a Stellarium landscape does, and the night sky, horizon haze and Milky Way were matched to Stellarium's brightness.
+
 `npm test` runs all of these checks.
 
 ## Security and store readiness
@@ -199,6 +201,7 @@ js/vedic.js          nakshatra / rashi / graha / Panchang vocabulary (EN + HI)
 js/i18n.js           interface strings (EN + HI)
 js/data/*.js         generated star and constellation data
 tools/build_data.py  regenerates js/data, img/milkyway.png and img/art
+tools/build_stellarium.py  rebuilds the constellation figures and star names from Stellarium's modern sky culture
 tools/store-screenshots.mjs  regenerates store/ screenshots and the Play feature graphic
 privacy.html, terms.html, support.html   legal pages (needed by both stores)
 ios/, android/       Capacitor native projects
@@ -210,7 +213,8 @@ tests/               accuracy tests (npm test)
 ## Credits
 
 - Star catalogue: [HYG Database](https://github.com/astronexus/HYG-Database) v4.1, CC BY-SA 4.0
-- Constellation lines and Milky Way outlines: [d3-celestial](https://github.com/ofrohn/d3-celestial), BSD-3-Clause
+- Constellation figures and star names: [Stellarium](https://github.com/Stellarium/stellarium)'s modern sky culture (imported by `tools/build_stellarium.py`)
+- Milky Way map: [d3-celestial](https://github.com/ofrohn/d3-celestial), BSD-3-Clause
 - Constellation illustrations: Johan Meuris for [Stellarium](https://github.com/Stellarium/stellarium-skycultures), [Free Art License](https://artlibre.org/licence/lal/en/)
 - Magnetic declination: World Magnetic Model 2025 (NOAA / BGS, public domain), coefficients via [geomagnetism](https://github.com/naturalatlas/geomagnetism) (Apache-2.0)
 - Ephemeris: [Astronomy Engine](https://github.com/cosinekitty/astronomy), MIT

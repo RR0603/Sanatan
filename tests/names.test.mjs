@@ -27,4 +27,11 @@ for (const s of ['Sirius', 'Canopus', 'Arcturus', 'Vega', 'Capella', 'Rigel', 'P
   check(`IAU name present: ${s}`, names.includes(s));
 check('358 IAU-named stars in the catalogue', names.length >= 350, String(names.length));
 check('all 88 IAU constellations with Latin names', LS_DATA.constellations.filter((c) => c.la).length >= 88, String(LS_DATA.constellations.filter((c) => c.la).length));
+// Figures come from Stellarium's modern sky culture (tools/build_stellarium.py).
+const ids = LS_DATA.constellations.map((c) => c.id);
+check('88 constellation figures, one each', ids.length === 88 && new Set(ids).size === 88, String(ids.length));
+check('Serpens is one figure named Serpens', LS_DATA.constellations.filter((c) => c.id === 'Ser').length === 1 && LS_DATA.constellations.find((c) => c.id === 'Ser').la === 'Serpens');
+const cnc = LS_DATA.constellations.find((c) => c.id === 'Cnc');
+check('Cancer includes the branch to iota Cancri (as in Stellarium)', cnc.l.some((pl) => pl.some(([ra, dec]) => Math.abs(ra - 131.674) < 0.05 && Math.abs(dec - 28.76) < 0.05)));
+check('Stellarium star names, e.g. Navi for gamma Cassiopeiae', names.includes('Navi') && names.length > 550, String(names.length));
 done();

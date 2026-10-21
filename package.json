@@ -15,7 +15,7 @@
     "store-shots": "node tools/store-screenshots.mjs",
     "preflight": "node scripts/preflight.mjs",
     "store-kit": "node scripts/store-kit.mjs",
-    "test": "node tests/astronomy.test.mjs && node tests/sensors.test.mjs && node tests/magnetic.test.mjs && node tests/features.test.mjs && node tests/names.test.mjs && node scripts/check-syntax.mjs"
+    "test": "node tests/astronomy.test.mjs && node tests/sensors.test.mjs && node tests/magnetic.test.mjs && node tests/features.test.mjs && node tests/names.test.mjs && node tests/stellarium.test.mjs && node scripts/check-syntax.mjs"
   },
   "dependencies": {
     "@capacitor/android": "^8.5.3",
