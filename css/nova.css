@@ -1,0 +1,238 @@
+/* ======================================================================
+   Nova — the new Antariksha design (default). Liquid glass over the live sky:
+   soft translucent layers, hairline light edges, aurora accents and a floating tab bar.
+   Everything is scoped to body.theme-nova so Classic stays exactly as it was.
+   ====================================================================== */
+.theme-nova {
+  --nv-glass: rgba(16, 20, 44, .26);
+  --nv-glass-2: rgba(10, 13, 32, .5);
+  --nv-edge: rgba(255, 255, 255, .14);
+  --nv-edge-hi: rgba(255, 255, 255, .32);
+  --nv-shine: linear-gradient(160deg, rgba(255, 255, 255, .16), rgba(255, 255, 255, .04) 38%, rgba(255, 255, 255, 0) 60%);
+  --nv-blur: blur(26px) saturate(185%);
+  --nv-aurora: linear-gradient(120deg, #ffe0a3 0%, #ffb067 38%, #ff7aa8 100%);
+  --nv-ice: linear-gradient(120deg, #a8f4ff 0%, #8fb8ff 55%, #b39bff 100%);
+  --nv-text: #f6f7ff;
+  --nv-muted: rgba(228, 233, 255, .66);
+  --nv-dim: rgba(228, 233, 255, .42);
+  --nv-shadow: 0 18px 50px rgba(0, 0, 0, .38), inset 0 1px 0 rgba(255, 255, 255, .14), inset 0 -1px 0 rgba(255, 255, 255, .03);
+  --tab-h: 66px;
+  --muted: var(--nv-muted);
+  --dim: var(--nv-dim);
+  --stroke: var(--nv-edge);
+  --stroke-hi: var(--nv-edge-hi);
+  --r-lg: 24px;
+  --r-md: 16px;
+  color: var(--nv-text);
+  letter-spacing: .005em;
+}
+
+/* Aurora wash behind pages so the glass reads beautifully over the sky */
+.theme-nova::before {
+  content: ''; position: fixed; inset: 0; z-index: 5; pointer-events: none; opacity: 0; transition: opacity .5s;
+  background:
+    radial-gradient(70% 45% at 0% 0%, rgba(124, 92, 255, .22), transparent 70%),
+    radial-gradient(60% 40% at 100% 8%, rgba(255, 140, 90, .16), transparent 70%),
+    radial-gradient(80% 50% at 50% 110%, rgba(60, 170, 255, .14), transparent 70%),
+    linear-gradient(180deg, rgba(4, 6, 18, .35), rgba(4, 6, 18, .55));
+}
+.theme-nova.page-mode::before { opacity: 1; }
+.theme-nova.mode-today #gl, .theme-nova.mode-today #sky, .theme-nova.mode-calendar #gl, .theme-nova.mode-calendar #sky,
+.theme-nova.mode-jyotish #gl, .theme-nova.mode-jyotish #sky { filter: brightness(.6) saturate(1.3); }
+
+/* ---------- glass primitives ---------- */
+.theme-nova .glass, .theme-nova .card, .theme-nova .panel, .theme-nova .sheet, .theme-nova .jy-stage, .theme-nova .jy-panel,
+.theme-nova .timebar, .theme-nova .dock, .theme-nova .results, .theme-nova .intro {
+  background: var(--nv-shine), var(--nv-glass);
+  -webkit-backdrop-filter: var(--nv-blur); backdrop-filter: var(--nv-blur);
+  border: 1px solid var(--nv-edge);
+  box-shadow: var(--nv-shadow);
+}
+.theme-nova .card { border-radius: 26px; padding: 16px; }
+.theme-nova .eyebrow {
+  background: var(--nv-aurora); -webkit-background-clip: text; background-clip: text; color: transparent;
+  font-weight: 700; letter-spacing: .2em; font-size: 10px;
+}
+.theme-nova .drawer h3 { background: var(--nv-ice); -webkit-background-clip: text; background-clip: text; color: transparent; }
+html[lang="hi"] .theme-nova .eyebrow { letter-spacing: .03em; font-size: 11.5px; }
+
+.theme-nova .pill {
+  height: 38px; border-radius: 999px; border: 1px solid var(--nv-edge); background: rgba(255, 255, 255, .07);
+  font-weight: 600; box-shadow: inset 0 1px 0 rgba(255, 255, 255, .12);
+}
+.theme-nova .pill.accent, .theme-nova .pill.on {
+  background: var(--nv-aurora); color: #26100a; border-color: transparent;
+  box-shadow: 0 8px 24px rgba(255, 140, 90, .35), inset 0 1px 0 rgba(255, 255, 255, .55);
+}
+.theme-nova .pill.link { color: #26100a; }
+.theme-nova .icon-btn.glass { border-radius: 50%; }
+.theme-nova .seg { border-radius: 999px; background: rgba(0, 0, 0, .22); border-color: rgba(255, 255, 255, .1); padding: 4px; }
+.theme-nova .seg button { border-radius: 999px; }
+.theme-nova .seg button.on {
+  color: #0d1430; background: var(--nv-ice);
+  box-shadow: 0 6px 18px rgba(140, 190, 255, .35), inset 0 1px 0 rgba(255, 255, 255, .6);
+}
+.theme-nova .toggle { border-radius: 14px; background: rgba(255, 255, 255, .045); }
+.theme-nova .toggle.on i { background: var(--nv-aurora); box-shadow: 0 0 14px rgba(255, 150, 90, .55); }
+.theme-nova .field { border-radius: 14px; background: rgba(0, 0, 0, .25); border-color: rgba(255, 255, 255, .12); }
+.theme-nova .slider input { accent-color: #ffb067; }
+
+/* ---------- top bar ---------- */
+.theme-nova .topbar { top: calc(10px + var(--sat)); left: calc(12px + var(--sal)); right: calc(12px + var(--sar)); }
+.theme-nova .topbar .bare {
+  width: 42px; height: 42px; filter: none; border-radius: 50%;
+  background: var(--nv-shine), rgba(16, 20, 44, .32); border: 1px solid var(--nv-edge);
+  -webkit-backdrop-filter: var(--nv-blur); backdrop-filter: var(--nv-blur); box-shadow: 0 8px 24px rgba(0, 0, 0, .3), inset 0 1px 0 rgba(255, 255, 255, .14);
+}
+.theme-nova .topbar .bare svg { width: 20px; height: 20px; }
+/* The top mode switch, in glass (hidden when the optional bottom tab bar is on) */
+.theme-nova .modes { background: var(--nv-shine), rgba(16, 20, 44, .32); border-color: var(--nv-edge); box-shadow: 0 8px 24px rgba(0, 0, 0, .3), inset 0 1px 0 rgba(255, 255, 255, .14); }
+.theme-nova .mode-glider { background: var(--nv-aurora); box-shadow: 0 6px 18px rgba(255, 140, 90, .4); }
+.theme-nova.mode-jyotish .mode-glider { background: var(--nv-ice); box-shadow: 0 6px 18px rgba(140, 190, 255, .4); }
+.theme-nova .mode.on { color: #26100a; }
+.theme-nova.mode-jyotish .mode.on { color: #0d1430; }
+.has-tabbar #modeSwitch { position: absolute; width: 0; overflow: hidden; visibility: hidden; pointer-events: none; }
+.theme-nova .search { border-radius: 999px; top: calc(10px + var(--sat)); }
+.theme-nova .results { border-radius: 22px; top: 54px; }
+
+/* ---------- optional floating tab bar (Settings → Design → Bottom tab bar) ---------- */
+.has-tabbar {
+  --tab-h: 66px;
+  --nv-shine: linear-gradient(160deg, rgba(255, 255, 255, .16), rgba(255, 255, 255, .04) 38%, rgba(255, 255, 255, 0) 60%);
+  --nv-edge: rgba(255, 255, 255, .14);
+  --nv-muted: rgba(228, 233, 255, .66);
+}
+.has-tabbar .tabbar {
+  display: flex; position: absolute; z-index: 9; left: 50%; transform: translateX(-50%);
+  bottom: calc(10px + var(--sab)); width: min(440px, calc(100% - 24px)); height: var(--tab-h); padding: 6px;
+  border-radius: 999px; gap: 4px;
+  background: var(--nv-shine), rgba(12, 15, 36, .42);
+  -webkit-backdrop-filter: blur(30px) saturate(190%); backdrop-filter: blur(30px) saturate(190%);
+  border: 1px solid var(--nv-edge); box-shadow: 0 20px 50px rgba(0, 0, 0, .45), inset 0 1px 0 rgba(255, 255, 255, .16);
+}
+.has-tabbar .tabbar button {
+  flex: 1; position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+  border-radius: 999px; color: var(--nv-muted); transition: color .25s;
+}
+.has-tabbar .tabbar .ti svg { width: 22px; height: 22px; display: block; transition: transform .3s cubic-bezier(.3, 1.4, .5, 1); }
+.has-tabbar .tabbar .tl { font-size: 10.5px; font-weight: 600; letter-spacing: .04em; }
+html[lang="hi"] .has-tabbar .tabbar .tl { font-size: 11.5px; letter-spacing: 0; }
+.has-tabbar .tabbar button::before {
+  content: ''; position: absolute; inset: 0; border-radius: 999px; opacity: 0; transform: scale(.85);
+  background: radial-gradient(120% 120% at 50% 0%, rgba(255, 190, 120, .35), rgba(255, 120, 170, .12) 60%, transparent 80%);
+  box-shadow: inset 0 0 0 1px rgba(255, 210, 160, .35), 0 0 22px rgba(255, 150, 100, .25);
+  transition: opacity .3s, transform .35s cubic-bezier(.3, 1.4, .5, 1);
+}
+.has-tabbar .tabbar button.on { color: #fff; }
+.has-tabbar .tabbar button.on::before { opacity: 1; transform: none; }
+.has-tabbar .tabbar button.on .ti svg { transform: translateY(-1px) scale(1.08); filter: drop-shadow(0 0 8px rgba(255, 190, 120, .8)); color: #ffd9a8; }
+.has-tabbar .tabbar button:active .ti svg { transform: scale(.9); }
+
+/* ---------- sky mode ---------- */
+.theme-nova .dock, .theme-nova .timebar { border-radius: 30px; }
+.theme-nova .toast { border-radius: 999px; padding: 11px 18px; background: var(--nv-shine), rgba(12, 15, 36, .7); }
+.theme-nova .intro { border-radius: 30px; }
+/* With the tab bar on, lift the sky controls above it */
+.has-tabbar .bottombar { bottom: calc(var(--tab-h) + 18px + var(--sab)); }
+.has-tabbar .fov { bottom: calc(var(--tab-h) + 84px + var(--sab)); }
+.has-tabbar .dock, .has-tabbar .timebar { bottom: calc(var(--tab-h) + 92px + var(--sab)); }
+.has-tabbar .toast { bottom: calc(var(--tab-h) + 170px + var(--sab)); }
+.has-tabbar .intro { bottom: calc(var(--tab-h) + 96px + var(--sab)); }
+.has-tabbar .side-ctrls { margin-top: -30px; }
+.theme-nova .compass-btn {
+  background: radial-gradient(circle at 50% 35%, rgba(255, 255, 255, .14), rgba(255, 255, 255, .03) 70%);
+  border: 1px solid rgba(255, 255, 255, .14); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+}
+.theme-nova .compass-btn.on { box-shadow: 0 0 0 1px rgba(142, 240, 255, .5), 0 0 28px rgba(126, 232, 250, .45); }
+.theme-nova .clock .clk-time { font-weight: 500; letter-spacing: -.01em; }
+.theme-nova .dock-btn svg { background: rgba(255, 255, 255, .07); border-color: rgba(255, 255, 255, .12); }
+.theme-nova .dock-btn.on svg { background: var(--nv-aurora); color: #26100a; box-shadow: 0 6px 20px rgba(255, 150, 90, .45); }
+.theme-nova .dock-btn.cyan.on svg { background: var(--nv-ice); color: #0d1430; box-shadow: 0 6px 20px rgba(140, 190, 255, .45); }
+.theme-nova .tb-now { background: var(--nv-aurora); color: #26100a; }
+.theme-nova .tb-btn { border-radius: 14px; }
+.theme-nova .loc-toast { border-radius: 22px; background: var(--nv-shine), rgba(20, 22, 54, .62); -webkit-backdrop-filter: var(--nv-blur); backdrop-filter: var(--nv-blur); }
+
+.theme-nova .panel { top: calc(64px + var(--sat)); border-radius: 26px; }
+.has-tabbar .panel { max-height: calc(100% - 64px - var(--tab-h) - 120px - var(--sat) - var(--sab)); }
+.theme-nova .sheet { top: calc(64px + var(--sat)); border-radius: 26px; }
+.theme-nova .sheet-glyph { border-radius: 16px; border-color: rgba(255, 200, 140, .45); background: rgba(255, 170, 90, .08); }
+.theme-nova .drawer { border-radius: 0 30px 30px 0; background: var(--nv-shine), rgba(10, 13, 32, .58); -webkit-backdrop-filter: blur(30px) saturate(180%); backdrop-filter: blur(30px) saturate(180%); border: 1px solid var(--nv-edge); }
+.theme-nova .scrim { background: rgba(2, 3, 10, .35); }
+
+/* ---------- pages ---------- */
+.theme-nova .page { top: calc(60px + var(--sat)); }
+.has-tabbar .page { padding-bottom: calc(var(--tab-h) + 30px + var(--sab)); }
+.theme-nova .page-head { margin: 8px 4px 16px; }
+.theme-nova .page-title { font-size: 30px; font-weight: 600; letter-spacing: -.025em; }
+.theme-nova .page-sub { font-size: 13.5px; }
+.theme-nova .page-body { gap: 14px; }
+.theme-nova .page-actions .icon-btn { width: 40px; height: 40px; border-radius: 50%; }
+.theme-nova .t-hero { padding: 20px 18px; gap: 18px; position: relative; overflow: hidden; }
+.theme-nova .t-hero::after {
+  content: ''; position: absolute; right: -60px; top: -60px; width: 200px; height: 200px; border-radius: 50%; pointer-events: none;
+  background: radial-gradient(circle, rgba(255, 190, 120, .22), transparent 70%);
+}
+.theme-nova .t-tithi { font-size: 28px; font-weight: 600; letter-spacing: -.02em; }
+.theme-nova .t-ev { background: var(--nv-shine), rgba(255, 255, 255, .06); -webkit-backdrop-filter: var(--nv-blur); backdrop-filter: var(--nv-blur); padding: 9px 16px; }
+.theme-nova .t-sun { border-radius: 22px; }
+.theme-nova .sun-cell b { font-size: 16px; font-weight: 600; }
+.theme-nova .daybar { height: 16px; }
+.theme-nova .mrow, .theme-nova .ch { border-radius: 14px; }
+.theme-nova .cd { border-radius: 16px; background: rgba(255, 255, 255, .03); }
+.theme-nova .cd.sel { border-color: transparent; background: linear-gradient(160deg, rgba(255, 200, 140, .32), rgba(255, 120, 170, .16)); box-shadow: 0 8px 24px rgba(255, 140, 100, .25), inset 0 0 0 1px rgba(255, 220, 180, .5); }
+.theme-nova .cd.today { border-color: rgba(168, 244, 255, .8); }
+.theme-nova .mi-person { border-radius: 20px; }
+.theme-nova .kbar i { background: var(--nv-aurora); }
+
+/* ---------- Jyotish ---------- */
+.theme-nova .jyotish { top: calc(62px + var(--sat)); }
+.has-tabbar .jyotish { padding-bottom: calc(var(--tab-h) + 24px + var(--sab)); }
+.theme-nova .jy-stage, .theme-nova .jy-panel { border-radius: 28px; }
+.theme-nova #jyTabs { overflow-x: auto; scrollbar-width: none; }
+.theme-nova #jyTabs::-webkit-scrollbar { display: none; }
+.theme-nova.mode-jyotish .sheet { top: calc(130px + var(--sat)); }
+
+/* ---------- modal & paywall ---------- */
+.theme-nova .modal-card, .theme-nova .pw-card {
+  border-radius: 30px; background: var(--nv-shine), rgba(12, 14, 34, .72); border-color: rgba(255, 210, 170, .3);
+  -webkit-backdrop-filter: blur(30px) saturate(180%); backdrop-filter: blur(30px) saturate(180%);
+}
+.theme-nova .pw-buy { background: var(--nv-aurora); border-radius: 999px; }
+
+@media (max-width: 720px) {
+  .theme-nova .sheet {
+    left: 8px; right: 8px; bottom: calc(8px + var(--sab)); top: auto; border-radius: 28px; max-height: 50vh;
+    padding-bottom: 16px;
+  }
+  .theme-nova.mode-jyotish .sheet { top: auto; }
+  .has-tabbar .sheet { bottom: calc(var(--tab-h) + 18px + var(--sab)); }
+  .theme-nova .page-title { font-size: 26px; }
+  .theme-nova .page-head { flex-direction: column; align-items: stretch; }
+  .theme-nova .page-actions { justify-content: flex-start; }
+  .theme-nova .jyotish { top: calc(60px + var(--sat)); }
+  .theme-nova .panel { left: 8px; width: calc(100% - 16px); }
+  .theme-nova .modal { place-items: end center; padding: 0; }
+  .theme-nova .modal-card { width: 100%; border-radius: 30px 30px 0 0; padding-bottom: calc(18px + var(--sab)); }
+}
+@media (max-width: 380px) {
+  .has-tabbar .tabbar .tl { font-size: 9.5px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .theme-nova *, .theme-nova *::before { transition: none !important; animation: none !important; }
+}
+
+/* Place chip in the top bar, shown where the mode switch was when the tab bar is on */
+.theme-nova .topbar { justify-content: space-between; }
+.theme-nova.has-tabbar .place-chip {
+  display: inline-flex; align-items: center; gap: 8px; height: 36px; padding: 0 14px; border-radius: 999px; max-width: calc(100% - 120px);
+  font-size: 12.5px; font-weight: 600; color: var(--nv-text); letter-spacing: .02em;
+  background: var(--nv-shine), rgba(16, 20, 44, .32); border: 1px solid var(--nv-edge);
+  -webkit-backdrop-filter: var(--nv-blur); backdrop-filter: var(--nv-blur); box-shadow: 0 8px 24px rgba(0, 0, 0, .3), inset 0 1px 0 rgba(255, 255, 255, .14);
+}
+.theme-nova.has-tabbar .place-chip span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.theme-nova.has-tabbar .place-chip .pc-dot { width: 7px; height: 7px; border-radius: 50%; flex: none; background: #ffb067; box-shadow: 0 0 8px #ffb067; }
+.theme-nova.has-tabbar .place-chip.live .pc-dot { background: #7dffb0; box-shadow: 0 0 10px #7dffb0; animation: pcPulse 2.4s ease-in-out infinite; }
+@keyframes pcPulse { 50% { box-shadow: 0 0 2px #7dffb0; } }
+.theme-nova.has-tabbar.page-mode .place-chip { opacity: 0; pointer-events: none; }
+.theme-nova .scrim { z-index: 19; }
+.theme-nova .drawer { z-index: 20; }

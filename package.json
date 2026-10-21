@@ -1,0 +1,36 @@
+{
+  "name": "antariksha",
+  "version": "1.1.0",
+  "private": true,
+  "description": "Antariksha — real-time Vedic sky map and Jyotish by Living Sanatan",
+  "license": "UNLICENSED",
+  "scripts": {
+    "build": "node scripts/build-web.mjs",
+    "sync": "npm run build && npx cap sync",
+    "ios": "npm run sync && npx cap open ios",
+    "android": "npm run sync && npx cap open android",
+    "assets": "npx --yes @capacitor/assets@3.0.5 generate --assetPath resources --iconBackgroundColor '#04060f' --iconBackgroundColorDark '#04060f' --splashBackgroundColor '#04060f' --splashBackgroundColorDark '#04060f'",
+    "version": "node scripts/set-version.mjs",
+    "serve": "python3 -m http.server 8000",
+    "store-shots": "node tools/store-screenshots.mjs",
+    "preflight": "node scripts/preflight.mjs",
+    "store-kit": "node scripts/store-kit.mjs",
+    "test": "node tests/astronomy.test.mjs && node tests/sensors.test.mjs && node tests/magnetic.test.mjs && node tests/features.test.mjs && node tests/names.test.mjs && node tests/stellarium.test.mjs && node scripts/check-syntax.mjs"
+  },
+  "dependencies": {
+    "@capacitor/android": "^8.5.3",
+    "@capacitor/app": "^8.1.2",
+    "@capacitor/core": "^8.5.3",
+    "@capacitor/geolocation": "^8.2.4",
+    "@capacitor/haptics": "^8.0.2",
+    "@capacitor/ios": "^8.5.3",
+    "@capacitor/local-notifications": "^8.3.1",
+    "@capacitor/share": "^8.0.3",
+    "@capacitor/splash-screen": "^8.0.0",
+    "@capacitor/status-bar": "^8.0.0",
+    "@revenuecat/purchases-capacitor": "^13.7.4"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^8.5.3"
+  }
+}

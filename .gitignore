@@ -1,0 +1,16 @@
+node_modules/
+www/
+.DS_Store
+*.keystore
+*.jks
+keystore.properties
+*.p8
+*.mobileprovision
+
+# Signing keys and credentials — never commit
+*.p12
+*.pem
+*.key
+.env
+.env.*
+*service-account*.json

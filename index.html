@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Antariksha — Vedic Sky Map · Living Sanatan</title>
+<meta name="description" content="Real-time Vedic planetarium: nakshatras, sidereal rashis, navagraha and Panchang. Point your phone at the sky.">
+<meta name="theme-color" content="#04060f">
+<!-- Everything ships with the app: no remote scripts, frames, plugins or form targets. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; media-src 'self' blob: mediastream:; connect-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'; frame-src 'none'">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Antariksha">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/svg+xml" href="img/icon.svg">
+<link rel="apple-touch-icon" href="img/icon-192.png">
+<link rel="stylesheet" href="css/fonts.css">
+<link rel="stylesheet" href="css/app.css">
+<link rel="stylesheet" href="css/nova.css">
+<link rel="stylesheet" href="css/ratri.css">
+</head>
+<body class="theme-nova">
+<video id="cam" playsinline muted autoplay></video>
+<canvas id="gl"></canvas>
+<canvas id="sky"></canvas>
+<canvas id="fx" aria-hidden="true"></canvas>
+<div id="night"></div>
+
+<div id="ui">
+  <header class="topbar">
+    <button class="bare" id="btnMenu" aria-label="Menu"></button>
+    <div class="modes" id="modeSwitch" role="tablist">
+      <button class="mode" data-mode="sky" role="tab"><span class="mi"></span><span class="ml" data-t="modeSky"></span></button>
+      <button class="mode" data-mode="today" role="tab"><span class="mi"></span><span class="ml" data-t="modeToday"></span></button>
+      <button class="mode" data-mode="calendar" role="tab"><span class="mi"></span><span class="ml" data-t="modeCalendar"></span></button>
+      <button class="mode" data-mode="jyotish" role="tab"><span class="mi"></span><span class="ml" data-t="modeJyotish"></span></button>
+      <i class="mode-glider"></i>
+    </div>
+    <button class="place-chip" id="placeChip" aria-label="Location"><i class="pc-dot"></i><span id="pcText"></span></button>
+    <button class="bare" id="btnSearch" aria-label="Search"></button>
+  </header>
+
+  <div class="search glass" id="searchBox" hidden>
+    <span class="search-ico" id="searchIco"></span>
+    <input id="searchInput" type="search" autocomplete="off" spellcheck="false" enterkeyhint="search">
+    <button class="bare small" id="searchClose" aria-label="Close search"></button>
+    <div class="results glass" id="searchResults" hidden></div>
+  </div>
+
+  <div class="loc-toast" id="locToast" hidden>
+    <span class="lt-ico" id="ltIco"></span>
+    <span class="lt-text"><b id="ltPlace"></b><span id="ltMode"></span></span>
+  </div>
+
+  <aside class="panel glass panchang" id="panchang" hidden>
+    <div class="panel-head">
+      <div>
+        <div class="eyebrow" data-t="panchang"></div>
+        <div class="panel-title" id="pTitle"></div>
+      </div>
+      <button class="icon-btn ghost" data-close="panchang" aria-label="Close"></button>
+    </div>
+    <div class="pgrid" id="pGrid"></div>
+  </aside>
+
+  <aside class="panel glass tonight" id="tonight" hidden>
+    <div class="panel-head">
+      <div>
+        <div class="eyebrow" data-t="tonightSky"></div>
+        <div class="panel-title" id="tnTitle"></div>
+      </div>
+      <button class="icon-btn ghost" data-close="tonight" aria-label="Close"></button>
+    </div>
+    <div id="tonightBody"></div>
+  </aside>
+
+  <div class="finder" id="finder" hidden aria-hidden="true"><div class="fa"></div><span class="fl"></span></div>
+
+  <div class="side-ctrls">
+    <button class="bare" id="btnZoomIn" aria-label="Zoom in"></button>
+    <button class="bare" id="btnZoomOut" aria-label="Zoom out"></button>
+    <button class="bare compass" id="btnCompass" aria-label="Face north"><span id="compassNeedle"></span></button>
+  </div>
+
+  <div class="fov" id="readout"></div>
+
+  <footer class="bottombar">
+    <button class="bare" id="btnLayers" aria-label="Layers"></button>
+    <div class="center">
+      <button class="bare cam" id="btnCam" aria-label="Camera view" hidden></button>
+      <button class="compass-btn" id="btnSensor" aria-label="Follow my phone">
+        <span class="aperture" id="aperture"></span>
+        <span class="dial" id="dial"><i class="dn">N</i><i class="de">E</i><i class="ds">S</i><i class="dw">W</i></span>
+      </button>
+    </div>
+    <button class="clock" id="hudClock">
+      <span class="clk-sub" id="hudTithi"></span>
+      <span class="clk-time" id="hudTime"></span>
+    </button>
+  </footer>
+
+  <section class="timebar glass" id="timebar" hidden>
+    <div class="tb-row">
+      <button class="tb-btn" data-step="-86400">−1d</button>
+      <button class="tb-btn" data-step="-3600">−1h</button>
+      <button class="tb-btn" data-rate="rev"></button>
+      <button class="tb-btn play" data-rate="toggle"></button>
+      <button class="tb-btn" data-rate="fwd"></button>
+      <button class="tb-btn" data-step="3600">+1h</button>
+      <button class="tb-btn" data-step="86400">+1d</button>
+    </div>
+    <div class="tb-row">
+      <input type="datetime-local" id="dtInput" step="60">
+      <span class="tb-rate" id="rateLabel"></span>
+      <button class="tb-now" id="btnNow" data-t="now"></button>
+    </div>
+    <div class="tb-row">
+      <span class="tb-date" id="hudDate"></span>
+      <button class="pill" id="btnPanchang" data-t="panchang"></button>
+      <button class="icon-btn ghost tb-close" id="tbClose" aria-label="Close"></button>
+    </div>
+  </section>
+
+  <nav class="dock glass" id="dock" hidden></nav>
+
+  <section class="jyotish" id="jyotish" hidden>
+    <div class="jy-wrap">
+      <div class="jy-stage glass">
+        <div class="jy-head">
+          <div>
+            <div class="eyebrow" data-t="bhachakra"></div>
+            <div class="jy-title" id="jyTitle"></div>
+          </div>
+          <div class="jy-head-actions">
+            <button class="pill" id="btnJyNow" data-t="transitNow"></button>
+            <button class="pill accent" id="btnJySky" data-t="viewSky"></button>
+          </div>
+        </div>
+        <div class="wheel-box"><canvas id="wheel"></canvas></div>
+        <div class="jy-hint" data-t="dragHint"></div>
+      </div>
+      <div class="jy-panel glass">
+        <div class="seg" id="jyTabs">
+          <button data-tab="kundali" data-t="kundali"></button>
+          <button data-tab="grahas" data-t="grahas"></button>
+          <button data-tab="dasha" data-t="dasha"></button>
+          <button data-tab="janma" data-t="janma"></button>
+          <button data-tab="milan" data-t="milan"></button>
+        </div>
+        <div class="jy-body" id="jyBody"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="page" id="today" hidden>
+    <div class="page-wrap">
+      <header class="page-head">
+        <div class="page-titles">
+          <div class="eyebrow" data-t="todayTitle"></div>
+          <h1 class="page-title" id="todayDate"></h1>
+          <div class="page-sub" id="todayPlace"></div>
+        </div>
+        <div class="page-actions">
+          <button class="icon-btn glass" id="btnTodayPrev" aria-label="Previous day"></button>
+          <button class="pill accent" id="btnTodayNow" data-t="today"></button>
+          <button class="icon-btn glass" id="btnTodayNext" aria-label="Next day"></button>
+          <button class="icon-btn glass" id="btnShare" aria-label="Share"></button>
+        </div>
+      </header>
+      <div class="page-body" id="todayBody"></div>
+    </div>
+  </section>
+
+  <section class="page" id="calendar" hidden>
+    <div class="page-wrap">
+      <header class="page-head">
+        <div class="page-titles">
+          <div class="eyebrow" data-t="calendarTitle"></div>
+          <h1 class="page-title" id="calTitle"></h1>
+          <div class="page-sub" id="calSub"></div>
+        </div>
+        <div class="page-actions">
+          <button class="icon-btn glass" id="btnCalPrev" aria-label="Previous month"></button>
+          <button class="pill" id="btnCalToday" data-t="today"></button>
+          <button class="icon-btn glass" id="btnCalNext" aria-label="Next month"></button>
+          <button class="icon-btn glass" id="btnReminders" aria-label="Reminders"></button>
+        </div>
+      </header>
+      <div class="page-body" id="calBody"></div>
+    </div>
+  </section>
+
+  <section class="sheet glass" id="sheet" hidden>
+    <div class="sheet-grip"></div>
+    <div class="sheet-head">
+      <div class="sheet-glyph" id="sGlyph"></div>
+      <div class="sheet-names">
+        <div class="eyebrow" id="sType"></div>
+        <div class="sheet-title" id="sTitle"></div>
+        <div class="sheet-sub" id="sSub"></div>
+      </div>
+      <button class="icon-btn ghost" data-close="sheet" aria-label="Close"></button>
+    </div>
+    <div class="sheet-actions">
+      <button class="pill" id="btnCenter" data-t="center"></button>
+      <button class="pill" id="btnTrack" data-t="track"></button>
+      <button class="pill accent" id="btnKundali" data-t="inKundali"></button>
+    </div>
+    <p class="sheet-desc" id="sDesc"></p>
+    <div class="kv" id="sRows"></div>
+  </section>
+
+  <div class="scrim" id="scrim" hidden></div>
+  <aside class="drawer glass" id="drawer" hidden>
+    <div class="panel-head">
+      <div class="brand">
+        <img src="img/icon.svg" alt="" width="34" height="34">
+        <div>
+          <div class="brand-name" data-t="appName"></div>
+          <div class="eyebrow" data-t="tagline"></div>
+        </div>
+      </div>
+      <button class="icon-btn ghost" data-close="drawer" aria-label="Close"></button>
+    </div>
+    <div class="drawer-body">
+      <h3 data-t="proEyebrow"></h3>
+      <div class="pro-row" id="proRow"></div>
+
+      <h3 data-t="design"></h3>
+      <div class="seg wide" id="themeSeg">
+        <button data-theme="nova" data-t="themeNova"></button>
+        <button data-theme="classic" data-t="themeClassic"></button>
+      </div>
+      <button class="toggle tabbar-opt" id="ratriToggle"><span><b data-t="ratriOpt"></b><small data-t="ratriOptSub"></small></span><i></i></button>
+      <button class="toggle tabbar-opt" id="tabbarToggle"><span><b data-t="tabbarOpt"></b><small data-t="tabbarOptSub"></small></span><i></i></button>
+
+      <h3 data-t="language"></h3>
+      <div class="seg wide" id="langSeg">
+        <button data-lang="en">English</button>
+        <button data-lang="hi">हिन्दी</button>
+      </div>
+
+      <h3 data-t="location"></h3>
+      <button class="pill wide accent" id="btnGeo" data-t="useMyLocation"></button>
+      <select id="citySelect" class="field"></select>
+      <div class="row2">
+        <label><span data-t="latitude"></span><input class="field" id="latInput" type="number" step="0.0001" min="-90" max="90"></label>
+        <label><span data-t="longitude"></span><input class="field" id="lonInput" type="number" step="0.0001" min="-180" max="180"></label>
+      </div>
+      <button class="pill wide" id="btnApplyLoc" data-t="apply"></button>
+
+      <h3 data-t="reminders"></h3>
+      <button class="pill wide" id="btnRemDrawer" data-t="remindersManage"></button>
+
+      <h3 data-t="names"></h3>
+      <div class="seg wide" id="namesSeg">
+        <button data-names="vedic" data-t="namesVedic"></button>
+        <button data-names="western" data-t="namesWestern"></button>
+      </div>
+
+      <h3 data-t="settings"></h3>
+      <div class="toggles" id="settingToggles"></div>
+      <label class="slider"><span data-t="groundOpacity"></span><input type="range" id="rngGround" min="0" max="1" step="0.05"></label>
+      <label class="slider"><span data-t="starBrightness"></span><input type="range" id="rngStars" min="0.6" max="1.8" step="0.05"></label>
+      <label class="slider"><span data-t="arFov"></span><input type="range" id="rngArFov" min="30" max="100" step="1"></label>
+      <label class="slider"><span data-t="compassOffset"> </span><input type="range" id="rngCompass" min="-45" max="45" step="0.5"></label>
+      <button class="pill wide" id="btnResetView" data-t="resetView"></button>
+
+      <h3 data-t="about"></h3>
+      <p class="about" data-t="aboutText"></p>
+      <p class="about" data-t="aboutJyotish"></p>
+      <a class="pill wide accent link" href="https://livingsanatan.com" target="_blank" rel="noopener" data-t="visit"></a>
+      <p class="credits" data-t="credits"></p>
+      <p class="credits" data-t="artCredits"></p>
+      <p class="credits legal-links"><a id="lnkPrivacy" target="_blank" rel="noopener" data-t="privacy"></a> · <a id="lnkTerms" target="_blank" rel="noopener" data-t="terms"></a> · <a id="lnkSupport" target="_blank" rel="noopener" data-t="support"></a></p>
+      <p class="credits" id="appVersion"></p>
+    </div>
+  </aside>
+
+  <nav class="tabbar" id="tabbar" aria-label="Sections">
+    <button data-mode="sky"><span class="ti"></span><span class="tl" data-t="modeSky"></span></button>
+    <button data-mode="today"><span class="ti"></span><span class="tl" data-t="modeToday"></span></button>
+    <button data-mode="calendar"><span class="ti"></span><span class="tl" data-t="modeCalendar"></span></button>
+    <button data-mode="jyotish"><span class="ti"></span><span class="tl" data-t="modeJyotish"></span></button>
+  </nav>
+
+  <section class="modal" id="reminders" hidden role="dialog" aria-modal="true">
+    <div class="modal-card">
+      <div class="panel-head">
+        <div>
+          <div class="eyebrow" data-t="reminders"></div>
+          <div class="panel-title" data-t="remindersTitle"></div>
+        </div>
+        <button class="icon-btn ghost" id="remClose" aria-label="Close"></button>
+      </div>
+      <div id="remBody"></div>
+    </div>
+  </section>
+
+  <div class="toast glass" id="toast" hidden></div>
+
+  <!-- First-run coach marks: a little star points at the compass, then at the camera -->
+  <div class="coach-ring" id="coachRing" hidden aria-hidden="true"></div>
+  <button class="coach-cam" id="coachCam" hidden aria-label="Camera view"></button>
+  <button class="coach" id="coach" hidden><span class="coach-star"></span><span class="coach-text" id="coachText"></span></button>
+
+  <section class="paywall" id="paywall" hidden role="dialog" aria-modal="true" aria-labelledby="pwTitle">
+    <div class="pw-card">
+      <button class="icon-btn ghost pw-close" id="pwClose" aria-label="Close"></button>
+      <div class="pw-orb"><span>✦</span></div>
+      <div class="eyebrow pw-eyebrow" data-t="proEyebrow"></div>
+      <h2 class="pw-title" id="pwTitle" data-t="proTitle"></h2>
+      <p class="pw-sub" data-t="proSub"></p>
+      <ul class="pw-list" id="pwList"></ul>
+      <button class="pw-buy" id="pwBuy"></button>
+      <div class="pw-note" data-t="proOneTime"></div>
+      <div class="pw-stores" id="pwStores" hidden></div>
+      <div class="pw-foot">
+        <button id="pwRestore" data-t="restore"></button>
+        <a id="pwTerms" target="_blank" rel="noopener" data-t="terms"></a>
+        <a id="pwPrivacy" target="_blank" rel="noopener" data-t="privacy"></a>
+      </div>
+    </div>
+  </section>
+
+  <section class="intro glass" id="intro" hidden>
+    <div class="intro-orb"></div>
+    <div class="intro-title" data-t="introTitle"></div>
+    <p data-t="introText"></p>
+    <button class="pill wide accent big" id="introSensor" data-t="introSensor"></button>
+    <button class="pill wide big" id="introCamera" data-t="introCamera"></button>
+    <button class="intro-later" id="introLater" data-t="introLater"></button>
+  </section>
+
+  <section class="intro glass" id="locAsk" hidden>
+    <div class="intro-orb"></div>
+    <div class="intro-title" data-t="locAsk"></div>
+    <button class="pill wide accent big" id="locAskYes" data-t="locAskYes"></button>
+    <button class="intro-later" id="locAskNo" data-t="locAskNo"></button>
+  </section>
+
+  <section class="intro glass" id="help" hidden>
+    <div class="intro-title" data-t="helpTitle"></div>
+    <p id="helpText"></p>
+    <button class="pill wide accent big" id="helpClose" data-t="ok"></button>
+  </section>
+</div>
+<button class="glass icon-btn show-ui" id="btnShowUi" aria-label="Show interface" hidden></button>
+
+<section class="yatra" id="yatra" hidden aria-live="polite">
+  <div class="lb top"></div>
+  <div class="lb bot"></div>
+  <div class="y-cap">
+    <div class="y-eyebrow" data-t="yatraTitle"></div>
+    <div class="y-time" id="yTime"></div>
+    <div class="y-date" id="yDate"></div>
+    <div class="y-ev" id="yEvent"></div>
+    <div class="y-prog"><i id="yBar"></i></div>
+  </div>
+  <button class="y-stop" id="yStop" aria-label="Stop"></button>
+</section>
+<div class="veil" id="veil" aria-hidden="true"></div>
+
+<script src="js/vendor/astronomy.browser.min.js"></script>
+<script src="js/data/stars.js"></script>
+<script src="js/data/constellations.js"></script>
+<script src="js/data/art.js"></script>
+<script src="js/config.js"></script>
+<script src="js/vedic.js"></script>
+<script src="js/i18n.js"></script>
+<script src="js/names.js"></script>
+<script src="js/sky.js"></script>
+<script src="js/jyotish.js"></script>
+<script src="js/render.js"></script>
+<script src="js/chart.js"></script>
+<script src="js/tz.js"></script>
+<script src="js/muhurta.js"></script>
+<script src="js/calendar.js"></script>
+<script src="js/milan.js"></script>
+<script src="js/magnetic.js"></script>
+<script src="js/sensors.js"></script>
+<script src="js/pro.js"></script>
+<script src="js/pages.js"></script>
+<script src="js/ulka.js"></script>
+<script src="js/fx.js"></script>
+<script src="js/nada.js"></script>
+<script src="js/yatra.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

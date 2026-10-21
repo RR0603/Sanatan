@@ -1,0 +1,33 @@
+# Builds an installable test APK — no keystore, secrets or Play account needed.
+# Run it from GitHub → Actions → "Android test APK" → Run workflow, then download the artifact,
+# unzip it and open app-debug.apk on an Android phone (allow "Install unknown apps" when asked).
+# This build is for trying the app on real phones only: it is debug-signed, so Google Play will not
+# accept it, and in-app purchases work only in builds installed from Play (use Android release for that).
+name: Android test APK
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { persist-credentials: false }
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: 21 }
+      - uses: android-actions/setup-android@9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407 # v3.2.2
+      - run: npm ci --ignore-scripts
+      - run: npm test
+      - run: npm run build && npx cap sync android
+      - name: Build debug APK
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug -PversionCode=$(( GITHUB_RUN_NUMBER + 100 ))
+      - uses: actions/upload-artifact@v4
+        with:
+          name: antariksha-test-apk-${{ github.run_number }}
+          path: android/app/build/outputs/apk/debug/app-debug.apk

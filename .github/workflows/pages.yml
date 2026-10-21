@@ -1,0 +1,41 @@
+# Publishes the website (the sky map plus the privacy, terms and support pages) to GitHub Pages
+# on every push to main. One-time setup: repository Settings → Pages → Source: "GitHub Actions".
+# Unlike the app build, the website keeps its Content-Security-Policy and the offline service worker.
+name: Website
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: pages
+  cancel-in-progress: true
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { persist-credentials: false }
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci --ignore-scripts
+      - run: npm test
+      - name: Collect the site
+        run: |
+          mkdir _site
+          cp -R index.html privacy.html terms.html support.html manifest.webmanifest sw.js css js img fonts _site/
+      - uses: actions/upload-pages-artifact@v3
+        with: { path: _site }
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
