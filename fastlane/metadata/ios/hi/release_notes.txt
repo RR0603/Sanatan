@@ -1,9 +1,9 @@
-The biggest update yet:
-• Nova — a brand-new glass design (the original look is still in Settings → Design)
-• Today — Rahu Kaal, Abhijit, Choghadiya, sunrise and moonrise, with a live status
-• Calendar — festivals, Ekadashis, vrats and eclipses for your city, with reminders
-• Tonight — see what's up and let the arrow guide your phone to it
-• Kundali Milan — 36-guna matching
-• Western sky: IAU constellation lines and names, and the tropical zodiac
-• Share the day's Panchang in one tap
-• Ratri night mode, Nada tanpura sound, Ulka meteor showers and the Yatra night journey
+अब तक का सबसे बड़ा अपडेट:
+• नोवा: बिल्कुल नया ग्लास डिज़ाइन (पुराना रूप सेटिंग्स → डिज़ाइन में उपलब्ध)
+• आज: राहु काल, अभिजित, चौघड़िया, सूर्योदय और चन्द्रोदय, लाइव स्थिति के साथ
+• कैलेंडर: आपके नगर के पर्व, एकादशी, व्रत और ग्रहण, स्मरण सहित
+• आज रात: क्या दिख रहा है देखें, तीर आपके फ़ोन को उस तक ले जाएगा
+• कुण्डली मिलान: 36 गुण मिलान
+• पाश्चात्य आकाश: IAU तारामण्डल रेखाएँ व नाम और सायन राशिचक्र
+• आज का पंचांग एक स्पर्श में साझा करें
+• रात्रि मोड, नाद तानपुरा, उल्का वर्षा और यात्रा

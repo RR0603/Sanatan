@@ -1444,7 +1444,7 @@
   $('searchClose').addEventListener('click', () => { $('searchInput').value = ''; runSearch(''); $('searchBox').hidden = true; });
   $('btnLayers').addEventListener('click', () => {
     $('btnLayers').classList.remove('invite'); try { localStorage.setItem('antariksha.openedMenu', '1'); } catch (e) { /* ignore */ }
-    $('dock').hidden = !$('dock').hidden; if (!$('dock').hidden) { $('timebar').hidden = true; } syncDock(); });
+    $('dock').hidden = !$('dock').hidden; if (!$('dock').hidden) { $('timebar').hidden = true; clearTimeout(locToastTimer); $('locToast').hidden = true; } syncDock(); });
   $('btnSensor').addEventListener('click', () => { setSensor(!view.sensor); });
   $('btnCam').addEventListener('click', () => { setAR(!view.ar); });
   $('btnPanchang').addEventListener('click', () => { close('timebar'); open('panchang'); });

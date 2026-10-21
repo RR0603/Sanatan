@@ -25,9 +25,9 @@ const block = (sec, label) => { const i = sec.indexOf(label); if (i < 0) { probl
 const appName = (md.match(/\| App name \(30\) \| (.*?) \[\d+\] \|/) || [])[1] || 'Antariksha: Vedic Sky Map';
 const hiName = field(hi, 'Name');
 const descEn = block(en, '**Description (4000)**'), descHi = block(hi, '**Description**');
-const whatsNew = block(en, "**What's new");
+const whatsNew = block(en, "**What's new"), whatsNewHi = block(hi, "**What's new");
 const review = block(md, '## App Review notes');
-for (const [k, v, lim] of [['description (en)', descEn, 4000], ['description (hi)', descHi, 4000], ['release notes', whatsNew, 4000]]) if ([...v].length > lim) problems.push(`${k} too long`);
+for (const [k, v, lim] of [['description (en)', descEn, 4000], ['description (hi)', descHi, 4000], ['release notes (en)', whatsNew, 4000], ['release notes (hi)', whatsNewHi, 4000]]) if ([...v].length > lim) problems.push(`${k} too long`);
 
 const out = join(root, 'fastlane');
 rmSync(join(out, 'metadata'), { recursive: true, force: true });
@@ -36,13 +36,13 @@ const put = (path, text) => { mkdirSync(dirname(join(out, path)), { recursive: t
 const site = C.links.web;
 
 // ---------- App Store (fastlane deliver) ----------
-for (const [loc, sec, name, desc] of [['en-US', en, appName, descEn], ['hi', hi, hiName, descHi]]) {
+for (const [loc, sec, name, desc, notes] of [['en-US', en, appName, descEn, whatsNew], ['hi', hi, hiName, descHi, whatsNewHi]]) {
   put(`metadata/ios/${loc}/name.txt`, name);
   put(`metadata/ios/${loc}/subtitle.txt`, field(sec, 'Apple subtitle'));
   put(`metadata/ios/${loc}/promotional_text.txt`, field(sec, 'Apple promotional text'));
   put(`metadata/ios/${loc}/keywords.txt`, field(sec, 'Apple keywords'));
   put(`metadata/ios/${loc}/description.txt`, desc);
-  put(`metadata/ios/${loc}/release_notes.txt`, whatsNew);
+  put(`metadata/ios/${loc}/release_notes.txt`, notes);
   put(`metadata/ios/${loc}/support_url.txt`, `${site}support.html`);
   put(`metadata/ios/${loc}/marketing_url.txt`, C.links.site);
   put(`metadata/ios/${loc}/privacy_url.txt`, `${site}privacy.html`);
@@ -56,12 +56,12 @@ put('metadata/ios/review_information/demo_required.txt', 'false');
 
 // ---------- Google Play (fastlane supply) ----------
 // Play release notes are limited to 500 characters: keep whole lines that fit.
-const playNotes = whatsNew.split('\n').reduce((acc, line) => ([...`${acc}\n${line}`].length <= 500 ? (acc ? `${acc}\n${line}` : line) : acc), '');
-for (const [loc, sec, name, desc] of [['en-US', en, appName, descEn], ['hi-IN', hi, hiName, descHi]]) {
+const playNotes = (notes) => notes.split('\n').reduce((acc, line) => ([...`${acc}\n${line}`].length <= 500 ? (acc ? `${acc}\n${line}` : line) : acc), '');
+for (const [loc, sec, name, desc, notes] of [['en-US', en, appName, descEn, whatsNew], ['hi-IN', hi, hiName, descHi, whatsNewHi]]) {
   put(`metadata/android/${loc}/title.txt`, name);
   put(`metadata/android/${loc}/short_description.txt`, field(sec, 'Play short description'));
   put(`metadata/android/${loc}/full_description.txt`, desc);
-  put(`metadata/android/${loc}/changelogs/default.txt`, playNotes);
+  put(`metadata/android/${loc}/changelogs/default.txt`, playNotes(notes));
 }
 
 // ---------- images ----------

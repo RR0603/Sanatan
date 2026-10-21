@@ -157,6 +157,14 @@ How the price reaches the user:
 
 ---
 
+## Try it on an Android phone today (no accounts needed)
+
+GitHub → **Actions** → **Android test APK** → **Run workflow**. When it finishes (about 6 minutes), open the run, download **antariksha-test-apk-N**, unzip it and send `app-debug.apk` to any Android phone (WhatsApp it to yourself or use Drive). Tap it and allow "Install unknown apps" when asked.
+
+Everything works except buying Pro: purchases only work in builds installed from Google Play (step A5 onwards). Use this build to show friends and family, and to recruit your 12 closed-testing testers (step A8).
+
+---
+
 ## A. Google Play
 
 ### A1. Developer account ($25 one-time)
