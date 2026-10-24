@@ -8,3 +8,4 @@
 - 2026-10-21 · There was never a snake — rope-and-snake (rajju-sarpa): the lamp removes only not-seeing; bondage was never there, so liberation is recognition, not escape (Māṇḍūkya Kārikā 2.17–18, 2.32; Aṣṭāvakra Gītā 1.11)
 - 2026-10-22 · The light you see by — every outer light (sun, moon, fire, voice) goes out; the Self is its own light (svayaṃ-jyotiḥ) that lights even dreams, and it never goes out (Bṛhadāraṇyaka 4.3.2–6, 4.3.9–10; Kaṭha 2.2.15)
 - 2026-10-23 · You are the gold — melt the ring and no gold is lost: every change is only a name and a shape (nāma-rūpa) on one substance; you are not the ornament but the gold (Chāndogya 6.1.4–5; Aṣṭāvakra Gītā 2.4)
+- 2026-10-24 · Fear needs a second — every fear needs two (me here, something out there); remove the second and fear has nowhere to stand; fearlessness (abhaya) is not courage but seeing there never was a second (Bṛhadāraṇyaka 1.4.1–2, 4.4.25; Taittirīya 2.7; Īśa 7)
