@@ -1,0 +1,38 @@
+# Cloudflare Worker for Living Sanatan premium subscriptions.
+# Setup steps: see ../SUBSCRIPTIONS.md
+name = "sanatan-premium"
+main = "src/index.js"
+compatibility_date = "2025-09-01"
+workers_dev = true
+
+[observability]
+enabled = true
+
+# Create these with:  npx wrangler kv namespace create STATE
+#                     npx wrangler kv namespace create CONTENT
+# then paste the printed ids below.
+[[kv_namespaces]]
+binding = "STATE"
+id = "REPLACE_WITH_STATE_NAMESPACE_ID"
+
+[[kv_namespaces]]
+binding = "CONTENT"
+id = "REPLACE_WITH_CONTENT_NAMESPACE_ID"
+
+[vars]
+# "test_mode" while testing, "live_mode" to take real payments.
+DODO_ENV = "test_mode"
+# The page readers return to after paying or opening a sign-in link.
+SITE_URL = "https://rr0603.github.io/Sanatan/"
+# Every origin the site is served from (comma separated, no trailing slash).
+ALLOWED_ORIGINS = "https://rr0603.github.io,https://livingsanatan.com,https://www.livingsanatan.com"
+# Sender for sign-in emails. The domain must be verified in Resend.
+EMAIL_FROM = "Living Sanatan <access@livingsanatan.com>"
+# Plans shown on the paywall. product_id comes from Dodo: Products -> your subscription product.
+PLANS = '[{"id":"monthly","product_id":"pdt_REPLACE_MONTHLY","label":"Monthly","price":"₹199 / month"},{"id":"yearly","product_id":"pdt_REPLACE_YEARLY","label":"Yearly","price":"₹1,999 / year","note":"2 months free"}]'
+
+# Secrets (never put these in this file):
+#   npx wrangler secret put DODO_API_KEY         # Dodo: Developer -> API keys
+#   npx wrangler secret put DODO_WEBHOOK_SECRET  # Dodo: Developer -> Webhooks (whsec_...)
+#   npx wrangler secret put SESSION_SECRET       # any random string, 32+ chars
+#   npx wrangler secret put RESEND_API_KEY       # resend.com API key, for sign-in emails

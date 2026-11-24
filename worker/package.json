@@ -1,0 +1,16 @@
+{
+  "name": "sanatan-premium-worker",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "test": "node --test test/*.test.js",
+    "extract": "node scripts/extract-premium.mjs",
+    "upload-content": "wrangler kv bulk put --binding=CONTENT --remote .private/premium-kv.json"
+  },
+  "devDependencies": {
+    "acorn": "^8.14.0",
+    "wrangler": "^4.40.0"
+  }
+}

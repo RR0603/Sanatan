@@ -10,6 +10,8 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
 <meta name="apple-mobile-web-app-title" content="Sanatan">
 <meta name="description" content="24 eras of Sanatan Dharma — cosmology, philosophy, and living inquiry by Rahul S.">
+<!-- Membership API (worker/). Set to your deployed Worker URL; see SUBSCRIPTIONS.md. Empty = memberships "opening soon". -->
+<meta name="premium-api" content="">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
 <title>The Living Sanatan Timeline — Dashavatara</title>
@@ -50,9 +52,10 @@
       https://www.google-analytics.com
       https://analytics.google.com
       https://www.clarity.ms
-      https://dc.services.visualstudio.com;
+      https://dc.services.visualstudio.com
+      https://*.workers.dev
+      https://api.livingsanatan.com;
     frame-src 'none';
-    frame-ancestors 'none';
     base-uri 'self';
     form-action 'self';
     object-src 'none';
@@ -67,7 +70,8 @@
   <meta name="robots" content="index, follow, noimageai, noai">
 
 <link referrerpolicy="no-referrer" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400;1,500&family=IBM+Plex+Mono:wght@300;400&family=Noto+Sans+Devanagari:wght@300;400&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=20260516-indrajala">
+<link rel="stylesheet" href="styles.css?v=20261124-members">
+<link rel="stylesheet" href="premium.css?v=20261124-members">
 
 <!-- Structured data for AI crawlers (LLMs, search engines, AEO) -->
 <script type="application/ld+json">
@@ -365,6 +369,9 @@
   <button id="toolbar-search-mobile" onclick="openEraSearch()" style="display:none;font-family:'IBM Plex Mono',monospace;font-size:14px;padding:10px 16px;background:none;border:1px solid rgba(201,168,76,.25);color:rgba(201,168,76,.6);cursor:pointer;white-space:nowrap;touch-action:manipulation;min-height:44px;">⌕</button>
 
   <!-- ── Toolbar Footer Cap ── -->
+  <!-- Membership -->
+  <button class="tbtn tbtn-member" id="sp-member-btn" type="button" title="Unlock every layer of every era"><span class="tb-glyph">◆</span><span class="tb-label"> Members</span></button>
+
   <div class="tb-cap tb-cap-bottom">
     <span class="tb-cap-glyph">∞</span>
     <span class="tb-cap-foot">explore · discover</span>
@@ -4381,6 +4388,7 @@
   <div id="era-search-hint"><span>↑↓ navigate</span><span>↵ enter</span><span>esc close</span></div>
 </div>
 
-<script src="script.js?v=20260516-indrajala"></script>
+<script src="script.js?v=20261124-members"></script>
+<script src="premium.js?v=20261124-members"></script>
 </body>
 </html>

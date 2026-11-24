@@ -1,0 +1,9 @@
+# Premium content: NEVER commit. This repo is public.
+worker/.private/
+*.premium.json
+premium-kv*.json
+
+node_modules/
+worker/.wrangler/
+worker/.dev.vars
+.DS_Store
