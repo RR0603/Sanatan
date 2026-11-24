@@ -85,6 +85,14 @@ npx wrangler deploy
 For `SESSION_SECRET` use a long random string, e.g. the output of
 `openssl rand -base64 48`. Changing it later signs every member out.
 
+**Optional: deploy from GitHub instead.** After the first deploy, add two
+repository secrets (Settings → Secrets and variables → Actions):
+`CLOUDFLARE_API_TOKEN` (Cloudflare → My Profile → API Tokens → "Edit
+Cloudflare Workers" template) and `CLOUDFLARE_ACCOUNT_ID`. Every change to
+`worker/` on `main` is then tested and deployed by
+`.github/workflows/worker.yml`. The Wrangler secrets above stay in
+Cloudflare and don't need re-entering.
+
 ### 4. Upload the member content
 
 The member text was removed from `script.js` and written to
